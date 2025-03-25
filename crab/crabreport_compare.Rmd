@@ -1,0 +1,245 @@
+---
+title: "Blue Crab Report: Review"
+author: "Jess Gorzo"
+date: '`r Sys.Date()`'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library("viridis")
+library(colorRamps)
+```
+## Data Exploration and Problem
+
+The computation of a geometric mean can't accommodate zeroes, because it is based on the product of the values. So, there are some workarounds. I am trying to match numbers to the previous report to be sure I am on the right track for updating. So far, the zero-fill workaround I have found seems to be the best match: add 1 to all values, and subtract 1 from the final result.
+
+...but there are a few discrepancies that might come down to finer-tuned data subsets, or a different method of accommodating 0's.
+
+### Ocean Trawl Stock Assessment Survey
+
+I pulled all records of blue crab (SPP = 314) from the CATCH table in the Access database sent to me by Greg. (This database query step is in the helper script I wrote, "accessdb.R" which generates the workspace imported in the code chunk below.)
+
+"The cruise analysis for geometric mean only includes the August and October cruises and shallow and mid strata due to a negligible number of crabs seen during the other cruises and deep strata."
+
+#### Assumptions
+* if an ID exists in TOWS that does not exist in CATCH subset for blue crabs, it means no crabs were caught on that tow  
+* each record is a tow, which is the unit of the calculation, and is thus unique  
+
+#### Comparison 
+
+One thing I noticed in text is that the peak annual geometric mean is said to be in 1988 (0.9) but Fig. 6 in the report shows a substantially higher peak around 1995?
+
+```{r cars}
+load("~/data/crab/crab.RData") #DROP OUTER STRATA
+geom_mean <- function(x) {exp(mean(log(x)))}
+geom_mean0 <- function(x) {exp(mean(log(x+1)))-1}
+```
+
+This is the geometric mean for crabs caught in 1988 (not zero-filled).
+
+```{r scenario}
+crab88 <- boats[boats$YEAR==1988,]
+geom_mean(crab88$NUMBER)
+```
+I then kept all records of TOWS where the ID was not in the IDs pulled by the previous query, in order to 0-fill the data. Then, I filled in values for the tows with no crabs in various ways to calculate a geometric mean. In Fig. 7, it appears August cruise = 4 and Oct Cruise = 5 matching up with the description in text, but in the data set in 1988 it appears the August cruise = 2 and the October cruise = 3. So, I changed the cruise numbers for this year to match the coding for the rest.
+```{r zero}
+tows <- tows[!is.na(tows$STRATUM),]
+tows$MONTH = as.integer(sapply(tows$YRMODA, function(x) substr(x, 5, 6)))
+tows0 <- tows[!tows$ID %in% boats$ID,]
+crab <- boats %>% add_row(ID = tows0$ID, YEAR = tows0$YEAR, STRATUM=tows0$STRATUM, MONTH=tows0$MONTH, CRUCODE=tows0$CRUCODE)
+
+crab$CRU = as.integer(sapply(crab$CRUCODE, function(x) substr(x, 5, 5)))
+
+ggplot(crab, aes(MONTH, CRU)) + geom_point(aes(colour=YEAR)) + scale_x_continuous(breaks=seq(1,12, by=1))
+crab[crab$CRU == 3 & crab$YEAR==1988,]$CRU <- 5 
+crab[crab$CRU == 2 & crab$YEAR==1988,]$CRU <- 4 
+
+crab[,c(1:5, 9:10)] <- apply(crab[,c(1:5, 9:10)], 2, as.integer)
+#+ scale_x_continuous(breaks=seq(1,12, by=1))
+
+#crab <- crab[!crab$STRATUM %in% c(14, 17, 20, 23, 26),] these are the deep strata
+crab$NUMBER1 <- crab$NUMBER
+crab$NUMBER0 <- crab$NUMBER
+crab$NUMBER1[is.na(crab$NUMBER)] <- 1
+crab$NUMBER0[is.na(crab$NUMBER)] <- 0
+crab$WEIGHT[is.na(crab$WEIGHT)] <- 0
+
+#length$FREQUENCY[is.na(length$FREQUENCY)] <- 0
+```
+
+This is the 0-fill method. The geometric mean given in text for 1988 is 0.9 crabs per tow. I got close to this number by using the subset July-Oct (perhaps notably, not the cruise number, which got me farther from the number in text).
+
+```{r, fig.width=10, fig.asp=0.8}
+# Safely divide using ifelse
+crab10 <- crab[crab$YEAR==2010,] #& crab$MONTH %in% 8:10
+crab88 <- crab[crab$YEAR==1988 & crab$MONTH %in% 7:10,]
+#crab88 <- crab[crab$YEAR==1988 & crab$CRU %in% 4:5,]
+#unique(crab$MONTH[crab$YEAR== 1988 & crab$CRU == 3])
+geom_mean0(crab88$NUMBER0)
+```
+
+However, to get close to the 2010 number in text (0.05) I had to keep the entire year's data.
+```{r sapidus}
+geom_mean0(crab10$NUMBER0)
+```
+
+This is the 1-fill method.
+
+```{r crabby}
+geom_mean(crab$NUMBER1)
+```
+So, the zero-fill method could round up to 0.9 and therefore this method may mirror what was done for the report.
+
+```{r len}
+length <- length %>% add_row(ID = tows0$ID, CRUCODE=tows0$CRUCODE)
+length$YEAR = as.integer(sapply(length$CRUCODE, function(x) substr(x, 1, 4)))
+length$CRU <- as.integer(sapply(length$CRUCODE, function(x) substr(x, 5, 5)))
+length$MONTH <- tows$MONTH[match(length$ID, tows$ID)]
+length$len <- length$LENGTH * length$FREQUENCY
+length[length$CRU == 3 & length$YEAR==1988,]$CRU <- 5 
+length[length$CRU == 2 & length$YEAR==1988,]$CRU <- 4 
+length$LENGTH[is.na(length$LENGTH)] <- 0
+```
+Overall, to best approximate the patterns in text, I had to subset the annually summarized data to only the deep strata and cruises 4 ans 5.
+
+closest I can get to number in text...(note the unit is in cm it appears, from the report and from email correspondence with Greg)
+```{r lengthcomp}
+geom_mean0(length$LENGTH[length$LENGTH > 0 & length$CRU %in% c(4,5)])
+```
+
+### Delaware River Striped Bass Recruitment Seine Survey
+
+As of today, the 2024 data has been completed but not imported into the database; upon speaking with Jen, she said there may need to be a few minor additions but it will be uploaded by the end of the week. She went over the database structure with me including relevant queries.
+
+She conveyed that a unique identifier can be made by combining year and ID for custom queries.
+Blue crab species code = 99
+
+So, I used the query in the database "BLUE CRAB TOTALS" to pull the zero-filled data, exported the results of the query to XLSX and then to CSV, which is the file being read in the code chunk below. The data is missing 2020, as expected.
+
+#### Assumptions
+* each record is a tow, which is the unit of the calculation, and is thus unique  
+
+#### Comparison
+In text, the report value of geometric mean per tow for 1995 is 0.8. This is based on tows Aug-Oct, and Jen cautioned me to use the survey month label over the actual month in the date.
+
+```{r blue}
+crab <- read.csv("~/data/crab/BLUE CRAB TOTALS.csv")
+crab$DATE <- strptime(crab$Date, "%m/%d/%Y")
+crab$MONTH <- as.integer(format(crab$DATE, "%m"))
+crab$DAY <- as.integer(format(crab$DATE, "%d"))
+crab$NUMBER1 <- crab$NUMBER
+crab$NUMBER0 <- crab$NUMBER
+crab$NUMBER1[is.na(crab$NUMBER)] <- 1
+crab$NUMBER0[is.na(crab$NUMBER)] <- 0
+crab_season <- crab[grep("s|oc", crab$data.month),]
+crab_season <- crab_season[crab_season$Year==1995,]
+crab_year <- crab[crab$Year==1995 & crab$MONTH %in% 8:10,] #
+```
+
+This is the geometric mean of blue crabs caught Aug-Oct 1995, not 0-filled.
+
+```{r bluecrab}
+geom_mean(crab_year$NUMBER[!is.na(crab_year$NUMBER)])
+```
+
+This is to compare subsets by sampling period vs. month with 0-filled data (in this case, for 1995 it's identical and the months line up with the sampling month label) 
+```{r c}
+geom_mean0(crab_season$NUMBER0)
+geom_mean0(crab_year$NUMBER0)
+```
+
+This is the geometric means of the same data set, 1-filling for 0's
+```{r bluecrabs}
+geom_mean(crab_year$NUMBER1)
+```
+
+This matches the number in text, note this column appears to be measured in mm
+```{r lencomp}
+totln <- c(crab$MAXLEN, crab$MINLEN)
+mean(totln, na.rm=T)
+```
+
+#### Questions
+* Why is there a jump in IDs ("missing" 321-700)?
+
+### Delaware Bay Otter Trawl
+
+For this I need additional data to zero-fill.
+
+### Mean Length
+This was how I got the number in text, note the measure in the dataset is mm
+```{r meanlen, echo=FALSE}
+totln <- read.csv("~/data/crab/BlueCrab_LENGTHS.csv")
+mean(totln$LENGTH, na.rm=T)
+```
+
+### River Herring Young-of-the-Year Seine Survey
+
+Brian sent me the data in a XLSX file, and said he would try to reverse engineer from the report how CPUE was calculated. I pulled the sheets imported below into separate CSV files. Also, there was some minor data cleaning required, so I passed some of the erroneous values found back to Brian to edit in the database.
+
+```{r blue_crabs}
+rherring <- read.csv("~/data/crab/River Herring Seine Blue Crab Data_catch.csv")
+rherring_effort <- read.csv("~/data/crab/River Herring Seine Blue Crab Data_head.csv", blank.lines.skip=T)
+
+rherring$STATION[rherring$STATION=="GEH03"] <- "GEHS03"
+rherring$WATERBODY[rherring$WATERBODY=="GERH"] <- "GREAT EGG HARBOR RIVER"
+rherring_effort$STATION[rherring_effort$STATION=="GEHSO3"] <- "GEHS03"
+rherring_effort$STATION[rherring_effort$STATION=="MRS03ALT"] <- "MRS03"
+```
+
+```{r rherring}
+rherring$id <- paste(rherring$STATION, rherring$DATE, sep="_")
+rherring_effort$id <- paste(rherring_effort$STATION, rherring_effort$DATE, sep="_")
+rherring_effort <- rherring_effort[!rherring_effort$id %in% rherring$id,]
+```
+
+```{r riverherring}
+rherring <- rherring %>% add_row(id = rherring_effort$id, WATERBODY=rherring_effort$WATERBODY,
+                                 DATE=rherring_effort$DATE, STATION=rherring_effort$STATION,
+                                 YEAR=rherring_effort$YEAR,
+                                 MONTH=rherring_effort$MONTH)
+```
+
+```{r herring}
+rherring$DATE <- strptime(rherring$DATE, "%m/%d/%Y")
+rherring <- rherring[order(rherring$DATE),]
+```
+
+Brian emailed me and said these were the stations used for each water body were the following:
+```{r subcomp}
+subsetGE15 <- rherring[rherring$YEAR==2016 & rherring$STATION %in% c("GEHS01", "GEHS02", "GEHS03", "GEHS04", "GEHS05"),]
+#& rherring$WATERBODY=="GREAT EGG HARBOR RIVER"
+subsetMR15 <- rherring[rherring$YEAR==2015 & rherring$STATION %in% c("MRS01", "MRS02", "MRS03", "MRS04", "MRS05", "MRS08"),]
+# #rherring$MONTH %in% 8:10 
+#& rherring$WATERBODY=="MAURICE RIVER"
+test <- subsetMR15
+test$NUMBER0 <- test$NUMBER
+test$NUMBER0[is.na(test$NUMBER)] <- 0
+
+#test <- subsetGE15
+#test$NUMBER0 <- test$NUMBER
+#test$NUMBER0[is.na(test$NUMBER)] <- 0
+```
+
+The number in the report is 0.7, so this could round down, but in the previous section, this same number would have been rounded up.
+
+```{r crabval}
+aggregate(test$NUMBER0, by=list(year=test$YEAR, river=test$WATERBODY), geom_mean0)
+```
+
+The closest I could get to the number in text (note length is in mm in this dataset from text):
+```{r lencompr}
+len <- read.csv("~/data/crab/River Herring Seine Blue Crab Data_length.csv")
+len$TOTALLENGTH[is.na(len$TOTALLENGTH)] <- 0
+mean(len$TOTALLENGTH)
+```
+
+```{r pressure, echo=FALSE}
+#You can also embed plots, for example:
+#plot(pressure)
+#Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+```

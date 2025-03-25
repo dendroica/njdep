@@ -1,0 +1,23 @@
+---
+title: "Blue Crab Report: Jess edits"
+author: "Jess Gorzo"
+date: "`r Sys.Date()`"
+output: word_document
+---
+
+```{r setup, echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(colorRamps)
+library(forcats)
+
+geom_mean <- function(x) {
+  exp(mean(log(x)))
+}
+geom_mean0 <- function(x) {
+  exp(mean(log(x + 1))) - 1
+}
+```

@@ -1,0 +1,455 @@
+---
+title: "Blue Crab Report: Jess edits"
+author: "Jess Gorzo"
+date: "`r Sys.Date()`"
+#fig_height: 6
+#fig_width: 7
+output: 
+  html_document: 
+    pandoc_args: ["--lua-filter=color-text.lua"]
+  #pdf_document: 
+  #  pandoc_args: ["--lua-filter=color-text.lua"]
+  #  keep_tex: true
+---
+
+```{r setup, echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(colorRamps)
+library(forcats)
+
+geom_mean <- function(x) {
+  exp(mean(log(x)))
+}
+geom_mean0 <- function(x) {
+  exp(mean(log(x + 1))) - 1
+}
+alpha <- 0.05
+ci <- function(x) {
+  x$se <- x$sample.sd / sqrt(x$tow)
+  x$degrees.freedom <- as.integer(x$tow - 1)
+  x$t.score <- qt(p = alpha / 2, df = x$degrees.freedom, lower.tail = F)
+  x$margin.error <- x$t.score * x$se
+  x$lower.bound <- x$geom - x$margin.error
+  x$upper.bound <- x$geom + x$margin.error
+  return(x)
+}
+
+# Return the desired percentiles plus the geometric mean
+bp.vals <- function(x, probs = c(0.1, 0.25, 0.75, .9)) {
+  r <- quantile(x, probs = probs, na.rm = TRUE)
+  r <- c(r[1:2], geom_mean0(x), r[3:4])
+  names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+  r
+}
+
+theme_set(theme_bw() + theme(text = element_text(size = 12, family = "Arial")))
+```
+
+```{cat, engine.opts = list(file = "color-text.lua")}
+Span = function(el)
+  color = el.attributes['color']
+  -- if no color attribute, return unchange
+  if color == nil then return el end
+  
+  -- transform to <span style="color: red;"></span>
+  if FORMAT:match 'html' then
+    -- remove color attributes
+    el.attributes['color'] = nil
+    -- use style attribute instead
+    el.attributes['style'] = 'color: ' .. color .. ';'
+    -- return full span element
+    return el
+  elseif FORMAT:match 'latex' then
+    -- remove color attributes
+    el.attributes['color'] = nil
+    -- encapsulate in latex code
+    table.insert(
+      el.content, 1,
+      pandoc.RawInline('latex', '\\textcolor{'..color..'}{')
+    )
+    table.insert(
+      el.content,
+      pandoc.RawInline('latex', '}')
+    )
+    -- returns only span content
+    return el.content
+  else
+    -- for other format return unchanged
+    return el
+  end
+end
+```
+
+
+[Jess overall note]{color="red"}:  My main suggestion ended up being to use arithmetic means for the summaries per bin; I think the basic story is the same as the original report, but with wider error bars better reflecting variability in counts. I went back to what you said about that these are just simple stats as a starting place anyway, and for each subset summary thought of what we are trying to say/capture with the figure. 
+ 
+## Ocean Trawl
+We calculated a geometric mean of the number of crabs caught annually, per strata and per cruise. Only shallow and mid-depth strata data were included, due to the de minimis catch in deep strata. The 2020 sampling year was excluded because it only includes data from the January cruise, due to COVID-19 statewide shutdowns.
+
+```{r oc,echo=FALSE, fig.cap="Raw zero-filled counts of crabs per tow"}
+midstrata <- c(13, 16, 19, 22, 25)
+load("~/data/crab/crab.RData") # boats is name of data frame with all of the blue crab data
+tow <- tows %>%
+  filter(!is.na(STRATUM), STRATUM < 99, !ID %in% boats$ID) %>%
+  mutate(mo = as.integer(sapply(YRMODA, function(x) substr(x, 5, 6)))) # ,
+# day = as.integer(sapply(tows$YRMODA, function(x) substr(x, 7, 8))))
+
+crab <- boats %>%
+  add_row(
+    ID = tow$ID, YEAR = tow$YEAR, STRATUM = tow$STRATUM,
+    MONTH = tow$mo,
+    CRUCODE = tow$CRUCODE
+  ) %>%
+  mutate(cru = as.integer(sapply(CRUCODE, function(x) substr(x, 5, 5)))) %>%
+  mutate(cru = replace(cru, cru == 3 & YEAR == 1988, 5)) %>%
+  mutate(
+    cru = replace(cru, cru == 2 & YEAR == 1988, 4),
+    across(c(1:5, 7, 9:11), as.integer),
+    depth = case_when(
+      STRATUM %in% midstrata ~ "11-20m (Mid)",
+      STRATUM %in% (midstrata + 1) ~ "Deep",
+      STRATUM %in% (midstrata - 1) ~ "0-10m (Shallow)"
+    ),
+    data.month = fct_relevel(case_when(
+      cru == 1 ~ "January",
+      cru == 2 ~ "April",
+      cru == 3 ~ "June",
+      cru == 4 ~ "August",
+      cru == 5 ~ "October",
+      cru > 5 ~ "Other"
+    ), "January", "April", "June", "August", "October", "Other"),
+    no0 = case_when(is.na(NUMBER) ~ 0L, .default = NUMBER),
+    no1 = case_when(is.na(NUMBER) ~ 1, .default = NUMBER),
+    WEIGHT = case_when(is.na(WEIGHT) ~ 0, .default = WEIGHT)
+  ) %>%
+  mutate(log0 = log(no0 + 1))
+
+crab$YRMODA <- tows$YRMODA[match(crab$ID, tows$ID)]
+ggplot(crab, aes(x=YRMODA/10000, y=no0)) + geom_point() + labs(x = "Year", y="Count")
+```
+
+```{r ocsub,echo=FALSE, include=FALSE}
+# from my notes: for annual, only use highest months cruises
+# crab$MONTH %in% 7:10
+
+crab_shallow <- crab[!crab$depth == "Deep", ]
+crab_season <- crab_shallow[crab_shallow$cru %in% 4:5, ]
+```
+
+### Annual
+
+```{r ocsum,echo=FALSE}
+crab_annual <- crab_season %>%
+  group_by(YEAR) %>%
+  summarise(
+    geom = geom_mean0(no0), tow = n(), yes = sum(ifelse(no0 > 0, 1, 0)),
+    sample.sd = sd(log0), mysd = sd(no0), logm = mean(log0), m = mean(no0)
+  )
+crab_annual <- ci(crab_annual)
+crab_annual$postow <- crab_annual$yes / crab_annual$tow
+```
+
+```{r ocplot, echo=FALSE, fig.width=10, fig.cap="Mean number of crabs caught annually, during cruises 4-5. Deep strata are excluded."}
+crab_annual$postow_trans <- crab_annual$postow * 100 / 5
+
+dd <- pivot_longer(crab_annual[, c("YEAR", "geom", "m", "postow_trans", "lower.bound", "upper.bound")], cols = geom:postow_trans, names_to = "var")
+dd$var[dd$var == "postow_trans"] <- "+tow"
+
+ggplot(data = dd, aes(x = YEAR, y = value, colour = var)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = lower.bound, ymax = upper.bound), width = 0.2, colour = "black") +
+  scale_y_continuous(name = "Mean # crabs caught", sec.axis = sec_axis(transform = ~ . * 5, name = "Positive Tows (%)")) +
+  labs(x = "Year")
+```
+
+### Per Cruise
+
+[Jess note]{color="red"}: I think the main point of this figure is to comparatively show crab haul per cruise, so a simple bar plot showing arithmetic mean of crabs (calculated from the zero-filled data) per cruise month suffices to illustrate that, with error bars showing variability per subset. (And generally so on for the rest of these...) 
+
+```{r occru, echo=FALSE}
+crab_cru <- crab_shallow %>% # subset to shallow and mid strata
+  group_by(cru) %>%
+  mutate(geom = geom_mean0(no0), tow = n(), sample.sd = sd(log0), mysd = sd(no0), logm = mean(log0), m = mean(no0), med = median(no0))
+crab_cru <- ci(crab_cru)
+
+p <- ggplot(crab_cru, aes(x = data.month, y = no0))
+
+p + geom_bar(stat = "summary") + geom_errorbar(stat = "summary", width = .2) + labs(y = "Mean # crabs caught", x = "Cruise Month")
+```
+
+### Per Stratum
+
+[Jess note/interpretation for the gist of this plot]{color="red"}: shallow strata are better for crabs! However same as above, wide variability around the highest means.
+
+```{r ocstr, echo=FALSE}
+crab_strata <- crab_season %>%
+  group_by(STRATUM) %>%
+  mutate(geom = geom_mean0(no0), tow = n(), sample.sd = sd(log0), mysd = sd(no0), logm = mean(log0), m = mean(no0))
+
+crab_cru <- ci(crab_strata)
+
+p <- ggplot(crab_cru, aes(x = depth, y = no0, fill = as.character(STRATUM)))
+
+p + geom_bar(position = position_dodge(width = 0.9), stat = "summary") + geom_errorbar(stat = "summary", width = .2, position = position_dodge(width = 0.9)) + labs(y = "Mean # crabs caught", x = "Cruise Month") + labs(y = "Mean # crabs caught", x = "Depth", fill = "Stratum")
+```
+
+```{r oclen, echo=FALSE}
+len <- length # %>% add_row(ID = tow$ID, CRUCODE = tow$CRUCODE)
+len$yr <- as.integer(sapply(len$CRUCODE, function(x) substr(x, 1, 4)))
+len$cru <- as.integer(sapply(len$CRUCODE, function(x) substr(x, 5, 5)))
+len$mo <- crab$MONTH[match(len$ID, crab$ID)]
+len$len <- len$LENGTH * len$FREQUENCY
+len[len$cru == 3 & len$yr == 1988, ]$cru <- 5
+len[len$cru == 2 & len$yr == 1988, ]$cru <- 4
+len$LENGTH[is.na(len$LENGTH)] <- 0
+```
+### Lengths
+Crabs ranged from `r min(len$LENGTH[len$LENGTH > 0 & len$cru %in% c(4,5)])` cm to `r max(len$LENGTH[len$LENGTH > 0 & len$cru %in% c(4,5)])` cm, with a geometric mean length of `r geom_mean0(len$LENGTH[len$LENGTH > 0 & len$cru %in% c(4,5)])` cm.
+
+## Delaware River Striped Bass Recruitment Seine Survey
+We calculated a geometric mean of the number of crabs caught monthly, annually, and regionally. Annual and regional means only included data Aug - Oct. The 2020 sampling year was excluded, due to COVID-19 statewide shutdowns. 
+
+```{r de,echo=FALSE, fig.cap="Raw zero-filled counts of crabs per tow"}
+crab <- read.csv("~/data/crab/BLUE CRAB TOTALS.csv")
+crab$date <- as.POSIXct(strptime(crab$Date, "%m/%d/%Y"))
+crab$mo <- as.integer(format(crab$date, "%m"))
+crab$day <- as.integer(format(crab$date, "%d"))
+crab$no1 <- crab$NUMBER
+crab$no0 <- crab$NUMBER
+crab$no1[is.na(crab$NUMBER)] <- 1
+crab$no0[is.na(crab$NUMBER)] <- 0L
+crab$log0 <- log(crab$no0 + 1)
+crab_season <- crab[grep("s|oc", crab$data.month), ]
+sta <- as.character(c(1:38))
+crabsta <- crab_season[crab_season$STATION.CODE %in% sta, ]
+# subset further by month? crab$MONTH %in% 8:10
+ggplot(crab, aes(x=date, y=no0)) + geom_point() + labs(x = "Time", y="Count")
+```
+
+### Annual
+
+```{r deyr, echo=FALSE}
+crab_annual <- crab_season %>% # make confidence intervals
+  group_by(Year) %>%
+  summarise(
+    geom = geom_mean0(no0), tow = n(), yes = sum(ifelse(no0 > 0, 1, 0)),
+    sample.sd = sd(log0), mysd = sd(no0), logm = mean(log0), m = mean(no0)
+  )
+
+crab_annual <- ci(crab_annual)
+crab_annual$postow <- crab_annual$yes / crab_annual$tow
+```
+
+```{r deplot, echo=FALSE, fig.width=10}
+crab_annual$postow_trans <- crab_annual$postow * 4
+dd <- pivot_longer(crab_annual[, c("Year", "geom", "m", "postow_trans", "lower.bound", "upper.bound")], cols = geom:postow_trans, names_to = "var")
+
+dd$var[dd$var == "postow_trans"] <- "+tow"
+
+ggplot(data = dd, aes(x = Year, y = value, colour = var)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = lower.bound, ymax = upper.bound), width = 0.2, colour = "black") +
+  scale_y_continuous(name = "Mean # crabs caught", sec.axis = sec_axis(transform = ~ . * 100 / 4, name = "Positive Tows (%)"))
+```
+
+### Monthly
+
+[Jess note]{color="red"}: Once again, arithmetic mean shows that crabs peak in late summer/early fall, consistent with ocean trawl.
+```{r demo, echo=FALSE}
+crab_month <- crab %>%
+  group_by(mo) %>%
+  mutate(geom = geom_mean0(no0), tow = n(), sample.sd = sd(log0), mysd = sd(no0), logm = mean(log0), m = mean(no0)) # %>%
+crabmo <- ci(crab_month)
+
+p <- ggplot(crabmo, aes(x = mo, y = no0))
+
+p + geom_bar(stat = "summary") + geom_errorbar(stat = "summary", width = .2) + labs(y = "Mean # crabs caught", x = "Cruise Month")
+```
+
+### Per Station
+```{r desta, echo=FALSE}
+crab_sta <- crabsta %>%
+  group_by(STATION.CODE) %>% # might have to reclass?
+  mutate(geom = geom_mean0(no0), tow = n(), sample.sd = sd(log0), mysd = sd(no0), logm = mean(log0), m = mean(no0))
+crab <- ci(crab_sta) # some only consist of 1 tow which means can't calculate confidence interval
+
+p <- ggplot(data = crab[crab$STATION.CODE != "27", ], aes(group = STATION.CODE, x = REGION, y = no0))
+
+p + geom_bar(position = position_dodge(width = 0.9), stat = "summary") + geom_errorbar(stat = "summary", width = .2, position = position_dodge(width = 0.9)) + labs(y = "Mean # crabs caught", x = "Region")
+
+totln <- c(crab$MAXLEN, crab$MINLEN)
+```
+
+### Lengths
+Crabs ranged from `r min(totln[totln > 0], na.rm=T)` mm to `r max(totln, na.rm=T)` mm, with a mean length of `r mean(totln[!is.na(totln)])` mm.
+
+## Delaware Bay Otter Trawl Survey
+We calculated a geometric mean of the number of crabs caught monthly, annually, and by station. The 2020 sampling year was excluded, due to COVID-19 statewide shutdowns. 
+
+```{r bay,echo=FALSE, fig.cap="Raw zero-filled counts of crabs per tow"}
+crab <- read.csv("~/data/crab/Blue Crab catch.csv")
+crab$date <- as.POSIXct(strptime(crab$Date, "%m/%d/%Y"))
+crab$no0 <- as.integer(crab$NUMBER)
+crab$no0[is.na(crab$NUMBER)] <- 0L
+crab$log0 <- log(crab$no0 + 1)
+crab_season <- crab[crab$Month %in% c(8:10), ]
+sta <- as.character(c(12, 15, 19, 23.1, 29.1, 30, 39, 47.1, 54, 60))
+crabsta <- crab_season[crab_season$STATION %in% sta, ]
+
+ggplot(crab, aes(x=date, y=no0)) + geom_point() + labs(x = "Time", y="Count")
+```
+
+### Annual
+```{r bayyr, echo=FALSE}
+crab_annual <- crab_season %>%
+  mutate(year = as.integer(format(date, "%Y"))) %>% # make confidence intervals
+  group_by(year) %>%
+  summarise(geom = geom_mean0(no0), tow = n(), yes = as.integer(sum(ifelse(no0 > 0, 1, 0))), sample.sd = sd(log0), mysd = sd(no0), logm = mean(log0), m = mean(no0))
+crab_annual_de <- ci(crab_annual)
+crab_annual_de$postow <- crab_annual_de$yes / crab_annual_de$tow * 100
+```
+
+```{r bayplot, echo=FALSE, fig.width=10}
+crab_annual_de$postow_trans <- crab_annual_de$postow / 1.25
+dd <- pivot_longer(crab_annual_de[, c("year", "geom", "m", "postow_trans", "lower.bound", "upper.bound")], cols = geom:postow_trans, names_to = "var")
+
+dd$var[dd$var == "postow_trans"] <- "+tow"
+
+ggplot(data = dd, aes(x = year, y = value, colour = var)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = lower.bound, ymax = upper.bound), width = 0.2, colour = "black") +
+  scale_y_continuous(name = "Mean # crabs caught", sec.axis = sec_axis(transform = ~ . * 1.25, name = "Positive Tows (%)")) +
+  labs(x = "Year")
+```
+
+### Monthly
+```{r baymo, echo=FALSE}
+crab_month <- crab %>%
+  group_by(Month) %>%
+  mutate(geom = geom_mean0(no0), tow = n(), sample.sd = sd(log0), mysd = sd(no0), logm = mean(log0), m = mean(no0)) # %>%
+# mutate(data.month = fct_relevel(data.month,
+#          "juneA", "juneB", ))
+crabmo <- ci(crab_month)
+
+p <- ggplot(crabmo, aes(x = Month, y = no0, group = Month))
+p + geom_bar(position = position_dodge(width = 0.9), stat = "summary") + geom_errorbar(stat = "summary", width = .2, position = position_dodge(width = 0.9)) + labs(y = "Mean # crabs caught", x = "Month")
+```
+
+### Per Station
+```{r baysta, echo=FALSE}
+crab$STATION <- as.character(crab$STATION)
+crab_sta <- crabsta %>%
+  group_by(STATION) %>% # might have to reclass?
+  mutate(geom = geom_mean0(no0), tow = n(), sample.sd = sd(log0), mysd = sd(no0), logm = mean(log0), m = mean(no0))
+crabsta <- ci(crab_sta)
+
+p <- ggplot(crabsta, aes(x = as.character(STATION), y = no0, group = STATION))
+
+p + geom_bar(position = position_dodge(width = 0.9), stat = "summary") + geom_errorbar(stat = "summary", width = .2, position = position_dodge(width = 0.9)) + labs(y = "Mean # crabs caught", x = "Station")
+
+totln <- read.csv("~/data/crab/BlueCrab_LENGTHS.csv")
+```
+
+### Lengths
+Crabs ranged from `r min(totln$LENGTH, na.rm=T)` mm to `r max(totln$LENGTH, na.rm=T)` mm, with a mean length of `r mean(totln$LENGTH, na.rm=T)` mm.
+
+## River Herring Young-of-the-Year Seine Survey
+We calculated a geometric mean of the number of crabs caught monthly, annually, and by station. The 2020 sampling year was excluded, due to COVID-19 statewide shutdowns; 2021 sampling started in August. Stations with extremely low salinity were excluded from the analysis due to a lack of catch of blue crabs.
+```{r crab,echo=FALSE, fig.cap="Raw zero-filled counts of crabs per tow"}
+crab <- read.csv("~/data/crab/River Herring Seine Blue Crab Data_catch.csv")
+crab_effort <- read.csv("~/data/crab/River Herring Seine Blue Crab Data_head.csv", blank.lines.skip = T)
+crab$STATION[crab$STATION == "GEH03"] <- "GEHS03"
+crab$WATERBODY[crab$WATERBODY == "GERH"] <- "GREAT EGG HARBOR RIVER"
+crab_effort$STATION[crab_effort$STATION == "GEHSO3"] <- "GEHS03"
+crab_effort$STATION[crab_effort$STATION == "MRS03ALT"] <- "MRS03"
+crab$id <- paste(crab$STATION, crab$DATE, sep = "_")
+crab_effort$id <- paste(crab_effort$STATION, crab_effort$DATE, sep = "_")
+crab_effort <- crab_effort[!crab_effort$id %in% crab$id, ]
+crab <- crab %>% add_row(
+  id = crab_effort$id, WATERBODY = crab_effort$WATERBODY,
+  DATE = crab_effort$DATE, STATION = crab_effort$STATION,
+  YEAR = crab_effort$YEAR,
+  MONTH = crab_effort$MONTH
+)
+crab$DATE <- as.POSIXct(strptime(crab$DATE, "%m/%d/%Y"))
+crab <- crab[order(crab$DATE), ]
+
+crab$no0 <- as.integer(crab$NUMBER)
+crab$no0[is.na(crab$NUMBER)] <- 0L
+crab$log0 <- log(crab$no0 + 1)
+
+ggplot(crab, aes(x=DATE, y=no0)) + geom_point() + labs(x = "Time", y="Count")
+```
+
+### Annual
+```{r crabyr, echo=FALSE}
+crab <- crab[crab$STATION %in% c("GEHS01", "GEHS02", "GEHS03", "GEHS04", "GEHS05", "MRS01", "MRS02", "MRS03", "MRS04", "MRS05", "MRS08"), ]
+
+crab_annual <- crab %>%
+  mutate(
+    year = as.Date(ISOdate(YEAR, 1, 1)), # first, convert the year into a date
+    year = format(year, "%Y")
+  ) %>% # make confidence intervals
+  group_by(year, WATERBODY) %>%
+  summarise(geom = geom_mean0(no0), tow = n(), yes = as.integer(sum(ifelse(no0 > 0, 1, 0))), sample.sd = sd(log0), mysd = sd(no0), logm = mean(log0), m = mean(no0))
+crab_annual$postow <- crab_annual$yes / crab_annual$tow * 100
+crab_annual$se <- crab_annual$sample.sd / sqrt(crab_annual$tow)
+crab_annual$degrees.freedom <- as.integer(crab_annual$tow - 1)
+crab_annual$t.score <- qt(p = alpha / 2, df = crab_annual$degrees.freedom, lower.tail = F)
+crab_annual$margin.error <- crab_annual$t.score * crab_annual$se
+crab_annual$lower.bound <- crab_annual$geom - crab_annual$margin.error
+crab_annual$upper.bound <- crab_annual$geom + crab_annual$margin.error
+```
+
+```{r crabplot, echo=FALSE, fig.width=10}
+crab_annual$postow_trans <- crab_annual$postow / 100 * 10
+dd <- pivot_longer(crab_annual[, c("year", "WATERBODY", "geom", "m", "postow_trans", "lower.bound", "upper.bound")], cols = geom:postow_trans, names_to = "var")
+
+dd$var[dd$var == "postow_trans"] <- "+tow"
+
+ggplot(data = dd, aes(x = year, y = value)) +
+  geom_line(aes(group = var, colour = var)) +
+  geom_errorbar(aes(ymin = lower.bound, ymax = upper.bound), width = 0.2, colour = "black") +
+  scale_y_continuous(
+    name = "Mean # crabs caught",
+    sec.axis = sec_axis(transform = ~ . / 10 * 100, name = "Positive Tows (%)")
+  ) +
+  facet_grid(WATERBODY ~ .) +
+  xlab("Year")
+```
+
+### Monthly
+```{r crabmo, echo=FALSE}
+crab_month <- crab %>% # make confidence intervals
+  group_by(MONTH, WATERBODY) %>%
+  mutate(geom = geom_mean0(no0), tow = n(), yes = as.integer(sum(ifelse(no0 > 0, 1, 0))), sample.sd = sd(log0), mysd = sd(no0), logm = mean(log0), m = mean(no0))
+crab <- ci(crab_month)
+
+p <- ggplot(crab, aes(x = MONTH, y = no0, group = MONTH)) #
+
+p + geom_bar(position = position_dodge(width = 0.9), stat = "summary") + geom_errorbar(stat = "summary", width = .2, position = position_dodge(width = 0.9)) + labs(y = "Mean # crabs caught", x = "Station") +
+  facet_wrap(~WATERBODY) + labs(y = "Crabs Caught", x = "Month")
+```
+
+### Per Station
+```{r crabsta, echo=FALSE}
+crab_sta <- crab %>%
+  group_by(STATION) %>% # might have to reclass?
+  mutate(geom = geom_mean0(no0), tow = n(), sample.sd = sd(log0), mysd = sd(no0), logm = mean(log0), m = mean(no0))
+crab <- ci(crab_sta)
+
+p <- ggplot(data = crab, aes(fill = STATION, x = WATERBODY, y = no0))
+
+p + geom_bar(position = position_dodge(width = 0.9), stat = "summary") + geom_errorbar(stat = "summary", width = .2, position = position_dodge(width = 0.9)) + labs(y = "Mean # crabs caught", x = "Station") +
+  labs(y = "Mean # crabs caught", x = "Waterbody", fill = "Station")
+
+len <- read.csv("~/data/crab/River Herring Seine Blue Crab Data_length.csv")
+len$TOTALLENGTH[is.na(len$TOTALLENGTH)] <- 0
+```
+
+### Lengths
+Crabs ranged from `r min(len$TOTALLENGTH[len$TOTALLENGTH > 0], na.rm=T)` mm to `r max(len$TOTALLENGTH[len$TOTALLENGTH > 0], na.rm=T)` mm, with a geometric mean length of `r geom_mean0(len$TOTALLENGTH)` mm.

@@ -1,0 +1,340 @@
+---
+title: "Blue Crab Exploratory Data Analysis"
+author: "Jess Gorzo"
+date: "`r Sys.Date()`"
+output: bookdown::html_document2
+---
+## Data Prep & Summary Stats: Ocean Trawl
+```{r cars, echo=FALSE, include=FALSE}
+knitr::opts_chunk$set(warning = FALSE, message = FALSE)
+
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(colorRamps)
+library(forcats)
+
+geom_mean <- function(x) {
+  exp(mean(log(x)))
+}
+geom_mean0 <- function(x) {
+  exp(mean(log(x + 1))) - 1
+}
+alpha <- 0.05
+ci <- function(x) {
+  x$se <- x$sample.sd / sqrt(x$tow)
+  x$degrees.freedom <- as.integer(x$tow - 1)
+  x$t.score <- qt(p = alpha / 2, df = x$degrees.freedom, lower.tail = F)
+  x$margin.error <- x$t.score * x$se
+  x$lower.bound <- x$geom - x$margin.error
+  x$upper.bound <- x$geom + x$margin.error
+  return(x)
+}
+
+# Return the desired percentiles plus the geometric mean
+bp.vals <- function(x, probs = c(0.1, 0.25, 0.75, .9)) {
+  r <- quantile(x, probs = probs, na.rm = TRUE)
+  r <- c(r[1:2], geom_mean0(x), r[3:4])
+  names(r) <- c("ymin", "lower", "middle", "upper", "ymax")
+  r
+}
+
+theme_set(theme_bw() #+ 
+            #theme(text = element_text(size=12, family="Arial"))
+            )
+```
+
+```{r crab, echo=FALSE, include=FALSE}
+#keep an eye here though biased? https://duckdblabs.github.io/db-benchmark/
+load("~/data/crab/crab.RData") #DROP OUTER STRATA
+
+tows <- tows[!is.na(tows$STRATUM),]
+tows$MONTH = as.integer(sapply(tows$YRMODA, function(x) substr(x, 5, 6)))
+tows$DAY = as.integer(sapply(tows$YRMODA, function(x) substr(x, 7, 8)))
+```
+
+```{r datashape, echo=FALSE}
+midstrata <- c(13, 16, 19, 22, 25)
+tows0 <- tows %>% filter(!is.na(STRATUM), STRATUM < 99, !ID %in% boats$ID) %>%
+  mutate(mo = as.integer(sapply(YRMODA, function(x) substr(x, 5, 6)))) #,
+
+crab <- boats %>% add_row(ID = tows0$ID, YEAR = tows0$YEAR, STRATUM = tows0$STRATUM, 
+                          MONTH = tows0$mo, 
+                          CRUCODE = tows0$CRUCODE) %>%
+  mutate(cru = as.integer(sapply(CRUCODE, function(x) substr(x, 5, 5)))) %>%
+  mutate(cru = replace(cru, cru == 3 & YEAR == 1988, 5)) %>%
+  mutate(cru = replace(cru, cru == 2 & YEAR == 1988, 4),
+         across(c(1:5, 7, 9:11), as.integer),
+         depth = case_when(
+                  STRATUM %in% midstrata ~ "11-20m (Mid)", 
+                  STRATUM %in% (midstrata + 1) ~ "Deep",
+                  STRATUM %in% (midstrata - 1) ~ "0-10m (Shallow)"),
+         data.month = fct_relevel(case_when(
+           cru == 1 ~ "January",
+           cru == 2 ~ "April",
+           cru == 3 ~ "June",
+           cru == 4 ~ "August",
+           cru == 5 ~ "October",
+           cru > 5 ~ "Other" 
+         ), "January", "April", "June", "August", "October", "Other"),
+         no0 = case_when(is.na(NUMBER) ~ 0L, .default = NUMBER),
+         no1 = case_when(is.na(NUMBER) ~ 1, .default = NUMBER),
+         WEIGHT = case_when(is.na(WEIGHT) ~ 0, .default = WEIGHT)) %>%
+           mutate(log0 = log(no0 + 1))
+
+crab$MAXDEPTH <- tows$MAXDEPTH[match(crab$ID, tows$ID)]
+crab$MINDEPTH <- tows$MINDEPTH[match(crab$ID, tows$ID)]
+crab$STARTDEPTH <- tows$STARTDEPTH[match(crab$ID, tows$ID)]
+crab$ENDDEPTH <- tows$ENDDEPTH[match(crab$ID, tows$ID)]
+
+len <- length
+len$cru <- as.integer(sapply(len$CRUCODE, function(x) substr(x, 5, 5)))
+len$yr = as.integer(sapply(len$CRUCODE, function(x) substr(x, 1, 4)))
+len[len$cru == 3 & len$yr == 1988, ]$cru <- 5
+len[len$cru == 2 & len$yr == 1988, ]$cru <- 4
+
+len$MONTH <- tows$MONTH[match(len$ID, tows$ID)]
+len$len <- len$LENGTH * len$FREQUENCY
+
+len$LENGTH[is.na(len$LENGTH)] <- 0
+```
+
+```{r sacrableu, echo=FALSE, include=FALSE}
+#This is to find average length of a crab per tow...
+avelen <- aggregate(len$len, by=list(len$ID), FUN=sum)
+#avelen_geom <- aggregate(len$LENGTH, by=list(len$ID), FUN=geom_mean0)
+crab$len <- avelen$x[match(crab$ID, avelen$Group.1)]
+result_vector <- function(numerator, denominator) {ifelse(denominator == 0, 0, numerator / denominator)}
+crab$avelen <- result_vector(crab$len,crab$no0)
+#crab$len_geom <- avelen_geom$x[match(crab$ID, avelen_geom$Group.1)]
+```
+This is the max depth for the deepest trawl a crab was ever recorded:
+```{r bcrab, echo=FALSE}
+max(crab$MAXDEPTH[crab$no0 > 0], na.rm=T)
+```
+So there are crabs on the deep trawls too sometimes...consider adding deep strata back in, because they should be equally low anyway across all comparisons?
+
+```{r echo=FALSE, include=FALSE}
+#This is to assess the average weight of a crab in a given tow
+# Safely divide using ifelse
+crab$size <- result_vector(crab$WEIGHT, crab$no0)
+#crab[crab$size==max(crab$size),]
+```
+
+## Visualization
+
+These are some plots to check out the ocean trawl data, focusing in on cruise 4. Each data point is a tow.
+
+```{r, echo=FALSE, fig.width=10, fig.asp=0.8, fig.cap = "Zero-filled number of crabs over time"}
+ggplot(crab[crab$cru==4,], aes(YEAR, no0, group=STRATUM)) + geom_line(aes(color=MAXDEPTH)) + scale_colour_gradient(low="skyblue1", high="blueviolet") + ggtitle("Raw zero-filled number of crabs")
+```
+
+Wow! Let's find the spike in NUMBER...it turns out it is in 2017 cruise 4:
+
+```{r crabby, echo=FALSE}
+head(crab[order(crab$NUMBER, decreasing=T),c("ID", "CRUCODE", "STRATUM", "STA", "SPP", "WEIGHT", "NUMBER", "MONTH")])
+```
+
+That doesn't seem like a very heavy corresponding WEIGHT; what's the story? Well, it turns out that tow had a ton of tiny crabs:
+
+```{r bleucrab, echo=FALSE}
+head(len[order(len$FREQUENCY, decreasing=T),c("ID", "CRUCODE","STA", "SPP", "LENGTH", "FREQUENCY", "INFO", "yr", "cru")])
+```
+
+I wonder what the length distro looks like in that tow...
+
+```{r crabs, echo=FALSE}
+len[len$ID==20174131,c("ID", "CRUCODE","STA", "SPP", "LENGTH", "FREQUENCY", "INFO", "yr", "cru")]
+```
+So now let's instead look at weight per tow... 
+```{r, fig.width=10, fig.asp=0.8, fig.cap="Colored by the max depth of the tow", echo=FALSE}
+ggplot(crab[crab$cru==4,], aes(YEAR, WEIGHT)) + geom_point(aes(color=MAXDEPTH)) + ggtitle("Weight of crabs in cruise 4") + scale_colour_gradient(low="blue",high="red")
+```
+
+As it turns out, 2017 cruise 4 does it again on a different tow:  
+```{r bleucrabs}
+head(crab[order(crab$WEIGHT, decreasing=T),c("ID", "CRUCODE", "STRATUM", "STA", "SPP", "WEIGHT", "NUMBER", "MONTH")])
+len[len$ID==20174144,c("ID", "CRUCODE","STA", "SPP", "LENGTH", "FREQUENCY", "INFO", "yr", "cru")]
+```
+This ends up tracking with ave crab weight per tow...
+
+```{r plots, echo=FALSE, fig.width=10, fig.asp=0.8}
+ggplot(remove_missing(crab[crab$cru==4,], na.rm=TRUE, vars=c("MAXDEPTH", "WEIGHT")), aes(YEAR, size)) + geom_point(aes(colour=no0)) + scale_colour_gradient(low="blue",high="red") + ggtitle("Average weight per tow in cruise 4")
+```
+
+Weightiest tows:
+```{r}
+head(crab[order(crab$size, decreasing=T),c("ID", "CRUCODE", "STRATUM", "STA", "SPP", "WEIGHT", "NUMBER", "size", "MONTH")]) 
+```
+So 2017 (cruise 4) ends up being a bumper year for both number of crabs and weight per tow! This doesn't show up really in the geometric mean, as currently subset and summarized:
+
+```{r bluecrabs, echo=FALSE}
+crab <- crab[!crab$depth == "Deep", ]
+crab_season <- crab[crab$cru %in% 4:5, ]
+crab_annual <- crab_season %>% 
+  group_by(YEAR) %>%
+  summarise(
+    geom = geom_mean0(no0), tow = n(), yes = sum(ifelse(no0 > 0, 1, 0)),
+    sample.sd = sd(log0), logm = mean(log0), m=mean(no0)
+  )
+crab_annual <- ci(crab_annual)
+crab_annual$postow <- crab_annual$yes / crab_annual$tow
+```
+
+```{r ocplot, echo=FALSE, fig.width=10}
+crab_annual$postow_trans <- crab_annual$postow * 3
+dd <- pivot_longer(crab_annual[,c("YEAR", "geom", "postow_trans", "lower.bound", "upper.bound")], cols = geom:postow_trans, names_to = "var")
+dd$var[dd$var == "geom"] <- "geom" 
+dd$var[dd$var == "postow_trans"] <- "+tow" 
+ggplot(data = dd, aes(x = YEAR, y = value, colour=var)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = lower.bound, ymax = upper.bound), width = 0.2, colour="black") +
+  scale_y_continuous(name = "Geometric Mean", sec.axis = sec_axis(transform = ~ . / 3 * 100, name = "Positive Tows (%)")) + labs(x="Year") + ggtitle("Recreating the existing geometric mean plot")
+```
+Instead 1996 comes out as the biggest year. Here's why (histogram cut for 2017 at 80 to look at the distribution in the same count range as 1996)...
+```{r mena, echo=FALSE}
+dd[dd$value==max(dd[dd$var=="geom",]$value),]
+head(crab_annual[order(crab_annual$m, decreasing=T),c("YEAR", "m")])
+#ggplot(crab_season[crab_season$YEAR==1996,c("YEAR", "CRUCODE", "ID", "no0")], aes(x=ID, y=no0)) + geom_point()
+#ggplot(crab[crab$YEAR==1996,c("YEAR", "CRUCODE", "ID", "no0")], aes(x=no0)) + geom_histogram()
+#ggplot(crab[crab$YEAR==2017,c("YEAR", "CRUCODE", "ID", "no0")], aes(x=ID, y=no0)) + geom_point()
+ggplot(crab_season[crab_season$YEAR %in% c(1996,2017) & crab_season$no0 < 80,c("YEAR", "CRUCODE", "ID", "no0")], aes(x=no0)) + geom_histogram() + facet_wrap(~YEAR)
+```
+
+So one could argue geometric mean better captures evenness in number across tows...but is that what we want to measure? It does seem like a bumper year (2017) is getting under-recognized; is it "bad" that it's getting pulled by a tow that's an outlier, or does it just so happen that a lot of crabs were concentrated in one place, and that still is relevant to what we're trying to measure overall? Also, note that in every case % positive tow tracks geometric mean, so...maybe present positive tow as capturing the same trend (or lack thereof) and present arithmetic mean as a different measure and compare on those same line graphs?
+
+```{r ocplots, echo=FALSE, fig.width=10}
+crab_annual$postow_trans <- crab_annual$postow * 100 / 5
+dd <- pivot_longer(crab_annual[,c("YEAR", "geom", "postow_trans", "m", "lower.bound", "upper.bound")], cols = geom:m, names_to = "var")
+#dd$var[dd$var == "geom"] <- "geom" 
+dd$var[dd$var == "postow_trans"] <- "+tow" 
+ggplot(data = dd, aes(x = YEAR, y = value, colour=var)) +
+  geom_line() +
+  geom_errorbar(aes(ymin = lower.bound, ymax = upper.bound), width = 0.2, colour="black") +
+  scale_y_continuous(name = "Mean", sec.axis = sec_axis(transform = ~ . *5, name = "Positive Tows (%)")) + labs(x="Year")
+```
+
+The data then ends up begging the question, where did we have monster crabs? 
+```{r monstercrabs, echo=FALSE, fig.width=10, fig.asp=0.8, fig.cap="Cruises 4 and 5 plotted here only"}
+#crab_noout <- crab[crab$no0 < 700,]
+ggplot(length, aes(CRUCODE, LENGTH)) + geom_point(aes(colour=FREQUENCY)) + scale_colour_gradient(low="blue",high="red") + ggtitle("Lengths recorded per tow, color-coded by number of crabs in each length bin")
+#+ scale_colour_gradient2(low = "red", mid = "white", high = "blue")
+```
+
+Top length records:
+```{r, echo=FALSE}
+head(length[order(length$LENGTH, decreasing=T),c("ID", "CRUCODE", "STA", "SPP", "LENGTH")])
+
+#ggplot(remove_missing(crab[crab$cru==4,], na.rm=TRUE, vars=c("MAXDEPTH", "WEIGHT")), aes(YEAR, len)) + geom_point(aes(colour=no0)) + scale_colour_gradient(low="blue",high="red")
+#+ scale_colour_gradient2(low = "red", mid = "white", high = "blue")
+```
+
+This is the only figure I'd say we can see maybe a hint of a trend, average length of crabs per cruise possibly declining?
+```{r bycru, echo=FALSE, fig.width=10, fig.asp=0.8}
+crusum <- len[len$cru %in% c(4,5),]
+crulen <- crusum %>%
+  group_by(CRUCODE) %>%
+  summarise(sum_crabs = sum(FREQUENCY, na.rm=TRUE), sum_len = sum(len, na.rm=TRUE))
+crulen$ave <- crulen$sum_len / crulen$sum_crabs
+ggplot(remove_missing(crulen, na.rm=TRUE, vars=c("ave")), aes(CRUCODE, ave)) + geom_point() + 
+  ggtitle("Average length per cruise, for cruises 4 and 5") #scale_colour_gradient(low="blue",high="red")
+```
+```{r monster,echo=FALSE, fig.width=10, fig.asp=0.8, fig.cap="I'm choosing to drop the huge number record for this one, just to get a better look with a more even color ramp"}
+crab_noout <- crab[crab$no0 < 700,]
+ggplot(remove_missing(crab_noout[crab_noout$cru==4,], na.rm=TRUE, vars=c("MAXDEPTH", "WEIGHT")), aes(YEAR, avelen)) + geom_point(aes(colour=no0)) + scale_colour_gradient(low="blue",high="red")
+#+ scale_colour_gradient2(low = "red", mid = "white", high = "blue")
+
+#ggplot(remove_missing(crab[crab$cru==4,], na.rm=TRUE, vars=c("MAXDEPTH", "WEIGHT")), aes(YEAR, len)) + geom_point(aes(colour=no0)) + scale_colour_gradient(low="blue",high="red")
+#+ scale_colour_gradient2(low = "red", mid = "white", high = "blue")
+```
+
+Now I'm curious what the story is if we keep only the tow with the highest number of crabs to represent each cruise...
+
+```{r, fig.width=10, fig.asp=0.8}
+maxlen <- crab %>%
+  group_by(CRUCODE) %>%
+  filter(no0 == max(no0, na.rm=TRUE))
+
+ggplot(remove_missing(maxlen, na.rm=TRUE, vars=c("MAXDEPTH", "WEIGHT")), aes(CRUCODE, avelen)) + geom_point(aes(colour=no0)) + scale_colour_gradient(low="blue",high="red")
+
+avelen <- aggregate(crab$avelen, by=list(crab$CRUCODE), FUN=mean)
+maxlen$avelen_cru <- avelen$x[match(maxlen$CRUCODE, avelen$Group.1)]
+
+ggplot(remove_missing(maxlen, na.rm=TRUE, vars=c("MAXDEPTH", "WEIGHT")), aes(CRUCODE, avelen_cru)) + geom_point(aes(colour=no0)) + scale_colour_gradient(low="blue",high="red")
+
+head(len[order(len$LENGTH,decreasing = T), c("ID", "LENGTH", "FREQUENCY", "MONTH")])
+crab[order(crab$avelen,decreasing = T), c("ID", "STRATUM", "WEIGHT", "NUMBER", "avelen")][1:40,]
+#crab[order(crab$len_geom,decreasing = T), c("ID", "STRATUM", "WEIGHT", "NUMBER", "len", "len_geom")][1:10,]
+```
+
+How can we tell this story better? Let's filter broadly to our months of interest and try to look for interesting points:
+
+```{r story}
+length <- len[len$MONTH < 11 & len$MONTH > 6,]
+ggplot(remove_missing(length %>% arrange(LENGTH), na.rm=TRUE, vars=c("FREQUENCY")), aes(yr, FREQUENCY)) + geom_jitter(aes(colour=LENGTH)) + scale_colour_gradientn(colours = matlab.like(27)) 
+```
+```{r occru, echo=FALSE}
+crab_cru <- crab %>% # subset to shallow and mid strata
+  group_by(cru) %>%
+  mutate(geom = geom_mean0(no0), tow = n(), sample.sd = sd(log0), logm = mean(log0), m = mean(no0))
+crab_cru <- ci(crab_cru)
+
+ggplot(data = crab_cru, aes(x = data.month, y = geom)) +
+  geom_bar(position = position_dodge(width = 0.9), stat = "identity") +
+  geom_errorbar(position = position_dodge(width = 0.9), aes(ymin = lower.bound, ymax = upper.bound), width = 0.2) + labs(y="Geometric Mean", x="Cruise Month")
+
+ggplot(crab_cru, aes(x = data.month, y = no0)) +
+  stat_summary(fun.data = bp.vals, geom = "boxplot") + labs(y="Crabs Caught", x="Cruise Month")
+
+ggplot(crab_cru, aes(x = data.month, y = no0^(1/2))) +
+  geom_boxplot() + labs(y="Crabs Caught", x="Cruise Month")
+```
+
+This is to look at average weight per crab. Each dot is a tow in cruise 4 of a given year
+
+```{r, fig.width=10, fig.asp=0.8}
+
+crab <- crab[crab$MONTH > 6 & crab$MONTH < 11,] #this chops at some cruise 5 records, but not a single crab was caught in Nov anyway
+ggplot(remove_missing(crab, na.rm=TRUE, vars=c("MAXDEPTH", "WEIGHT")), aes(no0, WEIGHT)) + geom_point(aes(colour=YEAR))
+ #scale_colour_gradient(low="blue",high="red") #scale_fill_distiller(palette = "Spectral") #+ 
+ggplot(remove_missing(crab, na.rm=TRUE, vars=c("MINDEPTH", "NUMBER")), aes(MINDEPTH, NUMBER)) + geom_point(aes(colour=YEAR))
+ggplot(remove_missing(crab, na.rm=TRUE, vars=c("ENDDEPTH", "NUMBER")), aes(ENDDEPTH, NUMBER)) + geom_point(aes(colour=YEAR))
+ggplot(remove_missing(crab, na.rm=TRUE, vars=c("STARTDEPTH", "NUMBER")), aes(STARTDEPTH, NUMBER)) + geom_point(aes(colour=YEAR))
+```
+
+This is the weightiest tow of crabs:
+```{r maxcrab}
+
+crab[crab$CRUCODE==20174,c("ID", "CRUCODE", "STRATUM", "STA", "SPP", "WEIGHT", "NUMBER", "INFO", "YEAR", "MONTH", "cru")]
+#len$FREQUENCY[is.na(len$FREQUENCY)] <- 0
+```
+
+## Look at the River Herring data
+
+```{r blue_crabs}
+rherring <- read.csv("~/data/crab/River Herring Seine Blue Crab Data_catch.csv")
+rherring_effort <- read.csv("~/data/crab/River Herring Seine Blue Crab Data_head.csv", blank.lines.skip=T)
+
+rherring$STATION[rherring$STATION=="GEH03"] <- "GEHS03"
+rherring$WATERBODY[rherring$WATERBODY=="GERH"] <- "GREAT EGG HARBOR RIVER"
+rherring_effort$STATION[rherring_effort$STATION=="GEHSO3"] <- "GEHS03"
+rherring_effort$STATION[rherring_effort$STATION=="MRS03ALT"] <- "MRS03"
+```
+
+```{r rherring}
+rherring$id <- paste(rherring$STATION, rherring$DATE, sep="_")
+rherring_effort$id <- paste(rherring_effort$STATION, rherring_effort$DATE, sep="_")
+rherring_effort <- rherring_effort[!rherring_effort$id %in% rherring$id,]
+```
+
+```{r riverherring}
+rherring <- rherring %>% add_row(id = rherring_effort$id, WATERBODY=rherring_effort$WATERBODY,
+                                 DATE=rherring_effort$DATE, STATION=rherring_effort$STATION,
+                                 YEAR=rherring_effort$YEAR,
+                                 MONTH=rherring_effort$MONTH)
+```
+
+```{r herring}
+rherring$DATE <- strptime(rherring$DATE, "%m/%d/%Y")
+rherring <- rherring[order(rherring$DATE),]
+```
