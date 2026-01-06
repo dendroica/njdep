@@ -451,6 +451,8 @@ Spp <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
     cruiseno <- 4:5
   } else if (cruise=="Oct") {
     cruiseno <- 5
+  } else if(cruise=="AprthruOct") {
+    cruiseno <- 2:5
   }
   ABUND <- ABUND[ABUND$CRUISE %in% cruiseno,]
   SPP <- ABUND[ABUND$NUMBER > 0,]
