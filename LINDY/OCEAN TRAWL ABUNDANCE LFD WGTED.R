@@ -102,6 +102,8 @@ factor_assignment <- function(area, stratum) { #MACRO1
 }
 
 MACRO2 <- function(ABUND, LENG, TEMPLATE) {
+  TEMPLATE$YEAR <- as.numeric(as.character(TEMPLATE$YEAR))
+  
   ABUNDALL <- ABUND %>%
     mutate(YEAR = "ALLC")
   
@@ -351,9 +353,8 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   
   # Create YTEMPLTALL
   YTEMPLTALL <- TEMPLATE
-  
   # Append data
-  YTEMPLTALL <- rbind(YTEMPLTALL, LENG)
+  YTEMPLTALL <- bind_rows(YTEMPLTALL, LENG)
   
   # Create LENGYALL
   LENGYALL <- YTEMPLTALL %>%
@@ -422,11 +423,10 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   # DATA YTEMPLT;
   # SET TEMPLATE;
   ytemplt <- TEMPLATE
-  
+  ytemplt <- bind_rows(ytemplt, LENG)
   # PROC APPEND BASE=YTEMPLT DATA=LENG;
   # In R, this is simply row-binding.
   #ytemplt$YEAR <- as.integer(ytemplt$YEAR)
-  ytemplt <- rbind(ytemplt, LENG)
   
   # DATA LENGY;
   # LENGTH YEAR $4; # R handles types dynamically, no direct equivalent needed for length
@@ -563,7 +563,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   SAMPLES <- ABUND %>%
     count(CRUCODE, STRATUM, AREA, name = "COUNT")
   
-  CRUTMPLT <- rbind(TEMPLATE, LENG)
+  CRUTMPLT <- bind_rows(TEMPLATE, LENG)
   LENGA <- CRUTMPLT %>%
     mutate(
       LENGA = as.character(LENGTH),
@@ -611,7 +611,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   STSAMPLESALL <- STABUNDALL %>%
     count(STRATUM, name="COUNT")
   
-  STYTEMPLTALL <- rbind(TEMPLATE, LENG)
+  STYTEMPLTALL <- bind_rows(TEMPLATE, LENG)
   STLENGYALL <- STYTEMPLTALL %>%
     mutate(
       STRATUM = 0,
@@ -676,7 +676,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   
   # Append data
   STYTEMPLT <- TEMPLATE
-  STYTEMPLT <- rbind(STYTEMPLT, LENG)
+  STYTEMPLT <- bind_rows(STYTEMPLT, LENG)
   
   # Create STLENGY
   STLENGY <- STYTEMPLT %>%
@@ -753,7 +753,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     select(-PERCENT, -COUNT)
   
   # Append data
-  LFWYTEMPLTALL <- rbind(TEMPLATE, LENG)
+  LFWYTEMPLTALL <- bind_rows(TEMPLATE, LENG)
   
   # Create LFWLENGYALL
   LFWLENGYALL <- LFWYTEMPLTALL %>%
@@ -870,7 +870,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     #select(-_TYPE_, -_FREQ_)
   
   # Append LENG to TEMPLATE
-  LFYTEMPLTALL <- rbind(TEMPLATE, LENG)
+  LFYTEMPLTALL <- bind_rows(TEMPLATE, LENG)
   
   # Create LFLENGYALL data frame
   LFLENGYALL <- LFYTEMPLTALL %>%
@@ -993,6 +993,9 @@ lfd <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
   } else if (spp=="Weakfish") {
     FIRST <- read.dbf(file.path(mypath, "CRABUN.dbf"))
     SECOND <- read.dbf(file.path(mypath, "CRLENG.dbf"))
+  } else if (spp=="Atl croaker") {
+    FIRST <- read.dbf(file.path(mypath, "MUABUN.dbf"))
+    SECOND <- read.dbf(file.path(mypath, "MULENG.dbf"))
   }
   
   LENG1 <- SECOND %>% select(-COMMON, -LATIN)
@@ -1024,15 +1027,29 @@ lfd <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
     cruiseno <- 4:5
   } else if (cruise=="Oct") {
     cruiseno <- 5
+  }  else if(cruise=="AprthruOct") {
+    cruiseno <- 2:5
+    ABUND <- ABUND[ABUND$YEAR > 1988,]
+    LENG <- LENG[LENG$YEAR > 1988,]
   }
   ABUND <- ABUND[ABUND$CRUISE %in% cruiseno,]
   LENG <- LENG[LENG$CRUISE %in% cruiseno,]
   ABUND$TOW <- NULL
   TEMPLATE <- read.dbf(file.path(mypath, "LTEMPLTE.dbf"))
   out <- MACRO2(ABUND, LENG, TEMPLATE)
-  myfile <- paste(spp, area, cruise, sep="_")
-  write.csv(out[[2]], file = file.path(outdir, paste(myfile, "CAL-STRATA.csv", sep="_")), row.names=F)
-  write.csv(out[[1]], file = file.path(outdir, paste(myfile, "CAL-ANNUAL.csv", sep="_")), row.names=F)
+  myfile <- paste(spp, paste0("strata",area), paste0("cru",cruise), sep="_")
+  annual <- out[[1]]
+  annual_yrs <- annual[-1, ]
+  annual_yrs$YEAR <- as.integer(annual_yrs$YEAR)
+  annual_yrs <- annual_yrs %>%
+    complete(YEAR = full_seq(c(1988, max(YEAR)), period = 1), # Fills sequence based on min/max in group
+             fill = list(value = NA)) %>% # Fills new value columns with NA
+    ungroup()
+  annual <- rbind(annual[1,], annual_yrs)
+  #annual$month <- cruise
+  #annual$strata <- area
+  #write.csv(out[[2]], file = file.path(outdir, paste(myfile, "CAL-STRATA.csv", sep="_")), row.names=F)
+  write.csv(annual, file = file.path(outdir, paste(myfile, "CAL-ANNUAL.csv", sep="_")), row.names=F)
 return(out)}
 
 # --- 0. Set up dummy data for demonstration ---

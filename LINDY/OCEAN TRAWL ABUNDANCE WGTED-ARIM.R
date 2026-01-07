@@ -2,51 +2,33 @@ library(foreign)
 library(dplyr)
 library(purrr)
 library(tidyr)
-# Importing the data
+library(stringr)
 
-macro20 <- function() {
-  timescale <- "month"
+# FYI you haven't done this part yet
+# **********FOR SIZED LOBSTER ONLY WHEN USING HASABUN***********************;
+#  **********FOR LEGAL SIZED LOBSTER;
+#SET FIRST;
+#NUMBER=LEGALN;
+#RUN;
+#  **********FOR SUBLEGAL SIZED LOBSTER;
+#SET FIRST;
+#NUMBER=SUBLEGALN;
+#RUN;
+#  **********FOR ALL LOBSTER WHEN USING HASABUN;
+#SET FIRST;
+#NUMBER=TOTALN;
+#RUN;
+
+macro20 <- function(ABUND, timescale = "month") {
   if (timescale == "season" | timescale=="quarter") { #macro20
     ABUND <- ABUND %>% mutate(
       CRUCODE = case_match(CRUCODE,
-                           19882 ~ 19884,
-                           19883 ~ 19885,
-                           19893 ~ 19892,
                            19896 ~ 19895,
-                           19903 ~ 19902,  
-                           19913 ~ 19912,  
-                           19923 ~ 19922,  
-                           19933 ~ 19932,  
-                           19943 ~ 19942,  
-                           19953 ~ 19952,  
-                           19963 ~ 19962, 
-                           19973 ~ 19972,  
-                           19983 ~ 19982, 
-                           19993 ~ 19992,  
-                           20003 ~ 20002,
-                           20013 ~ 20012,   
-                           20023 ~ 20022, 
-                           20033 ~ 20032, 
-                           20043 ~ 20042,  
-                           20053 ~ 20052,  
-                           20063 ~ 20062, 
-                           20073 ~ 20072,
-                           20083 ~ 20082, 
-                           20093 ~ 20092,  
-                           20103 ~ 20102,  
-                           20113 ~ 20112,  
-                           20123 ~ 20122,  
-                           20133 ~ 20132, 
-                           20143 ~ 20142,
-                           20153 ~ 20152,
-                           20163 ~ 20162,
-                           20173 ~ 20172,
-                           20183 ~ 20182,
-                           20193 ~ 20192,
-                           20223 ~ 20222,
-                           20233 ~ 20232,
-                           20243 ~ 20242,
                            .default = CRUCODE))
+    nums_char <- as.character(ABUND$CRUCODE)
+    modified_nums_char <- str_replace(nums_char, "3$", "2") # '$' anchors to end
+    # Convert back to numeric (handling potential errors if input wasn't purely digits)
+    ABUND$CRUCODE <- as.numeric(modified_nums_char)
   }
 }
 
@@ -423,6 +405,8 @@ Spp <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
     FIRST <- read.dbf(file.path(mypath, "TOABUN.dbf"))
   } else if (spp=="Weakfish") {
     FIRST <- read.dbf(file.path(mypath, "CRABUN.dbf"))
+  } else if (spp=="Atl croaker") {
+    FIRST <- read.dbf(file.path(mypath, "MUABUN.dbf"))
   }
   
   # Setting up the data
@@ -453,15 +437,28 @@ Spp <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
     cruiseno <- 5
   } else if(cruise=="AprthruOct") {
     cruiseno <- 2:5
+    ABUND <- ABUND[ABUND$YEAR > 1988,]
   }
   ABUND <- ABUND[ABUND$CRUISE %in% cruiseno,]
   SPP <- ABUND[ABUND$NUMBER > 0,]
   
   out <- macro9(SPP, ABUND)
   cruises <- paste0("cruise", paste(cruise, collapse=""))
-  myfile <- paste(spp, area, cruise, sep="_")
-  write.csv(out[[2]], file = file.path(outdir, paste(myfile, "annual.csv", sep="_")), row.names=F)
-  write.csv(out[[1]], file = file.path(outdir, paste(myfile, "strata.csv", sep="_")), row.names=F)
-  write.csv(out[[3]], file = file.path(outdir, paste(myfile, "month.csv", sep="_")), row.names=F)
+  myfile <- paste(spp, paste0("strata",area), paste0("cru",cruise), sep="_")
+  #yrs <- 1988:2025
+  annual <- out[[2]]
+  annual_yrs <- annual[-nrow(annual), ]
+  annual_yrs$YEAR <- as.integer(annual_yrs$YEAR)
+  #missing <- yrs[!yrs %in% annual$YEAR]
+  annual_yrs <- annual_yrs %>%
+    complete(YEAR = full_seq(c(1988, max(YEAR)), period = 1), # Fills sequence based on min/max in group
+             fill = list(value = NA)) %>% # Fills new value columns with NA
+    ungroup()
+  annual <- rbind(annual[nrow(annual),], annual_yrs)
+  annual$month <- cruise
+  annual$strata <- area
+  write.csv(annual, file = file.path(outdir, paste(myfile, "annualindex.csv", sep="_")), row.names=F)
+  #write.csv(out[[1]], file = file.path(outdir, paste(myfile, "strata.csv", sep="_")), row.names=F)
+  #write.csv(out[[3]], file = file.path(outdir, paste(myfile, "month.csv", sep="_")), row.names=F)
 return(out)}
 
