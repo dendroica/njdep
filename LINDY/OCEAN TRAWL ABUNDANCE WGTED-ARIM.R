@@ -382,7 +382,7 @@ TSSTRATS <- rbind(TSSTRATS, c("All Combined", TSAMW_all$NN, TSAMW_all$SAMPLES, T
 #  rename(STRATUM = STRATA)
 }
 #the main outputs are TSSTRATS, YSTRAT, MSTRAT, YMSTRATA
-return(list(TSSTRATS, YSTRAT, MSTRAT, YMSTRATA))} #LINE 424 what you'll need to do is get the var naming the same/compatible...
+return(list(YSTRAT, TSSTRATS, MSTRAT, YMSTRATA))} #LINE 424 what you'll need to do is get the var naming the same/compatible...
 
 Spp <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
   if (spp == "Black drum") {
@@ -446,7 +446,7 @@ Spp <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
   cruises <- paste0("cruise", paste(cruise, collapse=""))
   myfile <- paste(spp, paste0("strata",area), paste0("cru",cruise), sep="_")
   #yrs <- 1988:2025
-  annual <- out[[2]]
+  annual <- out[[1]]
   annual_yrs <- annual[-nrow(annual), ]
   annual_yrs$YEAR <- as.integer(annual_yrs$YEAR)
   #missing <- yrs[!yrs %in% annual$YEAR]
@@ -458,7 +458,7 @@ Spp <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
   annual$month <- cruise
   annual$strata <- area
   write.csv(annual, file = file.path(outdir, paste(myfile, "annualindex.csv", sep="_")), row.names=F)
-  #write.csv(out[[1]], file = file.path(outdir, paste(myfile, "strata.csv", sep="_")), row.names=F)
+  #write.csv(out[[2]], file = file.path(outdir, paste(myfile, "strata.csv", sep="_")), row.names=F)
   #write.csv(out[[3]], file = file.path(outdir, paste(myfile, "month.csv", sep="_")), row.names=F)
 return(out)}
 
