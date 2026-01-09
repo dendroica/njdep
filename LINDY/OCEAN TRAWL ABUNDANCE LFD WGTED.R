@@ -392,6 +392,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   # Transpose again
   TRANSY2AALL <- ZEROSYALL %>%
     pivot_longer(-YEAR, names_to = "LENGTH", values_to = "MEANS")
+  TRANSY2AALL$LENGTH <- as.integer(TRANSY2AALL$LENGTH)
   
   # Create TRANSY2AALL
   #TRANSY2AALL <- TRANSY2ALL %>%
@@ -399,7 +400,10 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   #select(-_NAME_)
   
   # Sort data
-  TRANSY2AALL <- TRANSY2AALL %>% arrange(YEAR, LENGTH)
+  TRANSY2AALL <- TRANSY2AALL %>% arrange(YEAR, LENGTH) %>%
+    group_by(YEAR) %>%
+    complete(LENGTH = full_seq(c(1, max(LENGTH)), period = 1), fill = list(value = 0)) %>%
+    ungroup()
   
   # Final transpose
   TRANSY3ALL <- TRANSY2AALL %>%
@@ -527,6 +531,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   # Transpose LENGY3
   TRANSY1 <- LENGY3 %>% #this matches! :) (need to flesh out/expand colnames)
     group_by(YEAR) %>%
+    complete(LENGA = full_seq(c(1, max(LENGA)), period = 1), fill = list(value = 0)) %>%
     #pivot_longer(cols = "MEANS", names_to = "LENGA", values_to = "MEANS") %>%
     pivot_wider(names_from = LENGA, values_from = MEANS)
   
@@ -1086,7 +1091,7 @@ return(out)}
 #Aug & Oct = 4:5
 #Apr & Oct = c(2,5)
 #"Atl croaker","Black drum","Horseshoe crab","Lobster - F (GE53mm)","Lobster - M (GE53mm)","Scup","Spot","Summer flounder")
-mypath <- "C:/Users/jgorzo/Documents/SASLoads"
+#mypath <- "C:/Users/jgorzo/Documents/SASLoads"
 #sppdata <- Spp(mypath, "Lobster - F (GE53mm)")
 #sppdata <- Spp(mypath, "Lobster - M (GE53mm)")
 
