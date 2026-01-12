@@ -18,6 +18,6 @@ outdir <- "~/output"
 #sppdata <- Spp(mypath, "Weakfish", cruise="AugOct", outdir="~/output/sasr")
 ##sppdata <- Spp(mypath, "Lobster - F (GE53mm)")
 ##sppdata <- Spp(mypath, "Lobster - M (GE53mm)")
-
+#Spp(mypath, "Atl croaker", cruise="AugOct", outdir=outdir)
 #you might need to work through macro20 for lobster?
 sppdata <- lfd(mypath, "Summer flounder", cruise="AprthruOct", outdir="~/output/sasr")
