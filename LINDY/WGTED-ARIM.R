@@ -20,7 +20,7 @@ library(stringr)
 #RUN;
 
 macro20 <- function(ABUND, timescale = "month") {
-  if (timescale == "season" | timescale=="quarter" | timescale=="Spring") { #macro20
+  if (timescale == "season" | timescale=="quarter") { #macro20
     ABUND <- ABUND %>% mutate(
       CRUCODE = case_match(CRUCODE,
                            19896 ~ 19895,
@@ -469,10 +469,10 @@ Spp <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
     cruiseno <- 2:5
     ABUND <- ABUND[ABUND$YEAR > 1988,]
   } else if (cruise=="Spring") {
-    ABUND <- macro20(ABUND, "Spring")
-    ABUND[ABUND$CRUISE == 3,]$CRUISE <- 2
-    ABUND[ABUND$CRUISE == 6,]$CRUISE <- 5
-    cruiseno <- 2
+    #ABUND <- macro20(ABUND, "Spring")
+    #ABUND[ABUND$CRUISE == 3,]$CRUISE <- 2
+    #ABUND[ABUND$CRUISE == 6,]$CRUISE <- 5
+    cruiseno <- 2:3
   }
   ABUND <- ABUND[ABUND$CRUISE %in% cruiseno,]
   SPP <- ABUND[ABUND$NUMBER > 0,]
