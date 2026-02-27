@@ -20,7 +20,7 @@ library(stringr)
 #RUN;
 
 macro20 <- function(ABUND, timescale = "month") {
-  if (timescale == "season" | timescale=="quarter") { #macro20
+  if (timescale == "season" | timescale=="quarter" | timescale=="Spring") { #macro20
     ABUND <- ABUND %>% mutate(
       CRUCODE = case_match(CRUCODE,
                            19896 ~ 19895,
@@ -30,17 +30,23 @@ macro20 <- function(ABUND, timescale = "month") {
     # Convert back to numeric (handling potential errors if input wasn't purely digits)
     ABUND$CRUCODE <- as.numeric(modified_nums_char)
   }
-}
+return(ABUND)}
 
 #SETUPS here would have to be a data frame of NUMBER,WEIGHT
 macro6 <- function(SETUPS) {
   TSAM <- SETUPS %>%
     summarise(TN = sum(NUMBER, na.rm=T), #10469.680381
-              TW = sum(WEIGHT, na.rm=T),
-              NM = mean(NUMBER, na.rm=T), WM = mean(WEIGHT, na.rm=T),
-              NMSE = sd(NUMBER, na.rm=T) / sqrt(n()), WMSE = sd(WEIGHT, na.rm=T) / sqrt(n()),
-              NV = var(NUMBER, na.rm=T), WV = var(WEIGHT, na.rm=T),
+              NM = mean(NUMBER, na.rm=T), 
+              NMSE = sd(NUMBER, na.rm=T) / sqrt(n()),
+              NV = var(NUMBER, na.rm=T),
               NN = n(), WN = n())
+  if("WEIGHT" %in% colnames(SETUPS)) {
+    weight  <- SETUPS %>% summarise(TW = sum(WEIGHT, na.rm=T), 
+                                    WM = mean(WEIGHT, na.rm=T),
+                                    WMSE = sd(WEIGHT, na.rm=T) / sqrt(n()),
+                                    WV = var(WEIGHT, na.rm=T))
+    TSAM <- cbind(TSAM, TW=weight$TW, WM=weight$WM, WMSE=weight$WMSE, WV=weight$WV)
+  }
   
   TSAMW <- TSAM %>%
     mutate(SAMPLES = NN) 
@@ -138,9 +144,11 @@ macro3 <- function(AREA, STRATUM) {
 # Function to apply factor (stratum weight) to means, variance, and standard errors
 macro2 <- function(TSAMW, FACTOR) { #macro3 goes in here
   TSAMW$NM <- FACTOR * TSAMW$NM
-  TSAMW$WM <- FACTOR * TSAMW$WM
+  if("WM" %in% colnames(TSAMW)) {
+    TSAMW$WM <- FACTOR * TSAMW$WM
+    TSAMW$WMSE <- TSAMW$WV / TSAMW$WN * FACTOR^2
+  }
   TSAMW$NMSE <- TSAMW$NV / TSAMW$NN * FACTOR^2
-  TSAMW$WMSE <- TSAMW$WV / TSAMW$WN * FACTOR^2
   return(data.frame(TSAMW))
 }
 
@@ -155,17 +163,25 @@ return(TSAMW)}
 MACRO8 <- function(TSAMW) { 
 #TSAMW <- macro7(TSAMW)  
 TSSUM <- TSAMW %>%
-  summarise(SAMPLET = sum(SAMPLES), NMSUM = sum(NM), WMSUM = sum(WM), 
-            NMSESUM1 = sum(NMSE), WMSESUM1 = sum(WMSE), 
-            TNSUM = sum(TN), TWSUM = sum(TW))
+  summarise(SAMPLET = sum(SAMPLES), NMSUM = sum(NM), 
+            NMSESUM1 = sum(NMSE), 
+            TNSUM = sum(TN))
+if("WM" %in% colnames(TSAMW)) {
+  weight <- TSAMW %>% summarise(WMSUM = sum(WM), WMSESUM1 = sum(WMSE), 
+                                TWSUM = sum(TW))
+  TSSUM <- cbind(TSSUM, WMSUM=weight$WMSUM, WMSESUM1=weight$WMSESUM1, TWSUM=weight$TWSUM)
+}
 
 TSSUM2 <- TSSUM %>%
   mutate(SAMPLES = SAMPLET, 
-         NMSESUM = sqrt(NMSESUM1), 
-         WMSESUM = sqrt(WMSESUM1))
+         NMSESUM = sqrt(NMSESUM1))
+if("WMSESUM1" %in% colnames(TSSUM)) {
+  weight <- TSSUM2 %>% mutate(WMSESUM = sqrt(WMSESUM1))
+  TSSUM2 <- cbind(TSSUM2, WMSESUM=weight$WMSESUM)
+}
 
 SETUPS <- TSSUM2 %>%
-  select(-NMSESUM1, -WMSESUM1)
+  select(-NMSESUM1) #-WMSESUM1
 }
 
 
@@ -208,11 +224,16 @@ YR <- function(ABUND, STRATSP, grouping) {
                              #SPTOW = n(),
                              PERCENTF = ifelse(SAMPLES > 0, SPTOW / SAMPLES, 0),
                              TOTALN = TNSUM,
-                             TOTALW = TWSUM,
                              STRATNM = NMSUM,
-                             STRATNSE = NMSESUM,
-                             STRATWM = WMSUM,
-                             STRATWSE = WMSESUM) %>% mutate(across(where(is.numeric), ~replace_na(.,0)))
+                             STRATNSE = NMSESUM) %>% 
+    mutate(across(where(is.numeric), ~replace_na(.,0)))
+  if("TWSUM" %in% colnames(YAM2)) {
+    YAM2 <- YAM2 %>% mutate(
+      TOTALW = TWSUM,
+      STRATWM = WMSUM,
+      STRATWSE = WMSESUM
+    )
+  }
   
   if("CRUCODE" %in% colnames(YAM2)) {
     YAM2$CRUISE <- substr(YAM2$CRUCODE,5,5)
@@ -254,7 +275,8 @@ YR <- function(ABUND, STRATSP, grouping) {
   #PERCENTF = 0, 
   #TOTALN = 0, STRATNM = 0, STRATNSE = 0, 
   #TOTALW = 0, STRATWM = 0, STRATWSE = 0)
-return(list(TSSTRATA, YAM2))}
+return(list(TSSTRATA, YAM2))
+}
 
 # MACRO 9
 #grouping <- "STRATUM"
@@ -268,7 +290,7 @@ TEMPLATE <- data.frame(YEAR = character(), MONTH = character(), STRATUM = numeri
                       TOTALW = numeric(), STRATWM = numeric(), STRATWSE = numeric(), 
                       MONTHN = character(), stringsAsFactors = FALSE)
 
-for (grouping in c("STRATUM", "YEAR", "CRUISE", "CRUCODE")) { #c("YEAR", "STRATUM"),
+for (grouping in c("YEAR")) { #c("YEAR", "STRATUM", "CRUISE", "CRUCODE"),
 TSAMW_all <- macro6(ABUND)
 TSAMW_all$PERCENTF = ifelse(TSAMW_all$SAMPLES > 0, TSAMW_all$NN / TSAMW_all$SAMPLES, 0)
 STRATSP <- posstrat(grouping, SPP)
@@ -280,7 +302,7 @@ TSSPPS2 <- TSSPPS %>%
   mutate(YEAR = "Grand Total") %>%
   select(YEAR, SPTOW)
 
-if(all(grouping %in% c("YEAR", "CRUISE", "CRUCODE"))) {
+if(all(grouping %in% c("YEAR"))) { #, "CRUISE", "CRUCODE"
  TSSTRATs <- YR(ABUND, STRATSP, grouping)
  TSSTRATA <- TSSTRATs[[1]]
  YAM2 <- TSSTRATs[[2]]
@@ -293,8 +315,13 @@ if(all(grouping %in% c("YEAR", "CRUISE", "CRUCODE"))) {
  if(grouping=="YEAR") {
  YSTRAT <- TSSTRATB %>% select(-MONTH) 
  YSTRAT <- rbind(YAM2[,which(colnames(YAM2) %in% colnames(YSTRAT))], YSTRAT) %>%
-   rename(TOTALN = TNSUM, STRATNM = NMSUM, STRATNSE=NMSESUM, TOTALW = TWSUM, STRATWM = WMSUM, STRATWSE = WMSESUM)
- YSTRAT <- YSTRAT[,c("YEAR", "SAMPLES", "SPTOW", "PERCENTF", "TOTALN", "STRATNM", "STRATNSE", "TOTALW", "STRATWM", "STRATWSE")]
+   rename(TOTALN = TNSUM, STRATNM = NMSUM, STRATNSE=NMSESUM)
+ keepercols <- c("YEAR", "SAMPLES", "SPTOW", "PERCENTF", "TOTALN", "STRATNM", "STRATNSE")
+ if("TWSUM" %in% colnames(YSTRAT)) {
+   YSTRAT <- YSTRAT %>% rename(TOTALW = TWSUM, STRATWM = WMSUM, STRATWSE = WMSESUM)
+   keepercols <- c(keepercols, c("TOTALW", "STRATWM", "STRATWSE"))
+ }
+ YSTRAT <- YSTRAT[,keepercols]
  }
  
  if(grouping=="CRUISE") {
@@ -322,9 +349,9 @@ TSAMW <- ABUND %>% group_by(across(all_of(grouping))) %>% macro6
 FACTOR <- 1
 TSAMW <- macro2(TSAMW, FACTOR=FACTOR)
 TSAMW$NMSE<- sqrt(TSAMW$NV/TSAMW$NN)
-TSAMW$WMSE<- sqrt(TSAMW$WV/TSAMW$WN)
+if("WV" %in% colnames(TSAMW)) {TSAMW$WMSE<- sqrt(TSAMW$WV/TSAMW$WN)}
 SETUPS <- TSAMW %>% #beware that in the original code line 251 drops from TSAMW itself
-  select(-NV, -WV, -NN, -WN) 
+  select(-NV, -NN, -WN) 
 
 #i think this is gonna be an output specific to STRATUM
 if(grouping == "STRATUM") {
@@ -382,7 +409,7 @@ TSSTRATS <- rbind(TSSTRATS, c("All Combined", TSAMW_all$NN, TSAMW_all$SAMPLES, T
 #  rename(STRATUM = STRATA)
 }
 #the main outputs are TSSTRATS, YSTRAT, MSTRAT, YMSTRATA
-return(list(YSTRAT, TSSTRATS, MSTRAT, YMSTRATA))} #LINE 424 what you'll need to do is get the var naming the same/compatible...
+return(list(YSTRAT))} #TSSTRATS, MSTRAT, YMSTRATA #LINE 424 what you'll need to do is get the var naming the same/compatible...
 
 Spp <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
   if (spp == "Black drum") {
@@ -413,10 +440,13 @@ Spp <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
   ABUN <- FIRST
   ABUND0 <- ABUN
   ABUND0$NUMBER <- ABUND0$NUMBER/ABUND0$MINOUT*20;
-  ABUND0$WEIGHT <- ABUND0$WEIGHT/ABUND0$MINOUT*20;
+  if (!spp %in% c("Lobster - F (GE53mm)", "Lobster - M (GE53mm)")) {
+    ABUND0$WEIGHT <- ABUND0$WEIGHT/ABUND0$MINOUT*20; 
+  }
   ABUND0$CRUCODE[ABUND0$CRUCODE==19882] <- 19884
   ABUND0$CRUCODE[ABUND0$CRUCODE==19883] <- 19885
   ABUND0$CRUISE <- substr(ABUND0$CRUCODE,5,5)
+  ABUND0$CRUISE <- as.integer(ABUND0$CRUISE)
   #ABUND0[ABUND0$CRUCODE==19882,]$CRUISE <- "4"
   #ABUND0[ABUND0$CRUCODE==19883,]$CRUISE <- "5"
   ABUND <- ABUND0
@@ -438,6 +468,11 @@ Spp <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
   } else if(cruise=="AprthruOct") {
     cruiseno <- 2:5
     ABUND <- ABUND[ABUND$YEAR > 1988,]
+  } else if (cruise=="Spring") {
+    ABUND <- macro20(ABUND, "Spring")
+    ABUND[ABUND$CRUISE == 3,]$CRUISE <- 2
+    ABUND[ABUND$CRUISE == 6,]$CRUISE <- 5
+    cruiseno <- 2
   }
   ABUND <- ABUND[ABUND$CRUISE %in% cruiseno,]
   SPP <- ABUND[ABUND$NUMBER > 0,]

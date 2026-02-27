@@ -1003,7 +1003,7 @@ lfd <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
     SECOND <- read.dbf(file.path(mypath, "MULENG.dbf"))
   }
   
-  LENG1 <- SECOND %>% select(-COMMON, -LATIN)
+  LENG1 <- SECOND #%>% select(-COMMON, -LATIN)
   #need more code for lobster...
   LENG1$CRUCODE[LENG1$CRUCODE==19882] <- 19884
   LENG1$CRUCODE[LENG1$CRUCODE==19883] <- 19885 #LENGS
@@ -1036,6 +1036,8 @@ lfd <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
     cruiseno <- 2:5
     ABUND <- ABUND[ABUND$YEAR > 1988,]
     LENG <- LENG[LENG$YEAR > 1988,]
+  } else if (cruise=="Spring") {
+    cruiseno <- 2:3
   }
   ABUND <- ABUND[ABUND$CRUISE %in% cruiseno,]
   LENG <- LENG[LENG$CRUISE %in% cruiseno,]

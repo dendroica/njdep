@@ -7,11 +7,11 @@ source("OCEAN TRAWL ABUNDANCE LFD WGTED.R")
 #MSTRAT = by month
 #YMSTRATA = by month and year (not usually needed)
 #mypath <- "C:/Users/galax/Downloads/SASLoads/SASLoads"
-mypath <- "C:/Users/jgorzo/Documents/SASLoads"
-outdir <- "~/output"
+mypath <- "V:/Marine Fish/Lindy/OceanTrawl/SASLoads"
+outdir <- "C:/Users/jgorzo/OneDrive - New Jersey Office of Information Technology/Documents/output/sasr"
 #sppdata <- Spp(mypath, "Black drum", "INM", "Oct", outdir="~/output/sasr")
 #sppdata <- Spp(mypath, "Scup", outdir=outdir) #"INM", "AugOct"
-#sppdata <- Spp(mypath, "Spot", "INM", "AugOct", outdir=outdir)
+#sppdata <- Spp(mypath, spp="Spot", "INM", cruise="AugOct", outdir=outdir)
 #sppdata <- Spp(mypath, "Summer flounder", outdir="~/output/sasr")
 #sppdata <- Spp(mypath, "Summer flounder", cruise="AprthruOct", outdir="~/output/sasr")
 #sppdata <- Spp(mypath, "Tautog", outdir="~/output/sasr")
@@ -20,4 +20,16 @@ outdir <- "~/output"
 ##sppdata <- Spp(mypath, "Lobster - M (GE53mm)")
 #Spp(mypath, "Atl croaker", cruise="AugOct", outdir=outdir)
 #you might need to work through macro20 for lobster?
-sppdata <- lfd(mypath, "Summer flounder", cruise="AprthruOct", outdir="~/output/sasr")
+#sppdata <- lfd(mypath, "Summer flounder", cruise="AprthruOct", outdir="~/output/sasr")
+sppdata <- Spp(mypath, spp="Lobster - F (GE53mm)", outdir="~/output/sasr")
+sppdata <- Spp(mypath, "Lobster - F (GE53mm)", cruise="Spring", outdir="~/output/sasr")
+sppdata <- Spp(mypath, "Lobster - F (GE53mm)", cruise="Oct", outdir="~/output/sasr")
+sppdata <- lfd(mypath, spp="Lobster - F (GE53mm)", cruise="Spring", outdir="~/output/sasr")
+sppdata <- lfd(mypath, "Lobster - F (GE53mm)", cruise="Oct", outdir="~/output/sasr")
+
+sppdata <- Spp(mypath, "Lobster - M (GE53mm)", outdir="~/output/sasr")
+sppdata <- Spp(mypath, "Lobster - M (GE53mm)", cruise="Spring", outdir="~/output/sasr")
+sppdata <- Spp(mypath, "Lobster - M (GE53mm)", cruise="Oct", outdir="~/output/sasr")
+sppdata <- lfd(mypath, "Lobster - M (GE53mm)", cruise="Spring", outdir="~/output/sasr")
+sppdata <- lfd(mypath, "Lobster - M (GE53mm)", cruise="Oct", outdir="~/output/sasr")
+
