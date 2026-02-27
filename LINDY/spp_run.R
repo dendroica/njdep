@@ -1,10 +1,8 @@
 usr <- "jgorzo"
 #input <- "C:/Users/galax/Downloads/SASLoads/SASLoads"
 input <- "V:/Marine Fish/Lindy/OceanTrawl/SASLoads"
-mywd <- file.path("C:/Users", usr, "Documents/njdep/LINDY")
-setwd(mywd)
-#source("OCEAN TRAWL ABUNDANCE WGTED-ARIM.R")
-#source("OCEAN TRAWL ABUNDANCE LFD WGTED.R")
+repo_path <- file.path("C:/Users", usr, "Documents/njdep/LINDY")
+setwd(repo_path)
 source("WGTED-ARIM.R")
 source("LFD WGTED.R")
 outdir <- file.path("C:/Users", usr,
