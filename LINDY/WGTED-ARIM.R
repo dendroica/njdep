@@ -29,7 +29,7 @@ macro20 <- function(ABUND, timescale = "month") {
     modified_nums_char <- str_replace(nums_char, "3$", "2") # '$' anchors to end
     # Convert back to numeric (handling potential errors if input wasn't purely digits)
     ABUND$CRUCODE <- as.numeric(modified_nums_char)
-  }
+  } #you would also have to re-code the CRUISE from 3 to 2 accordingly
 return(ABUND)}
 
 #SETUPS here would have to be a data frame of NUMBER,WEIGHT
@@ -411,7 +411,7 @@ TSSTRATS <- rbind(TSSTRATS, c("All Combined", TSAMW_all$NN, TSAMW_all$SAMPLES, T
 #the main outputs are TSSTRATS, YSTRAT, MSTRAT, YMSTRATA
 return(list(YSTRAT))} #TSSTRATS, MSTRAT, YMSTRATA #LINE 424 what you'll need to do is get the var naming the same/compatible...
 
-Spp <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
+WgtedAriM <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
   if (spp == "Black drum") {
     FIRST <- read.dbf(file.path(mypath, "PCABUN.dbf"))
     SECOND <- read.dbf(file.path(mypath, "PCLENG.dbf"))

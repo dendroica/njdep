@@ -966,7 +966,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
 
 return(list(FINALY, STFINALY, FINAL, YLFINALY, YLSTFINALY))} #finaly STFINALY
 
-lfd <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
+LFD <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
   if (spp == "Black drum") {
     FIRST <- read.dbf(file.path(mypath, "PCABUN.dbf"))
     SECOND <- read.dbf(file.path(mypath, "PCLENG.dbf"))
