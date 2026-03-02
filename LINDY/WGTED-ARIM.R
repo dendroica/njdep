@@ -5,228 +5,230 @@ library(tidyr)
 library(stringr)
 
 # FYI you haven't done this part yet
-# **********FOR SIZED LOBSTER ONLY WHEN USING HASABUN***********************;
+# **********FOR SIZED LOBSTER ONLY WHEN USING HASabun***********************;
 #  **********FOR LEGAL SIZED LOBSTER;
-#SET FIRST;
+#SET first;
 #NUMBER=LEGALN;
 #RUN;
 #  **********FOR SUBLEGAL SIZED LOBSTER;
-#SET FIRST;
+#SET first;
 #NUMBER=SUBLEGALN;
 #RUN;
-#  **********FOR ALL LOBSTER WHEN USING HASABUN;
-#SET FIRST;
+#  **********FOR ALL LOBSTER WHEN USING HASabun;
+#SET first;
 #NUMBER=TOTALN;
 #RUN;
 
-macro20 <- function(ABUND, timescale = "month") {
-  if (timescale == "season" | timescale=="quarter") { #macro20
-    ABUND <- ABUND %>% mutate(
+Macro20 <- function(abund, timescale = "month") {
+  if (timescale == "season" | timescale=="quarter") { #Macro20
+    abund <- abund %>% mutate(
       CRUCODE = case_match(CRUCODE,
                            19896 ~ 19895,
                            .default = CRUCODE))
-    nums_char <- as.character(ABUND$CRUCODE)
-    modified_nums_char <- str_replace(nums_char, "3$", "2") # '$' anchors to end
+    crucode <- as.character(abund$CRUCODE)
+    crucode <- str_replace(crucode, "3$", "2") # '$' anchors to end
     # Convert back to numeric (handling potential errors if input wasn't purely digits)
-    ABUND$CRUCODE <- as.numeric(modified_nums_char)
+    abund$CRUCODE <- as.numeric(crucode)
   } #you would also have to re-code the CRUISE from 3 to 2 accordingly
-return(ABUND)}
+return(abund)}
 
-#SETUPS here would have to be a data frame of NUMBER,WEIGHT
-macro6 <- function(SETUPS) {
-  TSAM <- SETUPS %>%
+#setups here would have to be a data frame of NUMBER,WEIGHT
+Macro6 <- function(setups) {
+  tsam <- setups %>%
     summarise(TN = sum(NUMBER, na.rm=T), #10469.680381
               NM = mean(NUMBER, na.rm=T), 
               NMSE = sd(NUMBER, na.rm=T) / sqrt(n()),
               NV = var(NUMBER, na.rm=T),
               NN = n(), WN = n())
-  if("WEIGHT" %in% colnames(SETUPS)) {
-    weight  <- SETUPS %>% summarise(TW = sum(WEIGHT, na.rm=T), 
+  if("WEIGHT" %in% colnames(setups)) {
+    weight  <- setups %>% summarise(TW = sum(WEIGHT, na.rm=T), 
                                     WM = mean(WEIGHT, na.rm=T),
                                     WMSE = sd(WEIGHT, na.rm=T) / sqrt(n()),
                                     WV = var(WEIGHT, na.rm=T))
-    TSAM <- cbind(TSAM, TW=weight$TW, WM=weight$WM, WMSE=weight$WMSE, WV=weight$WV)
+    tsam <- cbind(tsam, TW=weight$TW, WM=weight$WM, WMSE=weight$WMSE, WV=weight$WV)
   }
   
-  TSAMW <- TSAM %>%
+  tsamw <- tsam %>%
     mutate(SAMPLES = NN) 
-  return(TSAMW)}
+  return(tsamw)}
 
 # Function to assign factor (stratum weight) values
-macro3 <- function(AREA, STRATUM) {
-  FACTOR <- NA
+Macro3 <- function(AREA, STRATUM) {
+  factor <- NA
   if (AREA == "ALL") {
-    if (STRATUM == 12) FACTOR <- 0.008
-    else if (STRATUM == 13) FACTOR <- 0.018
-    else if (STRATUM == 14) FACTOR <- 0.043
-    else if (STRATUM == 15) FACTOR <- 0.010
-    else if (STRATUM == 16) FACTOR <- 0.045
-    else if (STRATUM == 17) FACTOR <- 0.164
-    else if (STRATUM == 18) FACTOR <- 0.033
-    else if (STRATUM == 19) FACTOR <- 0.132
-    else if (STRATUM == 20) FACTOR <- 0.156
-    else if (STRATUM == 21) FACTOR <- 0.010
-    else if (STRATUM == 22) FACTOR <- 0.111
-    else if (STRATUM == 23) FACTOR <- 0.103
-    else if (STRATUM == 24) FACTOR <- 0.019
-    else if (STRATUM == 25) FACTOR <- 0.075
-    else if (STRATUM == 26) FACTOR <- 0.074
+    if (STRATUM == 12) factor <- 0.008
+    else if (STRATUM == 13) factor <- 0.018
+    else if (STRATUM == 14) factor <- 0.043
+    else if (STRATUM == 15) factor <- 0.010
+    else if (STRATUM == 16) factor <- 0.045
+    else if (STRATUM == 17) factor <- 0.164
+    else if (STRATUM == 18) factor <- 0.033
+    else if (STRATUM == 19) factor <- 0.132
+    else if (STRATUM == 20) factor <- 0.156
+    else if (STRATUM == 21) factor <- 0.010
+    else if (STRATUM == 22) factor <- 0.111
+    else if (STRATUM == 23) factor <- 0.103
+    else if (STRATUM == 24) factor <- 0.019
+    else if (STRATUM == 25) factor <- 0.075
+    else if (STRATUM == 26) factor <- 0.074
   } else if (AREA == "INM") {
-    if (STRATUM == 12) FACTOR <- 0.018
-    else if (STRATUM == 13) FACTOR <- 0.039
-    else if (STRATUM == 15) FACTOR <- 0.021
-    else if (STRATUM == 16) FACTOR <- 0.099
-    else if (STRATUM == 18) FACTOR <- 0.073
-    else if (STRATUM == 19) FACTOR <- 0.286
-    else if (STRATUM == 21) FACTOR <- 0.021
-    else if (STRATUM == 22) FACTOR <- 0.241
-    else if (STRATUM == 24) FACTOR <- 0.041
-    else if (STRATUM == 25) FACTOR <- 0.162
+    if (STRATUM == 12) factor <- 0.018
+    else if (STRATUM == 13) factor <- 0.039
+    else if (STRATUM == 15) factor <- 0.021
+    else if (STRATUM == 16) factor <- 0.099
+    else if (STRATUM == 18) factor <- 0.073
+    else if (STRATUM == 19) factor <- 0.286
+    else if (STRATUM == 21) factor <- 0.021
+    else if (STRATUM == 22) factor <- 0.241
+    else if (STRATUM == 24) factor <- 0.041
+    else if (STRATUM == 25) factor <- 0.162
   } else if (AREA == "SOU") {
-    if (STRATUM == 21) FACTOR <- 0.024
-    else if (STRATUM == 22) FACTOR <- 0.284
-    else if (STRATUM == 23) FACTOR <- 0.264
-    else if (STRATUM == 24) FACTOR <- 0.049
-    else if (STRATUM == 25) FACTOR <- 0.191
-    else if (STRATUM == 26) FACTOR <- 0.188
+    if (STRATUM == 21) factor <- 0.024
+    else if (STRATUM == 22) factor <- 0.284
+    else if (STRATUM == 23) factor <- 0.264
+    else if (STRATUM == 24) factor <- 0.049
+    else if (STRATUM == 25) factor <- 0.191
+    else if (STRATUM == 26) factor <- 0.188
   } else if (AREA == "NOR") {
-    if (STRATUM == 12) FACTOR <- 0.013
-    else if (STRATUM == 13) FACTOR <- 0.030
-    else if (STRATUM == 14) FACTOR <- 0.070
-    else if (STRATUM == 15) FACTOR <- 0.016
-    else if (STRATUM==16) FACTOR <- 0.074
-    else if (STRATUM==17) FACTOR <- 0.268
-    else if (STRATUM==18) FACTOR <- 0.055
-    else if (STRATUM==19) FACTOR <- 0.216
-    else if (STRATUM==20) FACTOR <- 0.256
+    if (STRATUM == 12) factor <- 0.013
+    else if (STRATUM == 13) factor <- 0.030
+    else if (STRATUM == 14) factor <- 0.070
+    else if (STRATUM == 15) factor <- 0.016
+    else if (STRATUM==16) factor <- 0.074
+    else if (STRATUM==17) factor <- 0.268
+    else if (STRATUM==18) factor <- 0.055
+    else if (STRATUM==19) factor <- 0.216
+    else if (STRATUM==20) factor <- 0.256
   } else if (AREA=="SHR") {
-    if (STRATUM==12) FACTOR <- 0.216
-    else if (STRATUM==13) FACTOR <- 0.314
-    else if (STRATUM==14) FACTOR <- 0.470
+    if (STRATUM==12) factor <- 0.216
+    else if (STRATUM==13) factor <- 0.314
+    else if (STRATUM==14) factor <- 0.470
   } else if (AREA=="MON") {
-    if (STRATUM==12) FACTOR <- 0.119
-    else if (STRATUM==13) FACTOR <- 0.262
-    else if (STRATUM==14) FACTOR <- 0.619
+    if (STRATUM==12) factor <- 0.119
+    else if (STRATUM==13) factor <- 0.262
+    else if (STRATUM==14) factor <- 0.619
   } else if (AREA=="BSB") {
-    if (STRATUM==15) FACTOR <- 0.044
-    else if (STRATUM==16) FACTOR <- 0.208
-    else if (STRATUM==17) FACTOR <- 0.748
+    if (STRATUM==15) factor <- 0.044
+    else if (STRATUM==16) factor <- 0.208
+    else if (STRATUM==17) factor <- 0.748
   } else if (AREA=="SBS") {
-    if (STRATUM==18) FACTOR <- 0.104
-    else if (STRATUM==19) FACTOR <- 0.410
-    else if (STRATUM==20) FACTOR <- 0.486
+    if (STRATUM==18) factor <- 0.104
+    else if (STRATUM==19) factor <- 0.410
+    else if (STRATUM==20) factor <- 0.486
   } else if (AREA=="SIC") {
-    if (STRATUM==21) FACTOR <- 0.043
-    else if (STRATUM==22) FACTOR <- 0.496
-    else if (STRATUM==23) FACTOR <- 0.462
+    if (STRATUM==21) factor <- 0.043
+    else if (STRATUM==22) factor <- 0.496
+    else if (STRATUM==23) factor <- 0.462
   } else if (AREA=="CMH") {
-    if (STRATUM==24) FACTOR <- 0.114
-    else if (STRATUM==25) FACTOR <- 0.446
-    else if (STRATUM==26) FACTOR <- 0.440
+    if (STRATUM==24) factor <- 0.114
+    else if (STRATUM==25) factor <- 0.446
+    else if (STRATUM==26) factor <- 0.440
   } else if (AREA=="INS") {
-    if (STRATUM==12) FACTOR <- 0.103
-    else if (STRATUM==15) FACTOR <- 0.122
-    else if (STRATUM==18) FACTOR <- 0.419
-    else if (STRATUM==21) FACTOR <- 0.119
-    else if (STRATUM==24) FACTOR <- 0.238
+    if (STRATUM==12) factor <- 0.103
+    else if (STRATUM==15) factor <- 0.122
+    else if (STRATUM==18) factor <- 0.419
+    else if (STRATUM==21) factor <- 0.119
+    else if (STRATUM==24) factor <- 0.238
   } else if (AREA=="HOG") {
-    if (STRATUM==18) FACTOR <- 0.104
-    else if (STRATUM==21) FACTOR <- 0.030
-    else if (STRATUM==22) FACTOR <- 0.345
-    else if (STRATUM==24) FACTOR <- 0.059
-    else if (STRATUM==25) FACTOR <- 0.232
-    else if (STRATUM==26) FACTOR <- 0.229
-  } else if(AREA=="PST") FACTOR <- 1			
+    if (STRATUM==18) factor <- 0.104
+    else if (STRATUM==21) factor <- 0.030
+    else if (STRATUM==22) factor <- 0.345
+    else if (STRATUM==24) factor <- 0.059
+    else if (STRATUM==25) factor <- 0.232
+    else if (STRATUM==26) factor <- 0.229
+  } else if(AREA=="PST") factor <- 1			
   
-  return(FACTOR)
+  return(factor)
 }
 
 # Function to apply factor (stratum weight) to means, variance, and standard errors
-macro2 <- function(TSAMW, FACTOR) { #macro3 goes in here
-  TSAMW$NM <- FACTOR * TSAMW$NM
-  if("WM" %in% colnames(TSAMW)) {
-    TSAMW$WM <- FACTOR * TSAMW$WM
-    TSAMW$WMSE <- TSAMW$WV / TSAMW$WN * FACTOR^2
+Macro2 <- function(tsamw, factor) { #Macro3 goes in here
+  tsamw$NM <- factor * tsamw$NM
+  if("WM" %in% colnames(tsamw)) {
+    tsamw$WM <- factor * tsamw$WM
+    tsamw$WMSE <- tsamw$WV / tsamw$WN * factor^2
   }
-  TSAMW$NMSE <- TSAMW$NV / TSAMW$NN * FACTOR^2
-  return(data.frame(TSAMW))
+  tsamw$NMSE <- tsamw$NV / tsamw$NN * factor^2
+  return(data.frame(tsamw))
 }
 
 # MACRO 7
-macro7 <- function(TSAMW) { #you get this from macro6
-  FACTOR <- unname(unlist(Map(macro3, TSAMW$AREA, TSAMW$STRATUM)))
-  TSAMW <- macro2(TSAMW, FACTOR) 
-  #SETUPS <- TSAMW %>% select(-NN, -WN)
-return(TSAMW)}
+Macro7 <- function(tsamw) { #you get this from Macro6
+  factor <- unname(unlist(Map(Macro3, tsamw$AREA, tsamw$STRATUM)))
+  tsamw <- Macro2(tsamw, factor) 
+  #setups <- tsamw %>% select(-NN, -WN)
+return(tsamw)}
 
 # MACRO 8
-MACRO8 <- function(TSAMW) { 
-#TSAMW <- macro7(TSAMW)  
-TSSUM <- TSAMW %>%
+Macro8 <- function(tsamw) { 
+#tsamw <- Macro7(tsamw)  
+tssum <- tsamw %>%
   summarise(SAMPLET = sum(SAMPLES), NMSUM = sum(NM), 
             NMSESUM1 = sum(NMSE), 
             TNSUM = sum(TN))
-if("WM" %in% colnames(TSAMW)) {
-  weight <- TSAMW %>% summarise(WMSUM = sum(WM), WMSESUM1 = sum(WMSE), 
+if("WM" %in% colnames(tsamw)) {
+  weight <- tsamw %>% summarise(WMSUM = sum(WM), WMSESUM1 = sum(WMSE), 
                                 TWSUM = sum(TW))
-  TSSUM <- cbind(TSSUM, WMSUM=weight$WMSUM, WMSESUM1=weight$WMSESUM1, TWSUM=weight$TWSUM)
+  tssum <- cbind(tssum, WMSUM=weight$WMSUM, WMSESUM1=weight$WMSESUM1, TWSUM=weight$TWSUM)
 }
 
-TSSUM2 <- TSSUM %>%
+tssum2 <- tssum %>%
   mutate(SAMPLES = SAMPLET, 
          NMSESUM = sqrt(NMSESUM1))
-if("WMSESUM1" %in% colnames(TSSUM)) {
-  weight <- TSSUM2 %>% mutate(WMSESUM = sqrt(WMSESUM1))
-  TSSUM2 <- cbind(TSSUM2, WMSESUM=weight$WMSESUM)
+
+if("WMSESUM1" %in% colnames(tssum)) {
+  weight <- tssum2 %>% mutate(WMSESUM = sqrt(WMSESUM1))
+  tssum2 <- cbind(tssum2, WMSESUM=weight$WMSESUM)
 }
 
-SETUPS <- TSSUM2 %>%
+setups <- tssum2 %>%
   select(-NMSESUM1) #-WMSESUM1
 }
 
 
-posstrat <- function(grouping, SPP) {
-  SPP <- SPP %>%
+Posstrat <- function(grouping, spp) {
+  spp <- spp %>%
     arrange(across(all_of(grouping)))
   #superseded <- mtcars %>%
   #filter(disp < 160) %>%
   #  group_by(across(all_of(cols))) %>%
   #  summarise(n = n(), .groups = 'drop_last')
-  POSSTRAT <- SPP %>%
+  POSSTRAT <- spp %>%
     group_by(across(all_of(grouping))) %>%
     summarise(SPTOW = n(), .groups = 'drop')
   
-  STRATSP <- POSSTRAT %>%
+  stratsp <- POSSTRAT %>%
     select(all_of(c("SPTOW", grouping))) %>% drop_na(all_of(grouping))
 }
 
 #the proc means doesn't mean anything, so much as the "by"
 #so for example...
 #
-#PROC SORT DATA=ABUND;
+#PROC SORT DATA=abund;
 #BY STRATUM;
 #PROC MEANS;
 #BY STRATUM;
 #%MACRO6; *CALCULATE MEAN AND VARIANCE;
 #
 #is the same as...
-#TSAMW <- ABUND %>% group_by(across(all_of(c("STRATUM")))) %>% macro6
+#tsamw <- abund %>% group_by(across(all_of(c("STRATUM")))) %>% Macro6
 
-YR <- function(ABUND, STRATSP, grouping) {
-  ABUND <- ABUND %>%
+Yr <- function(abund, stratsp, grouping) {
+  abund <- abund %>%
     arrange(across(all_of(c(grouping, "STRATUM", "AREA"))))
-  #line 442: do I need to summarize before piping into MACRO8?
-  TSAMW <- ABUND %>% group_by(across(all_of(c(grouping, "STRATUM", "AREA")))) %>% macro6
-  TEMPLATE <- TSAMW %>% macro7 #%>% select(-NN, -WN)
-  SETUPS <- TEMPLATE %>% group_by(across(all_of(grouping))) %>% MACRO8 #LINE 444 #PICK BACK UP HERE 7/25 LINE 595
-  # WILL NEED TO SAS TEST TO SEE WHAT'S GOING ON WITH THE TEMPLATE (LINE 572) ...how is this passed? what's the context for having it in that code block?
-  YAM2 <- merge(SETUPS, STRATSP, by=grouping, all = TRUE) %>% mutate(STRATUM = 0,
+  
+  setups <- abund %>% 
+    group_by(across(all_of(c(grouping, "STRATUM", "AREA")))) %>% Macro6 %>%
+    Macro7 %>% group_by(across(all_of(grouping))) %>% Macro8
+  
+  YAM2 <- merge(setups, stratsp, by=grouping, all = TRUE) %>% mutate(STRATUM = 0,
                              #SPTOW = n(),
                              PERCENTF = ifelse(SAMPLES > 0, SPTOW / SAMPLES, 0),
                              TOTALN = TNSUM,
                              STRATNM = NMSUM,
                              STRATNSE = NMSESUM) %>% 
     mutate(across(where(is.numeric), ~replace_na(.,0)))
+  
   if("TWSUM" %in% colnames(YAM2)) {
     YAM2 <- YAM2 %>% mutate(
       TOTALW = TWSUM,
@@ -256,21 +258,22 @@ YR <- function(ABUND, STRATSP, grouping) {
     #TOTALN = 0, STRATNM = 0, STRATNSE = 0, 
     #TOTALW = 0, STRATWM = 0, STRATWSE = 0) %>% select(-STRAT) %>% #line 368 drop more for TSYSTRATS?
   
-  TSAMW <- ABUND %>%
+  tsamw <- abund %>%
     arrange(across(all_of(c("STRATUM", "AREA"))))
-  SETUPS <- TSAMW %>% group_by(across(all_of(c("STRATUM", "AREA")))) %>% macro6 %>% macro7 %>% MACRO8
+  setups <- tsamw %>% group_by(across(all_of(c("STRATUM", "AREA")))) %>%
+    Macro6 %>% Macro7 %>% Macro8
   
-  TSSTRATA <- SETUPS %>% mutate(
+  TSSTRATA <- setups %>% mutate(
     YEAR="Grand Total",
     STRATUM=0,
-    SAMPLES=SETUPS$SAMPLES,
-    TOTALN = TSAMW$TNSUM,
-    TOTALW = TSAMW$TWSUM,
-    STRATNM = TSAMW$NMSUM,
-    STRATNSE = TSAMW$NMSESUM,
-    STRATWM = TSAMW$WMSUM,
-    STRATWSE = TSAMW$WMSESUM,
-    MONTHN="1") %>% mutate(across(where(is.numeric), ~replace_na(.,0))) #select(-STRAT) %>% #line 368 drop more for TSYSTRATS?
+    SAMPLES=setups$SAMPLES,
+    TOTALN = tsamw$TNSUM,
+    TOTALW = tsamw$TWSUM,
+    STRATNM = tsamw$NMSUM,
+    STRATNSE = tsamw$NMSESUM,
+    STRATWM = tsamw$WMSUM, #this still works?
+    STRATWSE = tsamw$WMSESUM,
+    MONTHN="1") %>% mutate(across(where(is.numeric), ~replace_na(.,0)))
   #SAMPLES = 0, #fill samples here?
   #PERCENTF = 0, 
   #TOTALN = 0, STRATNM = 0, STRATNSE = 0, 
@@ -280,34 +283,32 @@ return(list(TSSTRATA, YAM2))
 
 # MACRO 9
 #grouping <- "STRATUM"
-macro9 <- function(SPP, ABUND) {
+Macro9 <- function(spp, abund) {
 #*BY STRATUM BY STRATUM BY STRATUM;
 
   # MACRO 4
-TEMPLATE <- data.frame(YEAR = character(), MONTH = character(), STRATUM = numeric(), 
+template <- data.frame(YEAR = character(), MONTH = character(), STRATUM = numeric(), 
                       SAMPLES = numeric(), SPTOW = numeric(), PERCENTF = numeric(), 
                       TOTALN = numeric(), STRATNM = numeric(), STRATNSE = numeric(), 
                       TOTALW = numeric(), STRATWM = numeric(), STRATWSE = numeric(), 
                       MONTHN = character(), stringsAsFactors = FALSE)
 
 for (grouping in c("YEAR")) { #c("YEAR", "STRATUM", "CRUISE", "CRUCODE"),
-TSAMW_all <- macro6(ABUND)
-TSAMW_all$PERCENTF = ifelse(TSAMW_all$SAMPLES > 0, TSAMW_all$NN / TSAMW_all$SAMPLES, 0)
-STRATSP <- posstrat(grouping, SPP)
+tsamw_all <- Macro6(abund)
+tsamw_all$PERCENTF = ifelse(tsamw_all$SAMPLES > 0, tsamw_all$NN / tsamw_all$SAMPLES, 0)
+stratsp <- Posstrat(grouping, spp)
 
-TSSPPS <- SPP %>%
-  summarise(SPTOW = n(), .groups = 'drop') #line 374 does this need more summary stats?
-
-TSSPPS2 <- TSSPPS %>%
+TSsppS2 <- spp %>%
+  summarise(SPTOW = n(), .groups = 'drop') %>%
   mutate(YEAR = "Grand Total") %>%
   select(YEAR, SPTOW)
 
 if(all(grouping %in% c("YEAR"))) { #, "CRUISE", "CRUCODE"
- TSSTRATs <- YR(ABUND, STRATSP, grouping)
+ TSSTRATs <- Yr(abund, stratsp, grouping)
  TSSTRATA <- TSSTRATs[[1]]
  YAM2 <- TSSTRATs[[2]]
  
- TSSTRATB <- merge(TSSTRATA,TSSPPS2, by = "YEAR", all=T) %>% mutate(
+ TSSTRATB <- merge(TSSTRATA,TSsppS2, by = "YEAR", all=T) %>% mutate(
    PERCENTF = ifelse(SAMPLES > 0, SPTOW / SAMPLES, 0),
    MONTH = "Grand Total"
  ) %>% select(-MONTHN, -STRATUM)
@@ -332,7 +333,6 @@ if(all(grouping %in% c("YEAR"))) { #, "CRUISE", "CRUCODE"
  MSTRAT <- MSTRAT[,c("MONTH", "SAMPLES", "SPTOW", "PERCENTF", "TOTALN", "STRATNM", "STRATNSE", "TOTALW", "STRATWM", "STRATWSE")]
  }
  
- 
  if(grouping=="CRUCODE") {
  YMSTRATA <- TSSTRATB %>% mutate(MONTH="All") #%>% bind_rows(YAM2) #YMSTRATS
  YAM2$YEAR <- substr(YAM2$CRUCODE,1,4)
@@ -341,29 +341,30 @@ if(all(grouping %in% c("YEAR"))) { #, "CRUISE", "CRUCODE"
  YMSTRATA <- YMSTRATA[,c("YEAR", "MONTH", "SAMPLES", "SPTOW", "PERCENTF", "TOTALN", "STRATNM", "STRATNSE", "TOTALW", "STRATWM", "STRATWSE")]
  }
 } 
-ABUND <- ABUND %>%
+
+abund <- abund %>%
   arrange(across(all_of(grouping))) #line 243 in SAS
 #line 244-245 means "by stratum" which in SAS would produce different tables...
 #line 244: do you need to put the MEANS summary stats by stratum back in?
-TSAMW <- ABUND %>% group_by(across(all_of(grouping))) %>% macro6
-FACTOR <- 1
-TSAMW <- macro2(TSAMW, FACTOR=FACTOR)
-TSAMW$NMSE<- sqrt(TSAMW$NV/TSAMW$NN)
-if("WV" %in% colnames(TSAMW)) {TSAMW$WMSE<- sqrt(TSAMW$WV/TSAMW$WN)}
-SETUPS <- TSAMW %>% #beware that in the original code line 251 drops from TSAMW itself
+tsamw <- abund %>% group_by(across(all_of(grouping))) %>% Macro6
+factor <- 1
+tsamw <- Macro2(tsamw, factor=factor)
+tsamw$NMSE<- sqrt(tsamw$NV/tsamw$NN)
+if("WV" %in% colnames(tsamw)) {tsamw$WMSE<- sqrt(tsamw$WV/tsamw$WN)}
+setups <- tsamw %>% #beware that in the original code line 251 drops from tsamw itself
   select(-NV, -NN, -WN) 
 
 #i think this is gonna be an output specific to STRATUM
 if(grouping == "STRATUM") {
-  TSSTRATS <- merge(SETUPS, STRATSP, by=grouping, all = TRUE) %>%
+  TSSTRATS <- merge(setups, stratsp, by=grouping, all = TRUE) %>%
     mutate(
-      PERCENTF = ifelse(TSAMW$SAMPLES > 0, SPTOW / TSAMW$SAMPLES, 0),
-      TOTALN = TSAMW$TN,
-      TOTALW = TSAMW$TW,
-      STRATNM = TSAMW$NM,
-      STRATNSE = TSAMW$NMSE,
-      STRATWM = TSAMW$WM,
-      STRATWSE = TSAMW$WMSE) %>% 
+      PERCENTF = ifelse(tsamw$SAMPLES > 0, SPTOW / tsamw$SAMPLES, 0),
+      TOTALN = tsamw$TN,
+      TOTALW = tsamw$TW,
+      STRATNM = tsamw$NM,
+      STRATNSE = tsamw$NMSE,
+      STRATWM = tsamw$WM,
+      STRATWSE = tsamw$WMSE) %>% 
     mutate(across(where(is.numeric), ~replace_na(.,0)))
   #select(-STRAT) %>% #line 368 drop more for TSYSTRATS?
   #SAMPLES = 0, #fill samples here?
@@ -373,27 +374,27 @@ if(grouping == "STRATUM") {
   #mutate(across(where(is.numeric), ~replace_na(.,0)))
   #}
   
-  #TSAM <- SETUPS %>%
+  #tsam <- setups %>%
   #  summarise(TN = sum(NUMBER), TW = sum(WEIGHT),
   #            NM = mean(NUMBER), WM = mean(WEIGHT),
   #            NMSE = sd(NUMBER) / sqrt(n()), WMSE = sd(WEIGHT) / sqrt(n()),
   #            NV = var(NUMBER), WV = var(WEIGHT),
   #            NN = n(), WN = n())
-  #TSAMW <- TSAM %>%
+  #tsamw <- tsam %>%
   #  mutate(SAMPLES = n())
   
-  TSSTRATX <- SETUPS %>% mutate(YEAR = "Grand Total", #this used to be a merge/altered TEMPLATE e.g. line 394
+  TSSTRATX <- setups %>% mutate(YEAR = "Grand Total", #this used to be a merge/altered template e.g. line 394
                                 STRATUM = 0, 
-                                TOTALN = TSAMW$TN,
-                                TOTALW = TSAMW$TW, 
-                                STRATNM = TSAMW$NM,
-                                STRATNSE = TSAMW$NMSE,
-                                STRATWM = TSAMW$WM,
-                                STRATWSE = TSAMW$WMSE) #%>%
+                                TOTALN = tsamw$TN,
+                                TOTALW = tsamw$TW, 
+                                STRATNM = tsamw$NM,
+                                STRATNSE = tsamw$NMSE,
+                                STRATWM = tsamw$WM,
+                                STRATWSE = tsamw$WMSE) #%>%
   #select(-MONTH, -MONTHN, -SPTOW) #line 306: added SPTOW here for the merge below
   
-  TSSTRATZ <- merge(TSSTRATX, TSSPPS2, by = "YEAR", all = TRUE) %>%
-    mutate(PERCENTF = ifelse(TSAMW$SAMPLES > 0, SPTOW / TSAMW$SAMPLES, 0))
+  TSSTRATZ <- merge(TSSTRATX, TSsppS2, by = "YEAR", all = TRUE) %>%
+    mutate(PERCENTF = ifelse(tsamw$SAMPLES > 0, SPTOW / tsamw$SAMPLES, 0))
   
   TSSTRATZY <- TSSTRATZ
   if(!"YEAR" %in% grouping) {
@@ -401,7 +402,7 @@ if(grouping == "STRATUM") {
   }
   
 TSSTRATS<- TSSTRATS[,c(grouping, "SAMPLES", "SPTOW", "PERCENTF", "TOTALN", "STRATNM", "STRATNSE", "TOTALW", "STRATWM", "STRATWSE")]
-TSSTRATS <- rbind(TSSTRATS, c("All Combined", TSAMW_all$NN, TSAMW_all$SAMPLES, TSAMW_all$PERCENTF, TSAMW_all$TN, TSAMW_all$NM, TSAMW_all$NMSE, TSAMW_all$TW, TSAMW_all$WM, TSAMW_all$WMSE))
+TSSTRATS <- rbind(TSSTRATS, c("All Combined", tsamw_all$NN, tsamw_all$SAMPLES, tsamw_all$PERCENTF, tsamw_all$TN, tsamw_all$NM, tsamw_all$NMSE, tsamw_all$TW, tsamw_all$WM, tsamw_all$WMSE))
 }
 #TSSTRATY <- TSSTRATZY %>%
 #  mutate(STRATA = ifelse(STRATUM == 0, "All Combined", STRATUM)) %>%
@@ -411,55 +412,55 @@ TSSTRATS <- rbind(TSSTRATS, c("All Combined", TSAMW_all$NN, TSAMW_all$SAMPLES, T
 #the main outputs are TSSTRATS, YSTRAT, MSTRAT, YMSTRATA
 return(list(YSTRAT))} #TSSTRATS, MSTRAT, YMSTRATA #LINE 424 what you'll need to do is get the var naming the same/compatible...
 
-WgtedAriM <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
-  if (spp == "Black drum") {
-    FIRST <- read.dbf(file.path(mypath, "PCABUN.dbf"))
-    SECOND <- read.dbf(file.path(mypath, "PCLENG.dbf"))
-  } else if (spp == "Lobster - F (GE53mm)") {
+WgtedAriM <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
+  if (myspp == "Black drum") {
+    first <- read.dbf(file.path(mypath, "PCabun.dbf"))
+    second <- read.dbf(file.path(mypath, "PCLENG.dbf"))
+  } else if (myspp == "Lobster - F (GE53mm)") {
     #LOBSTER
     #Female index & catch at length (CAL), GE 53mm+ (i.e., lengths equal to 53 mm and greater)
-    FIRST <- read.dbf(file.path(mypath, "HA53FABUN.dbf"))
-  } else if (spp == "Lobster - M (GE53mm)") {
+    first <- read.dbf(file.path(mypath, "HA53Fabun.dbf"))
+  } else if (myspp == "Lobster - M (GE53mm)") {
     #Male index & catch at length (CAL), GE 53mm+ (i.e., lengths equal to 53 mm and greater)
-    FIRST <- read.dbf(file.path(mypath, "HA53MABUN.dbf"))
-  } else if (spp=="Scup") {
-    FIRST <- read.dbf(file.path(mypath, "SCABUN.dbf"))
-  } else if (spp=="Spot") {
-    FIRST <- read.dbf(file.path(mypath, "LXABUN.dbf"))
-  } else if (spp=="Summer flounder") {
-    FIRST <- read.dbf(file.path(mypath, "PDABUN.dbf"))
-  } else if (spp=="Tautog") {
-    FIRST <- read.dbf(file.path(mypath, "TOABUN.dbf"))
-  } else if (spp=="Weakfish") {
-    FIRST <- read.dbf(file.path(mypath, "CRABUN.dbf"))
-  } else if (spp=="Atl croaker") {
-    FIRST <- read.dbf(file.path(mypath, "MUABUN.dbf"))
+    first <- read.dbf(file.path(mypath, "HA53Mabun.dbf"))
+  } else if (myspp=="Scup") {
+    first <- read.dbf(file.path(mypath, "SCabun.dbf"))
+  } else if (myspp=="Spot") {
+    first <- read.dbf(file.path(mypath, "LXabun.dbf"))
+  } else if (myspp=="Summer flounder") {
+    first <- read.dbf(file.path(mypath, "PDabun.dbf"))
+  } else if (myspp=="Tautog") {
+    first <- read.dbf(file.path(mypath, "TOabun.dbf"))
+  } else if (myspp=="Weakfish") {
+    first <- read.dbf(file.path(mypath, "CRabun.dbf"))
+  } else if (myspp=="Atl croaker") {
+    first <- read.dbf(file.path(mypath, "MUabun.dbf"))
   }
   
   # Setting up the data
-  ABUN <- FIRST
-  ABUND0 <- ABUN
-  ABUND0$NUMBER <- ABUND0$NUMBER/ABUND0$MINOUT*20;
-  if (!spp %in% c("Lobster - F (GE53mm)", "Lobster - M (GE53mm)")) {
-    ABUND0$WEIGHT <- ABUND0$WEIGHT/ABUND0$MINOUT*20; 
+  abun <- first
+  abund0 <- abun
+  abund0$NUMBER <- abund0$NUMBER/abund0$MINOUT*20;
+  if (!myspp %in% c("Lobster - F (GE53mm)", "Lobster - M (GE53mm)")) {
+    abund0$WEIGHT <- abund0$WEIGHT/abund0$MINOUT*20; 
   }
-  ABUND0$CRUCODE[ABUND0$CRUCODE==19882] <- 19884
-  ABUND0$CRUCODE[ABUND0$CRUCODE==19883] <- 19885
-  ABUND0$CRUISE <- substr(ABUND0$CRUCODE,5,5)
-  ABUND0$CRUISE <- as.integer(ABUND0$CRUISE)
-  #ABUND0[ABUND0$CRUCODE==19882,]$CRUISE <- "4"
-  #ABUND0[ABUND0$CRUCODE==19883,]$CRUISE <- "5"
-  ABUND <- ABUND0
-  ABUND$AREA <- "ALL"
+  abund0$CRUCODE[abund0$CRUCODE==19882] <- 19884
+  abund0$CRUCODE[abund0$CRUCODE==19883] <- 19885
+  abund0$CRUISE <- substr(abund0$CRUCODE,5,5)
+  abund0$CRUISE <- as.integer(abund0$CRUISE)
+  #abund0[abund0$CRUCODE==19882,]$CRUISE <- "4"
+  #abund0[abund0$CRUCODE==19883,]$CRUISE <- "5"
+  abund <- abund0
+  abund$AREA <- "ALL"
   
   if(area=="INM") {
-    ABUND <- ABUND[!ABUND$STRATUM %in% c(14,17,20,23,26),]
-    ABUND$AREA <- "INM"
+    abund <- abund[!abund$STRATUM %in% c(14,17,20,23,26),]
+    abund$AREA <- "INM"
   }
   
   cruiseno <- 1:6
   if(cruise=="AprOct") {
-    ABUND <- ABUND[ABUND$YEAR > 1988,]
+    abund <- abund[abund$YEAR > 1988,]
     cruiseno <- c(2,5)
   } else if (cruise=="AugOct") {
     cruiseno <- 4:5
@@ -467,19 +468,19 @@ WgtedAriM <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
     cruiseno <- 5
   } else if(cruise=="AprthruOct") {
     cruiseno <- 2:5
-    ABUND <- ABUND[ABUND$YEAR > 1988,]
+    abund <- abund[abund$YEAR > 1988,]
   } else if (cruise=="Spring") {
-    #ABUND <- macro20(ABUND, "Spring")
-    #ABUND[ABUND$CRUISE == 3,]$CRUISE <- 2
-    #ABUND[ABUND$CRUISE == 6,]$CRUISE <- 5
+    #abund <- Macro20(abund, "Spring")
+    #abund[abund$CRUISE == 3,]$CRUISE <- 2
+    #abund[abund$CRUISE == 6,]$CRUISE <- 5
     cruiseno <- 2:3
   }
-  ABUND <- ABUND[ABUND$CRUISE %in% cruiseno,]
-  SPP <- ABUND[ABUND$NUMBER > 0,]
+  abund <- abund[abund$CRUISE %in% cruiseno,]
+  spp <- abund[abund$NUMBER > 0,]
   
-  out <- macro9(SPP, ABUND)
+  out <- Macro9(spp, abund)
   cruises <- paste0("cruise", paste(cruise, collapse=""))
-  myfile <- paste(spp, paste0("strata",area), paste0("cru",cruise), sep="_")
+  myfile <- paste(myspp, paste0("strata",area), paste0("cru",cruise), sep="_")
   #yrs <- 1988:2025
   annual <- out[[1]]
   annual_yrs <- annual[-nrow(annual), ]

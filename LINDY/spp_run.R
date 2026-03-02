@@ -19,10 +19,10 @@ outdir <- file.path("C:/Users", usr,
 ##index <- WgtedAriM(input, "Lobster - M (GE53mm)")
 #WgtedAriM(input, "Atl croaker", cruise="AugOct", outdir=outdir)
 #lf <- LFD(input, "Summer flounder", cruise="AprthruOct", outdir=outdir)
-index <- WgtedAriM(input, spp="Lobster - F (GE53mm)", outdir=outdir)
+index <- WgtedAriM(input, myspp="Lobster - F (GE53mm)", outdir=outdir)
 index <- WgtedAriM(input, "Lobster - F (GE53mm)", cruise="Spring", outdir=outdir)
 index <- WgtedAriM(input, "Lobster - F (GE53mm)", cruise="Oct", outdir=outdir)
-lf <- LFD(input, spp="Lobster - F (GE53mm)", cruise="Spring", outdir=outdir)
+lf <- LFD(input, myspp="Lobster - F (GE53mm)", cruise="Spring", outdir=outdir)
 lf <- LFD(input, "Lobster - F (GE53mm)", cruise="Oct", outdir=outdir)
 
 index <- WgtedAriM(input, "Lobster - M (GE53mm)", outdir=outdir)
