@@ -41,13 +41,13 @@ Macro20 <- function(abund, timescale = "month") {
 
 # setups here would have to be a data frame of NUMBER,WEIGHT
 Macro6 <- function(setups) {
-  tsam <- setups %>%
+  tsam <- setups %>% mutate(SPTOW = ifelse(NUMBER > 0, 1, 0)) %>%
     summarise(
       TN = sum(NUMBER, na.rm = T), # 10469.680381
       NM = mean(NUMBER, na.rm = T),
       NMSE = sd(NUMBER, na.rm = T) / sqrt(n()),
       NV = var(NUMBER, na.rm = T),
-      NN = n(), WN = n()
+      NN = n(), WN = n(), SPTOW = sum(SPTOW, na.rm=T)
     )
   if ("WEIGHT" %in% colnames(setups)) {
     weight <- setups %>% summarise(
@@ -231,7 +231,8 @@ Macro8 <- function(tsamw) {
     summarise(
       SAMPLET = sum(SAMPLES), NMSUM = sum(NM),
       NMSESUM1 = sum(NMSE),
-      TNSUM = sum(TN)
+      TNSUM = sum(TN),
+      SPTOW = sum(SPTOW)
     )
   if ("WM" %in% colnames(tsamw)) {
     weight <- tsamw %>% summarise(
@@ -302,21 +303,11 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
   spp <- abund[abund$NUMBER > 0, ]
 
   for (grouping in c("YEAR")) { # c("YEAR", "STRATUM", "CRUISE", "CRUCODE"),
-    tsamw_all <- Macro6(abund)
-    tsamw_all$PERCENTF <- ifelse(tsamw_all$SAMPLES > 0, tsamw_all$NN / tsamw_all$SAMPLES, 0)
-    
-    spp <- spp %>%
-      arrange(across(all_of(grouping)))
-    # superseded <- mtcars %>%
-    # filter(disp < 160) %>%
-    #  group_by(across(all_of(cols))) %>%
-    #  summarise(n = n(), .groups = 'drop_last')
-
-    stratsp <- spp %>%
-      group_by(across(all_of(grouping))) %>%
-      summarise(SPTOW = n(), .groups = "drop") %>%
-      select(all_of(c("SPTOW", grouping))) %>%
-      drop_na(all_of(grouping))
+    #stratsp <- spp %>%
+    #  group_by(across(all_of(grouping))) %>%
+    #  summarise(SPTOW = n(), .groups = "drop") %>%
+    #  select(all_of(c("SPTOW", grouping))) %>%
+    #  drop_na(all_of(grouping))
 
     tsspps2 <- spp %>%
       summarise(SPTOW = n(), .groups = "drop") %>%
@@ -324,9 +315,6 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
       select(YEAR, SPTOW)
 
     if (all(grouping %in% c("YEAR"))) { # , "CRUISE", "CRUCODE"
-      abund <- abund %>%
-        arrange(across(all_of(c(grouping, "STRATUM", "AREA"))))
-
       setups <- abund %>%
         group_by(across(all_of(c(grouping, "STRATUM", "AREA")))) %>%
         Macro6() %>%
@@ -334,7 +322,7 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
         group_by(across(all_of(grouping))) %>%
         Macro8()
 
-      yam2 <- merge(setups, stratsp, by = grouping, all = TRUE) %>%
+      yam2 <- setups %>% #merge(setups, stratsp, by = grouping, all = TRUE) %>%
         mutate(
           STRATUM = 0,
           # SPTOW = n(),
@@ -375,10 +363,8 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
       # PERCENTF = 0,
       # TOTALN = 0, STRATNM = 0, STRATNSE = 0,
       # TOTALW = 0, STRATWM = 0, STRATWSE = 0) %>% select(-STRAT) %>% #line 368 drop more for TSystratS?
-
-      tsamw <- abund %>%
-        arrange(across(all_of(c("STRATUM", "AREA"))))
-      setups <- tsamw %>%
+      
+      setups <- abund %>%
         group_by(across(all_of(c("STRATUM", "AREA")))) %>%
         Macro6() %>%
         Macro7() %>%
@@ -389,15 +375,15 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
           YEAR = "Grand Total",
           STRATUM = 0,
           SAMPLES = setups$SAMPLES,
-          TOTALN = tsamw$TNSUM,
-          TOTALW = tsamw$TWSUM,
-          STRATNM = tsamw$NMSUM,
-          STRATNSE = tsamw$NMSESUM,
-          STRATWM = tsamw$WMSUM, # this still works?
-          STRATWSE = tsamw$WMSESUM,
+          TOTALN = setups$TNSUM,
+          TOTALW = setups$TWSUM,
+          STRATNM = setups$NMSUM,
+          STRATNSE = setups$NMSESUM,
+          STRATWM = setups$WMSUM, # this still works?
+          STRATWSE = setups$WMSESUM,
           MONTHN = "1"
         ) %>%
-        mutate(across(where(is.numeric), ~ replace_na(., 0)))
+        mutate(across(where(is.numeric), ~ replace_na(., 0))) %>% select(-SPTOW)
       # SAMPLES = 0, #fill samples here?
       # PERCENTF = 0,
       # TOTALN = 0, STRATNM = 0, STRATNSE = 0,
@@ -416,11 +402,11 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
 
       if (grouping == "YEAR") {
         ystrat <- tsstratb %>% select(-MONTH)
-        ystrat <- rbind(yam2[, which(colnames(yam2) %in% colnames(ystrat))], ystrat) %>%
-          rename(TOTALN = TNSUM, STRATNM = NMSUM, STRATNSE = NMSESUM)
+        ystrat <- rbind(yam2[, which(colnames(yam2) %in% colnames(ystrat))], ystrat) #%>%
+          #rename(TOTALN = TNSUM, STRATNM = NMSUM, STRATNSE = NMSESUM)
         keepercols <- c("YEAR", "SAMPLES", "SPTOW", "PERCENTF", "TOTALN", "STRATNM", "STRATNSE")
         if ("TWSUM" %in% colnames(ystrat)) {
-          ystrat <- ystrat %>% rename(TOTALW = TWSUM, STRATWM = WMSUM, STRATWSE = WMSESUM)
+          #ystrat <- ystrat %>% rename(TOTALW = TWSUM, STRATWM = WMSUM, STRATWSE = WMSESUM)
           keepercols <- c(keepercols, c("TOTALW", "STRATWM", "STRATWSE"))
         }
         ystrat <- ystrat[, keepercols]
@@ -443,10 +429,6 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
       }
     }
 
-    abund <- abund %>%
-      arrange(across(all_of(grouping))) # line 243 in SAS
-    # line 244-245 means "by stratum" which in SAS would produce different tables...
-    # line 244: do you need to put the MEANS summary stats by stratum back in?
     tsamw <- abund %>%
       group_by(across(all_of(grouping))) %>%
       Macro6()
@@ -510,6 +492,8 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
       }
 
       TSSTRATS <- TSSTRATS[, c(grouping, "SAMPLES", "SPTOW", "PERCENTF", "TOTALN", "STRATNM", "STRATNSE", "TOTALW", "STRATWM", "STRATWSE")]
+      tsamw_all <- Macro6(abund)
+      tsamw_all$PERCENTF <- ifelse(tsamw_all$SAMPLES > 0, tsamw_all$NN / tsamw_all$SAMPLES, 0)
       TSSTRATS <- rbind(TSSTRATS, c("All Combined", tsamw_all$NN, tsamw_all$SAMPLES, tsamw_all$PERCENTF, tsamw_all$TN, tsamw_all$NM, tsamw_all$NMSE, tsamw_all$TW, tsamw_all$WM, tsamw_all$WMSE))
     }
     # TSSTRATY <- TSSTRATZY %>%
