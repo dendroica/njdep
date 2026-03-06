@@ -346,7 +346,7 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
       # TOTALW = 0, STRATWM = 0, STRATWSE = 0) %>% select(-STRAT) %>% #line 368 drop more for TSystratS?
       
       tsstrata <- abund %>%
-        group_by(across(all_of(c("STRATUM", "AREA")))) %>%
+        group_by(across(all_of(c("STRATUM", "AREA", "factor")))) %>%
         Macro6() %>%
         Macro7() %>%
         Macro8() %>%
