@@ -358,11 +358,10 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
         mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%  mutate(
           PERCENTF = ifelse(SAMPLES > 0, SPTOW / SAMPLES, 0),
           MONTH = "Grand Total"
-        ) %>%
-        select(-MONTHN, -STRATUM)
+        )
 
       if (grouping == "YEAR") {
-        ystrat <- tsstrata %>% select(-MONTH)
+        ystrat <- tsstrata
         keepercols <- c("YEAR", "SAMPLES", "SPTOW", "PERCENTF", "TOTALN", "STRATNM", "STRATNSE")
         if ("TOTALW" %in% colnames(ystrat)) {
           #ystrat <- ystrat %>% rename(TOTALW = TWSUM, STRATWM = WMSUM, STRATWSE = WMSESUM)
