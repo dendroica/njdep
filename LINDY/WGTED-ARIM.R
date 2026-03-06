@@ -64,164 +64,16 @@ Macro6 <- function(setups) {
   return(tsamw)
 }
 
-# Function to apply factor (stratum weight) to means, variance, and standard errors
-Macro2 <- function(tsamw, factor) {
-  tsamw$NM <- factor * tsamw$NM
-  if ("WM" %in% colnames(tsamw)) {
-    tsamw$WM <- factor * tsamw$WM
-    tsamw$WMSE <- tsamw$WV / tsamw$WN * factor^2
-  }
-  tsamw$NMSE <- tsamw$NV / tsamw$NN * factor^2
-  return(data.frame(tsamw))
-}
-
 # MACRO 7
 Macro7 <- function(tsamw) { # you get this from Macro6
-  factor <- unname(unlist(Map(function(AREA, STRATUM) {
-      factor <- NA
-      if (AREA == "ALL") {
-        if (STRATUM == 12) {
-          factor <- 0.008
-        } else if (STRATUM == 13) {
-          factor <- 0.018
-        } else if (STRATUM == 14) {
-          factor <- 0.043
-        } else if (STRATUM == 15) {
-          factor <- 0.010
-        } else if (STRATUM == 16) {
-          factor <- 0.045
-        } else if (STRATUM == 17) {
-          factor <- 0.164
-        } else if (STRATUM == 18) {
-          factor <- 0.033
-        } else if (STRATUM == 19) {
-          factor <- 0.132
-        } else if (STRATUM == 20) {
-          factor <- 0.156
-        } else if (STRATUM == 21) {
-          factor <- 0.010
-        } else if (STRATUM == 22) {
-          factor <- 0.111
-        } else if (STRATUM == 23) {
-          factor <- 0.103
-        } else if (STRATUM == 24) {
-          factor <- 0.019
-        } else if (STRATUM == 25) {
-          factor <- 0.075
-        } else if (STRATUM == 26) factor <- 0.074
-      } else if (AREA == "INM") {
-        if (STRATUM == 12) {
-          factor <- 0.018
-        } else if (STRATUM == 13) {
-          factor <- 0.039
-        } else if (STRATUM == 15) {
-          factor <- 0.021
-        } else if (STRATUM == 16) {
-          factor <- 0.099
-        } else if (STRATUM == 18) {
-          factor <- 0.073
-        } else if (STRATUM == 19) {
-          factor <- 0.286
-        } else if (STRATUM == 21) {
-          factor <- 0.021
-        } else if (STRATUM == 22) {
-          factor <- 0.241
-        } else if (STRATUM == 24) {
-          factor <- 0.041
-        } else if (STRATUM == 25) factor <- 0.162
-      } else if (AREA == "SOU") {
-        if (STRATUM == 21) {
-          factor <- 0.024
-        } else if (STRATUM == 22) {
-          factor <- 0.284
-        } else if (STRATUM == 23) {
-          factor <- 0.264
-        } else if (STRATUM == 24) {
-          factor <- 0.049
-        } else if (STRATUM == 25) {
-          factor <- 0.191
-        } else if (STRATUM == 26) factor <- 0.188
-      } else if (AREA == "NOR") {
-        if (STRATUM == 12) {
-          factor <- 0.013
-        } else if (STRATUM == 13) {
-          factor <- 0.030
-        } else if (STRATUM == 14) {
-          factor <- 0.070
-        } else if (STRATUM == 15) {
-          factor <- 0.016
-        } else if (STRATUM == 16) {
-          factor <- 0.074
-        } else if (STRATUM == 17) {
-          factor <- 0.268
-        } else if (STRATUM == 18) {
-          factor <- 0.055
-        } else if (STRATUM == 19) {
-          factor <- 0.216
-        } else if (STRATUM == 20) factor <- 0.256
-      } else if (AREA == "SHR") {
-        if (STRATUM == 12) {
-          factor <- 0.216
-        } else if (STRATUM == 13) {
-          factor <- 0.314
-        } else if (STRATUM == 14) factor <- 0.470
-      } else if (AREA == "MON") {
-        if (STRATUM == 12) {
-          factor <- 0.119
-        } else if (STRATUM == 13) {
-          factor <- 0.262
-        } else if (STRATUM == 14) factor <- 0.619
-      } else if (AREA == "BSB") {
-        if (STRATUM == 15) {
-          factor <- 0.044
-        } else if (STRATUM == 16) {
-          factor <- 0.208
-        } else if (STRATUM == 17) factor <- 0.748
-      } else if (AREA == "SBS") {
-        if (STRATUM == 18) {
-          factor <- 0.104
-        } else if (STRATUM == 19) {
-          factor <- 0.410
-        } else if (STRATUM == 20) factor <- 0.486
-      } else if (AREA == "SIC") {
-        if (STRATUM == 21) {
-          factor <- 0.043
-        } else if (STRATUM == 22) {
-          factor <- 0.496
-        } else if (STRATUM == 23) factor <- 0.462
-      } else if (AREA == "CMH") {
-        if (STRATUM == 24) {
-          factor <- 0.114
-        } else if (STRATUM == 25) {
-          factor <- 0.446
-        } else if (STRATUM == 26) factor <- 0.440
-      } else if (AREA == "INS") {
-        if (STRATUM == 12) {
-          factor <- 0.103
-        } else if (STRATUM == 15) {
-          factor <- 0.122
-        } else if (STRATUM == 18) {
-          factor <- 0.419
-        } else if (STRATUM == 21) {
-          factor <- 0.119
-        } else if (STRATUM == 24) factor <- 0.238
-      } else if (AREA == "HOG") {
-        if (STRATUM == 18) {
-          factor <- 0.104
-        } else if (STRATUM == 21) {
-          factor <- 0.030
-        } else if (STRATUM == 22) {
-          factor <- 0.345
-        } else if (STRATUM == 24) {
-          factor <- 0.059
-        } else if (STRATUM == 25) {
-          factor <- 0.232
-        } else if (STRATUM == 26) factor <- 0.229
-      } else if (AREA == "PST") factor <- 1
-  }, tsamw$AREA, tsamw$STRATUM)))
-  tsamw <- Macro2(tsamw, factor)
+  tsamw$NM <- tsamw$factor * tsamw$NM
+  if ("WM" %in% colnames(tsamw)) {
+    tsamw$WM <- tsamw$factor * tsamw$WM
+    tsamw$WMSE <- tsamw$WV / tsamw$WN * tsamw$factor^2
+  }
+  tsamw$NMSE <- tsamw$NV / tsamw$NN * tsamw$factor^2
+  return(data.frame(tsamw))
   # setups <- tsamw %>% select(-NN, -WN)
-  return(tsamw)
 }
 
 # MACRO 8
@@ -300,33 +152,162 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
     cruiseno <- 2:3
   }
   abund <- abund[abund$CRUISE %in% cruiseno, ]
-  spp <- abund[abund$NUMBER > 0, ]
+  factor <- unname(unlist(Map(function(AREA, STRATUM) {
+    factor <- NA
+    if (AREA == "ALL") {
+      if (STRATUM == 12) {
+        factor <- 0.008
+      } else if (STRATUM == 13) {
+        factor <- 0.018
+      } else if (STRATUM == 14) {
+        factor <- 0.043
+      } else if (STRATUM == 15) {
+        factor <- 0.010
+      } else if (STRATUM == 16) {
+        factor <- 0.045
+      } else if (STRATUM == 17) {
+        factor <- 0.164
+      } else if (STRATUM == 18) {
+        factor <- 0.033
+      } else if (STRATUM == 19) {
+        factor <- 0.132
+      } else if (STRATUM == 20) {
+        factor <- 0.156
+      } else if (STRATUM == 21) {
+        factor <- 0.010
+      } else if (STRATUM == 22) {
+        factor <- 0.111
+      } else if (STRATUM == 23) {
+        factor <- 0.103
+      } else if (STRATUM == 24) {
+        factor <- 0.019
+      } else if (STRATUM == 25) {
+        factor <- 0.075
+      } else if (STRATUM == 26) factor <- 0.074
+    } else if (AREA == "INM") {
+      if (STRATUM == 12) {
+        factor <- 0.018
+      } else if (STRATUM == 13) {
+        factor <- 0.039
+      } else if (STRATUM == 15) {
+        factor <- 0.021
+      } else if (STRATUM == 16) {
+        factor <- 0.099
+      } else if (STRATUM == 18) {
+        factor <- 0.073
+      } else if (STRATUM == 19) {
+        factor <- 0.286
+      } else if (STRATUM == 21) {
+        factor <- 0.021
+      } else if (STRATUM == 22) {
+        factor <- 0.241
+      } else if (STRATUM == 24) {
+        factor <- 0.041
+      } else if (STRATUM == 25) factor <- 0.162
+    } else if (AREA == "SOU") {
+      if (STRATUM == 21) {
+        factor <- 0.024
+      } else if (STRATUM == 22) {
+        factor <- 0.284
+      } else if (STRATUM == 23) {
+        factor <- 0.264
+      } else if (STRATUM == 24) {
+        factor <- 0.049
+      } else if (STRATUM == 25) {
+        factor <- 0.191
+      } else if (STRATUM == 26) factor <- 0.188
+    } else if (AREA == "NOR") {
+      if (STRATUM == 12) {
+        factor <- 0.013
+      } else if (STRATUM == 13) {
+        factor <- 0.030
+      } else if (STRATUM == 14) {
+        factor <- 0.070
+      } else if (STRATUM == 15) {
+        factor <- 0.016
+      } else if (STRATUM == 16) {
+        factor <- 0.074
+      } else if (STRATUM == 17) {
+        factor <- 0.268
+      } else if (STRATUM == 18) {
+        factor <- 0.055
+      } else if (STRATUM == 19) {
+        factor <- 0.216
+      } else if (STRATUM == 20) factor <- 0.256
+    } else if (AREA == "SHR") {
+      if (STRATUM == 12) {
+        factor <- 0.216
+      } else if (STRATUM == 13) {
+        factor <- 0.314
+      } else if (STRATUM == 14) factor <- 0.470
+    } else if (AREA == "MON") {
+      if (STRATUM == 12) {
+        factor <- 0.119
+      } else if (STRATUM == 13) {
+        factor <- 0.262
+      } else if (STRATUM == 14) factor <- 0.619
+    } else if (AREA == "BSB") {
+      if (STRATUM == 15) {
+        factor <- 0.044
+      } else if (STRATUM == 16) {
+        factor <- 0.208
+      } else if (STRATUM == 17) factor <- 0.748
+    } else if (AREA == "SBS") {
+      if (STRATUM == 18) {
+        factor <- 0.104
+      } else if (STRATUM == 19) {
+        factor <- 0.410
+      } else if (STRATUM == 20) factor <- 0.486
+    } else if (AREA == "SIC") {
+      if (STRATUM == 21) {
+        factor <- 0.043
+      } else if (STRATUM == 22) {
+        factor <- 0.496
+      } else if (STRATUM == 23) factor <- 0.462
+    } else if (AREA == "CMH") {
+      if (STRATUM == 24) {
+        factor <- 0.114
+      } else if (STRATUM == 25) {
+        factor <- 0.446
+      } else if (STRATUM == 26) factor <- 0.440
+    } else if (AREA == "INS") {
+      if (STRATUM == 12) {
+        factor <- 0.103
+      } else if (STRATUM == 15) {
+        factor <- 0.122
+      } else if (STRATUM == 18) {
+        factor <- 0.419
+      } else if (STRATUM == 21) {
+        factor <- 0.119
+      } else if (STRATUM == 24) factor <- 0.238
+    } else if (AREA == "HOG") {
+      if (STRATUM == 18) {
+        factor <- 0.104
+      } else if (STRATUM == 21) {
+        factor <- 0.030
+      } else if (STRATUM == 22) {
+        factor <- 0.345
+      } else if (STRATUM == 24) {
+        factor <- 0.059
+      } else if (STRATUM == 25) {
+        factor <- 0.232
+      } else if (STRATUM == 26) factor <- 0.229
+    } else if (AREA == "PST") factor <- 1
+  }, abund$AREA, abund$STRATUM)))
+  
+  abund$factor <- factor
 
   for (grouping in c("YEAR")) { # c("YEAR", "STRATUM", "CRUISE", "CRUCODE"),
-    #stratsp <- spp %>%
-    #  group_by(across(all_of(grouping))) %>%
-    #  summarise(SPTOW = n(), .groups = "drop") %>%
-    #  select(all_of(c("SPTOW", grouping))) %>%
-    #  drop_na(all_of(grouping))
-
-    tsspps2 <- spp %>%
-      summarise(SPTOW = n(), .groups = "drop") %>%
-      mutate(YEAR = "Grand Total") %>%
-      select(YEAR, SPTOW)
-
     if (all(grouping %in% c("YEAR"))) { # , "CRUISE", "CRUCODE"
-      setups <- abund %>%
-        group_by(across(all_of(c(grouping, "STRATUM", "AREA")))) %>%
+      yam2 <- abund %>%
+        group_by(across(all_of(c(grouping, "STRATUM", "AREA", "factor")))) %>%
         Macro6() %>%
         Macro7() %>%
         group_by(across(all_of(grouping))) %>%
-        Macro8()
-
-      yam2 <- setups %>% #merge(setups, stratsp, by = grouping, all = TRUE) %>%
-        mutate(
+        Macro8() %>% mutate(
           STRATUM = 0,
           # SPTOW = n(),
-          PERCENTF = ifelse(SAMPLES > 0, SPTOW / SAMPLES, 0),
+          PERCENTF = ifelse(SAMPLES > 0, SPTOW / SAMPLES, 0)) %>% rename(
           TOTALN = TNSUM,
           STRATNM = NMSUM,
           STRATNSE = NMSESUM
@@ -334,7 +315,7 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
         mutate(across(where(is.numeric), ~ replace_na(., 0)))
 
       if ("TWSUM" %in% colnames(yam2)) {
-        yam2 <- yam2 %>% mutate(
+        yam2 <- yam2 %>% rename(
           TOTALW = TWSUM,
           STRATWM = WMSUM,
           STRATWSE = WMSESUM
@@ -364,56 +345,43 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
       # TOTALN = 0, STRATNM = 0, STRATNSE = 0,
       # TOTALW = 0, STRATWM = 0, STRATWSE = 0) %>% select(-STRAT) %>% #line 368 drop more for TSystratS?
       
-      setups <- abund %>%
+      tsstrata <- abund %>%
         group_by(across(all_of(c("STRATUM", "AREA")))) %>%
         Macro6() %>%
         Macro7() %>%
-        Macro8()
-
-      tsstrata <- setups %>%
+        Macro8() %>%
         mutate(
           YEAR = "Grand Total",
-          STRATUM = 0,
-          SAMPLES = setups$SAMPLES,
-          TOTALN = setups$TNSUM,
-          TOTALW = setups$TWSUM,
-          STRATNM = setups$NMSUM,
-          STRATNSE = setups$NMSESUM,
-          STRATWM = setups$WMSUM, # this still works?
-          STRATWSE = setups$WMSESUM,
-          MONTHN = "1"
-        ) %>%
-        mutate(across(where(is.numeric), ~ replace_na(., 0))) %>% select(-SPTOW)
-      # SAMPLES = 0, #fill samples here?
-      # PERCENTF = 0,
-      # TOTALN = 0, STRATNM = 0, STRATNSE = 0,
-      # TOTALW = 0, STRATWM = 0, STRATWSE = 0)
-
-      tsstrats <- list(tsstrata, yam2)
-      # tsstrata <- tsstrats[[1]]
-      # yam2 <- tsstrats[[2]]
-
-      tsstratb <- merge(tsstrata, tsspps2, by = "YEAR", all = T) %>%
-        mutate(
+          STRATUM = 0, MONTHN = "1") %>% rename(TOTALN = TNSUM, TOTALW = TWSUM, 
+                                  STRATNM = NMSUM, STRATNSE = NMSESUM,
+                                  STRATWM = WMSUM, STRATWSE = WMSESUM) %>%
+        mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%  mutate(
           PERCENTF = ifelse(SAMPLES > 0, SPTOW / SAMPLES, 0),
           MONTH = "Grand Total"
         ) %>%
         select(-MONTHN, -STRATUM)
 
       if (grouping == "YEAR") {
-        ystrat <- tsstratb %>% select(-MONTH)
-        ystrat <- rbind(yam2[, which(colnames(yam2) %in% colnames(ystrat))], ystrat) #%>%
-          #rename(TOTALN = TNSUM, STRATNM = NMSUM, STRATNSE = NMSESUM)
+        ystrat <- tsstrata %>% select(-MONTH)
         keepercols <- c("YEAR", "SAMPLES", "SPTOW", "PERCENTF", "TOTALN", "STRATNM", "STRATNSE")
-        if ("TWSUM" %in% colnames(ystrat)) {
+        if ("TOTALW" %in% colnames(ystrat)) {
           #ystrat <- ystrat %>% rename(TOTALW = TWSUM, STRATWM = WMSUM, STRATWSE = WMSESUM)
           keepercols <- c(keepercols, c("TOTALW", "STRATWM", "STRATWSE"))
         }
-        ystrat <- ystrat[, keepercols]
+        yam2 <- yam2[, keepercols]
+        #ystrat <- yam2 %>% summarise(
+        #  SAMPLES = sum(SAMPLES),
+        #  SPTOW = sum(SPTOW),
+        #  PERCENTF = sum(SPTOW) / sum(SAMPLES),
+        #  TOTALN = sum(TOTALN),
+        #  
+        #)
+        ystrat <- rbind(yam2[, which(colnames(yam2) %in% colnames(ystrat))], ystrat[,keepercols]) #%>%
+          #rename(TOTALN = TNSUM, STRATNM = NMSUM, STRATNSE = NMSESUM)
       }
 
       if (grouping == "CRUISE") {
-        MSTRAT <- tsstratb %>% select(-YEAR) # SPTOW Calc differs here...
+        MSTRAT <- tsstrata %>% select(-YEAR) # SPTOW Calc differs here...
         MSTRAT <- rbind(yam2[, which(colnames(yam2) %in% colnames(MSTRAT))], MSTRAT)
         MSTRAT <- MSTRAT %>%
           rename(TOTALN = TNSUM, STRATNM = NMSUM, STRATNSE = NMSESUM, TOTALW = TWSUM, STRATWM = WMSUM, STRATWSE = WMSESUM)
@@ -421,7 +389,7 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
       }
 
       if (grouping == "CRUCODE") {
-        YMSTRATA <- tsstratb %>% mutate(MONTH = "All") # %>% bind_rows(yam2) #YMSTRATS
+        YMSTRATA <- tsstrata %>% mutate(MONTH = "All") # %>% bind_rows(yam2) #YMSTRATS
         yam2$YEAR <- substr(yam2$CRUCODE, 1, 4)
         YMSTRATA <- rbind(yam2[, which(colnames(yam2) %in% colnames(YMSTRATA))], YMSTRATA) %>%
           rename(TOTALN = TNSUM, STRATNM = NMSUM, STRATNSE = NMSESUM, TOTALW = TWSUM, STRATWM = WMSUM, STRATWSE = WMSESUM)
@@ -429,20 +397,17 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
       }
     }
 
-    tsamw <- abund %>%
-      group_by(across(all_of(grouping))) %>%
-      Macro6()
-    factor <- 1
-    tsamw <- Macro2(tsamw, factor = factor)
-    tsamw$NMSE <- sqrt(tsamw$NV / tsamw$NN)
-    if ("WV" %in% colnames(tsamw)) {
-      tsamw$WMSE <- sqrt(tsamw$WV / tsamw$WN)
-    }
-    setups <- tsamw %>% # beware that in the original code line 251 drops from tsamw itself
-      select(-NV, -NN, -WN)
-
     # i think this is gonna be an output specific to STRATUM
     if (grouping == "STRATUM") {
+      abund$factor <- 1
+      tsamw <- abund %>%
+        group_by(across(all_of(grouping))) %>%
+        Macro6() %>% Macro7()
+      #factor <- 1
+      #tsamw <- Macro2(tsamw, factor = factor)
+      setups <- tsamw %>% # beware that in the original code line 251 drops from tsamw itself
+        select(-NV, -NN, -WN)
+      
       TSSTRATS <- merge(setups, stratsp, by = grouping, all = TRUE) %>%
         mutate(
           PERCENTF = ifelse(tsamw$SAMPLES > 0, SPTOW / tsamw$SAMPLES, 0),
