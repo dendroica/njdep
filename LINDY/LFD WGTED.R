@@ -1045,6 +1045,8 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
     LENG <- LENG[LENG$YEAR > 1988,]
   } else if (cruise=="Spring") {
     cruiseno <- 2:3
+  } else if (cruise=="Apr") {
+    cruiseno <- 2
   }
   ABUND <- ABUND[ABUND$CRUISE %in% cruiseno,]
   LENG <- LENG[LENG$CRUISE %in% cruiseno,]

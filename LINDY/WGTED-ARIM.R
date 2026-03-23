@@ -151,6 +151,8 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
     abund <- abund[abund$YEAR > 1988, ]
   } else if (cruise == "Spring") {
     cruiseno <- 2:3
+  } else if (cruise=="Apr") {
+    cruiseno <- 2
   }
   abund <- abund[abund$CRUISE %in% cruiseno, ]
   factor <- unname(unlist(Map(function(AREA, STRATUM) {
