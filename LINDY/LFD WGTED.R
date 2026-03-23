@@ -107,9 +107,6 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   ABUNDALL <- ABUND %>%
     mutate(YEAR = "ALLC")
   
-  ABUNDALL <- ABUNDALL %>%
-    arrange(YEAR, STRATUM, AREA)
-  
   AMALL <- ABUNDALL %>%
     group_by(YEAR, STRATUM, AREA) %>%
     summarise(TN = sum(NUMBER, na.rm = TRUE),
@@ -118,11 +115,8 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
               NN = n(), .groups = 'drop')
   
   AMALL$FACTOR <- unname(unlist(Map(factor_assignment, AMALL$AREA, AMALL$STRATUM)))
-  AMWALL <- AMALL %>%
-    mutate(NM1 = FACTOR * NM,
-           SNV1 = NV / NN * FACTOR^2)
   
-  AM2ALL <- AMWALL %>%
+  AM2ALL <-  AMALL %>% mutate(NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
     group_by(YEAR) %>%
     summarise(NM2 = sum(NM1, na.rm = TRUE),
               SNV2 = sum(SNV1, na.rm = TRUE), .groups = 'drop')
@@ -134,19 +128,10 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     group_by(YEAR) %>%
     summarise(TOTALN = sum(NUMBER, na.rm = TRUE), SAMPLES=n(), .groups = 'drop')
   
-  AM4ALL <- left_join(AM3ALL, AM2ALL, by = "YEAR") %>%
-    mutate(SNVE = sqrt(SNV2)) #%>%
-    #select(-_TYPE_, -_FREQ_)
-  
-  YMEANSALL <- AM4ALL %>%
+  YMEANSALL <- left_join(AM3ALL, AM2ALL, by = "YEAR") %>%
+    mutate(SNVE = sqrt(SNV2)) %>%
     mutate(NMEAN = NM2) %>%
     select(YEAR, SAMPLES, TOTALN, NMEAN, SNVE)
-  
-  print(YMEANSALL) ####end of the ARITHMETIC line 278
-  
-  # Sort and summarize data
-  ABUND <- ABUND %>%
-    arrange(YEAR, STRATUM, AREA)
   
   AM <- ABUND %>%
     group_by(YEAR, STRATUM, AREA) %>%
@@ -157,41 +142,23 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
               .groups = 'drop')
   AM$FACTOR <- unname(unlist(Map(factor_assignment, AM$AREA, AM$STRATUM)))
   # Create AMW dataset
-  AMW <- AM %>%
-    mutate(NM1 = FACTOR * NM,
-           SNV1 = NV / NN * FACTOR^2)
-  
-  AM2 <- AMW %>%
+  AM2 <- AM %>% mutate(NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
     group_by(YEAR) %>%
     summarise(NM2 = sum(NM1, na.rm = TRUE),
               SNV2 = sum(SNV1, na.rm = TRUE),
               .groups = 'drop')
   
-  #AM2Y <- AM2 %>%
-  #  select(-c(_FREQ_, _TYPE_))
-  
-  # Sort and summarize again
-  AM3 <- ABUND %>%
-    group_by(YEAR) %>%
-    summarise(TOTALN = sum(NUMBER, na.rm = TRUE), SAMPLES=n(),
-              .groups = 'drop')
-  
   # Merge datasets
-  AM4 <- AM3 %>%
-    left_join(AM2, by = "YEAR") %>%
-    mutate(
-           NMEAN = NM2,
-           SNVE = sqrt(SNV2)) %>%
+  AM4 <- ABUND %>% group_by(YEAR) %>% summarise(TOTALN = sum(NUMBER, na.rm = TRUE),
+                                                SAMPLES=n(),
+                                                .groups = 'drop') %>%
+    left_join(AM2, by = "YEAR") %>% mutate(NMEAN = NM2, SNVE = sqrt(SNV2)) %>%
     select(-c(NM2, SNV2))
   #YMEANSALL$YEAR <- as.integer(YMEANSALL$YEAR)
   # Append to YMEANS
   YMEANS <- rbind(YMEANSALL, AM4[,names(YMEANSALL)])
   
-  # Print the final dataset
-  print(YMEANS) #line 324
-  
   AMM <- ABUND %>%
-    arrange(CRUCODE, STRATUM, AREA) %>%
     group_by(CRUCODE, STRATUM, AREA) %>%
     summarise(TN = sum(NUMBER, na.rm = TRUE),
               NM = mean(NUMBER, na.rm = TRUE),
@@ -199,16 +166,9 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
               NN = n(), .groups = 'drop')
 
   AMM$FACTOR <- unname(unlist(Map(factor_assignment, AMM$AREA, AMM$STRATUM)))
-  # Create AMWM
-  AMWM <- AMM %>%
-    mutate(NM1 = FACTOR * NM,
-           SNV1 = NV / NN * FACTOR^2) %>%
-    group_by(CRUCODE) %>%
-    summarise(NM2 = sum(NM1, na.rm = TRUE),
-              SNV2 = sum(SNV1, na.rm = TRUE), .groups = 'drop')
-  
-  # Create AM2M
-  AM2M <- AMWM %>%
+  AM2M <- AMM %>% mutate(NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
+    group_by(CRUCODE) %>% summarise(NM2 = sum(NM1, na.rm = TRUE),
+              SNV2 = sum(SNV1, na.rm = TRUE), .groups = 'drop') %>%
     mutate(CRUCODES = CRUCODE,
            CRUISE = substr(trimws(as.character(CRUCODES)), 5, 5),
            CRUISE = case_when(
@@ -229,19 +189,12 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   
   # Sort and summarize again
   AM3M <- ABUND %>%
-    arrange(CRUCODE) %>%
     group_by(CRUCODE) %>%
     summarise(TOTALN = sum(NUMBER, na.rm = TRUE), SAMPLES = n(), .groups = 'drop')
   
-  # Create AM4M
-  AM4M <- left_join(AM3M, AM2M, by = "CRUCODE") %>%
-    mutate(YEAR = substr(CRUCODES, 1, 4),
-           #SAMPLES = _FREQ_,
-           SNVE = sqrt(SNV2)) #%>%
-    #select(-_TYPE_, -_FREQ_, -CRUCODES, -CRUISE)
-  
   # Create MEANS
-  MEANS <- AM4M %>%
+  MEANS <- left_join(AM3M, AM2M, by = "CRUCODE") %>%
+    mutate(YEAR = substr(CRUCODES, 1, 4), SNVE = sqrt(SNV2)) %>%
     mutate(NMEAN = NM2) %>%
     select(-NM2, -SNV2)
   
@@ -249,22 +202,17 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   MMEANS <- MEANS %>%
     select(-CRUCODES, -CRUISE)
   
-  # Print the final result
-  print(MMEANS) #line 389
-  
   # All strata combined
   STABUNDALL <- ABUND %>%
     mutate(STRATUM = 0) %>%
     arrange(STRATUM)
   
-  STAMALL <- STABUNDALL %>%
+  STAMWALL <- STABUNDALL %>%
     group_by(STRATUM) %>%
     summarise(TN = sum(NUMBER, na.rm = TRUE),
               NM = mean(NUMBER, na.rm = TRUE),
               NV = var(NUMBER, na.rm = TRUE),
-              NN = n(), .groups = 'drop')
-  
-  STAMWALL <- STAMALL %>%
+              NN = n(), .groups = 'drop') %>%
     mutate(FACTOR = 1,
            NM1 = FACTOR * NM,
            SNV1 = NV / NN * FACTOR^2) 
@@ -273,46 +221,20 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     group_by(STRATUM) %>%
     summarise(NM2 = sum(NM1, na.rm = TRUE),
               SNV2 = sum(SNV1, na.rm = TRUE), .groups = 'drop')
-  
-  #STAM2YALL <- STAM2ALL %>%
-  #  select(-_FREQ_, -_TYPE_)
-  
-  STAM3ALL <- STABUNDALL %>%
-    group_by(STRATUM) %>%
-    summarise(TOTALN = sum(NUMBER, na.rm = TRUE), .groups = 'drop')
-  
-  STAM4ALL <- STAM3ALL %>%
-    left_join(STAM2ALL, by = "STRATUM") %>%
-    mutate(
-           SNVE = sqrt(SNV2)) #%>%
-    #select(-_TYPE_, -_FREQ_)
-  
+
   # Arithmetic
-  STYMEANSALL <- STAM4ALL %>%
-    mutate(NMEAN = NM2, SAMPLES=STAMWALL$NN) %>%
-    select(-NM2, -SNV2)
-  
-  print(STYMEANSALL) #line 441
-  
-  # Sort data by STRATUM
-  ABUND <- ABUND %>% arrange(STRATUM)
-  
-  # Calculate means and sums
-  STAM <- ABUND %>%
+  STYMEANSALL <- STABUNDALL %>%
     group_by(STRATUM) %>%
-    summarise(TN = sum(NUMBER, na.rm = TRUE),
-              NM = mean(NUMBER, na.rm = TRUE),
-              NV = var(NUMBER, na.rm = TRUE),
-              NN = n())
-  
-  # Create STAMW
-  STAMW <- STAM %>%
-    mutate(FACTOR = 1,
-           NM1 = FACTOR * NM,
-           SNV1 = NV / NN * FACTOR^2)
-  
+    summarise(TOTALN = sum(NUMBER, na.rm = TRUE), .groups = 'drop') %>% 
+    left_join(STAM2ALL, by = "STRATUM") %>%
+    mutate(SNVE = sqrt(SNV2))  %>% mutate(NMEAN = NM2, SAMPLES=STAMWALL$NN) %>%
+    select(-NM2, -SNV2)
+
   # Calculate means for NM1 and SNV1
-  STAM2 <- STAMW %>%
+  STAM2 <- ABUND %>% group_by(STRATUM) %>%
+    summarise(TN = sum(NUMBER, na.rm = TRUE), NM = mean(NUMBER, na.rm = TRUE),
+              NV = var(NUMBER, na.rm = TRUE), NN = n()) %>%
+    mutate(FACTOR = 1, NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
     group_by(STRATUM) %>%
     summarise(NM2 = sum(NM1, na.rm = TRUE),
               SNV2 = sum(SNV1, na.rm = TRUE))
@@ -320,17 +242,11 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   # Prepare STAM2Y
   #STAM2Y <- STAM2 %>%
   #  select(-c(_FREQ_, _TYPE_))
-  
-  # Sort data by STRATUM again
-  ABUND <- ABUND %>% arrange(STRATUM)
-  
-  # Calculate total number
-  STAM3 <- ABUND %>%
-    group_by(STRATUM) %>%
-    summarise(TOTALN = sum(NUMBER, na.rm = TRUE), SAMPLES=n())
-  
+
   # Merge STAM3 and STAM2Y
-  STAM4 <- STAM3 %>%
+  STAM4 <- ABUND %>%
+    group_by(STRATUM) %>%
+    summarise(TOTALN = sum(NUMBER, na.rm = TRUE), SAMPLES=n()) %>%
     left_join(STAM2, by = "STRATUM") %>%
     mutate(#SAMPLES = n(),
            NMEAN = NM2,
@@ -339,74 +255,34 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   
   # Append to STYMEANS
   STYMEANS <- bind_rows(STYMEANSALL, STAM4) 
-  
-  # Print the final result
-  print(STYMEANS) #line 487
   ############LENGTHS######################
-  # Sort data
-  ABUNDALL <- ABUNDALL %>% arrange(YEAR, STRATUM, AREA)
-
   # Frequency table
   SAMPLESALL <- ABUNDALL %>%
     count(YEAR, STRATUM, AREA, name="COUNT") %>%
     ungroup()
-  
-  # Create YTEMPLTALL
-  YTEMPLTALL <- TEMPLATE
-  # Append data
-  YTEMPLTALL <- bind_rows(YTEMPLTALL, LENG)
-  
-  # Create LENGYALL
-  LENGYALL <- YTEMPLTALL %>%
-    mutate(YEAR = "ALLC", LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
-    arrange(YEAR, STRATUM, LENGA)
-  
-  # Summarize frequency
-  LENGY1ALL <- LENGYALL %>%
-    group_by(YEAR, STRATUM, LENGA) %>%
-    summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop')
-  
+
   # Merge data
-  LENG2 <- LENGY1ALL %>%
+  LENG2 <- TEMPLATE %>% bind_rows(LENG) %>%
+    mutate(YEAR = "ALLC", LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
+    group_by(YEAR, STRATUM, LENGA) %>%
+    summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop') %>%
     inner_join(SAMPLESALL, by = c("YEAR", "STRATUM")) %>%
     filter(SUM > 0)
   
   LENG2$FACTOR <- unname(unlist(Map(factor_assignment, LENG2$AREA, LENG2$STRATUM)))
-  # Calculate mean
-  LENG2 <- LENG2 %>%
-    mutate(MEAN1 = FACTOR * (SUM / COUNT))
-  
-  # Summarize mean
-  LENGY3ALL <- LENG2 %>%
-    group_by(YEAR, LENGA) %>%
-    summarise(MEANS = sum(MEAN1, na.rm = TRUE), .groups = 'drop')
-  
-  # Transpose data
-  TRANSY1ALL <- LENGY3ALL %>%
-    pivot_wider(names_from = LENGA, values_from = MEANS)
-  
-  # Replace NA with 0
-  ZEROSYALL <- TRANSY1ALL %>%
-    mutate(across(where(is.numeric), ~ replace_na(., 0)))
   
   # Transpose again
-  TRANSY2AALL <- ZEROSYALL %>%
+  TRANSY2AALL <- LENG2 %>%
+    mutate(MEAN1 = FACTOR * (SUM / COUNT)) %>% group_by(YEAR, LENGA) %>%
+    summarise(MEANS = sum(MEAN1, na.rm = TRUE), .groups = 'drop') %>%
+    pivot_wider(names_from = LENGA, values_from = MEANS) %>%
+    mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%
     pivot_longer(-YEAR, names_to = "LENGTH", values_to = "MEANS")
   TRANSY2AALL$LENGTH <- as.integer(TRANSY2AALL$LENGTH)
   
-  # Create TRANSY2AALL
-  #TRANSY2AALL <- TRANSY2ALL %>%
-  #mutate(LENGTH = ifelse(substr(_NAME_, 1, 1) == "_", substr(_NAME_, 2, 3), _NAME_)) %>%
-  #select(-_NAME_)
-  
-  # Sort data
-  TRANSY2AALL <- TRANSY2AALL %>% arrange(YEAR, LENGTH) %>%
-    group_by(YEAR) %>%
-    complete(LENGTH = full_seq(c(1, max(LENGTH)), period = 1), fill = list(value = 0)) %>%
-    ungroup()
-  
-  # Final transpose
-  TRANSY3ALL <- TRANSY2AALL %>%
+  TRANSY3ALL <- TRANSY2AALL %>% group_by(YEAR) %>%
+    complete(LENGTH = full_seq(c(1, max(LENGTH)), period = 1),
+             fill = list(value = 0)) %>% ungroup() %>%
     pivot_wider(names_from = LENGTH, values_from = MEANS)
   
   # Final merge
@@ -414,9 +290,6 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     inner_join(TRANSY3ALL, by = "YEAR") %>%
     mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%
     filter(YEAR != "1901")
-  
-  # Print final result
-  print(FINALYALL) #line 560
   
   # PROC FREQ;
   # TABLE YEAR*STRATUM*AREA / NOPRINT OUT=SAMPLES;
@@ -426,8 +299,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   
   # DATA YTEMPLT;
   # SET TEMPLATE;
-  ytemplt <- TEMPLATE
-  ytemplt <- bind_rows(ytemplt, LENG)
+  ytemplt <- TEMPLATE %>% bind_rows(ytemplt, LENG)
   # PROC APPEND BASE=YTEMPLT DATA=LENG;
   # In R, this is simply row-binding.
   #ytemplt$YEAR <- as.integer(ytemplt$YEAR)
@@ -459,19 +331,12 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     lengy$STRATUM <- sample(LETTERS[1:3], nrow(lengy), replace = TRUE)
   }
   
-  lengy_sorted <- lengy %>%
-    arrange(YEAR, STRATUM, LENGA)
-  
   # PROC MEANS NOPRINT;
   # BY YEAR STRATUM LENGA;
   # VAR FREQUENCY;
   # OUTPUT OUT=LENGY1 SUM=SUM;
-  lengy1 <- lengy_sorted %>%
-    group_by(YEAR, STRATUM, LENGA) %>%
-    summarise(
-      SUM = sum(FREQUENCY, na.rm = TRUE), # na.rm=TRUE handles missing values like SAS's default
-      .groups = 'drop' # Drop grouping structure after summarizing
-    )
+  lengy1 <- lengy %>% group_by(YEAR, STRATUM, LENGA) %>%
+    summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop')
   
   # DATA LENG2;
   # MERGE LENGY1 SAMPLES;
@@ -486,57 +351,22 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   # Assuming 'FACTOR' is a column in 'leng2' (which came from TEMPLATE/LENG via ytemplt).
   leng2$FACTOR <- unname(unlist(Map(factor_assignment, leng2$AREA, leng2$STRATUM)))
   
-  leng2 <- leng2 %>%
-    mutate(
-      MEAN1 = FACTOR * (SUM / COUNT)
-    )
-  
-  # PROC SORT;
-  # BY YEAR LENGA;
-  leng2_sorted_by_year_lenga <- leng2 %>%
-    arrange(YEAR, LENGA)
-  
-  # PROC MEANS NOPRINT;
-  # BY YEAR LENGA;
-  # VAR MEAN1;
-  # OUTPUT OUT=LENGY3 SUM=MEANS;
-  LENGY3 <- leng2_sorted_by_year_lenga %>%
-    group_by(YEAR, LENGA) %>%
-    summarise(
-      MEANS = sum(MEAN1, na.rm = TRUE),
-      .groups = 'drop'
-    )
-  
   # --- Displaying results (optional) ---
-  print("abund_sorted (first few rows):")
-  #print(head(abund_sorted))
-  
-  print("samples (first few rows):")
-  #print(head(samples))
-  
-  print("ytemplt (first few rows):")
-  #print(head(ytemplt))
   
   print("lengy (first few rows):")
   print(head(lengy))
   
-  print("lengy1 (first few rows):")
-  print(head(lengy1))
-  
   print("leng2 (first few rows):")
   print(head(leng2))
   
-  print("lengy3 (first few rows):")
-  #print(head(lengy3)) #line 593
-  # Transpose LENGY3
-  TRANSY1 <- LENGY3 %>% #this matches! :) (need to flesh out/expand colnames)
-    group_by(YEAR) %>%
-    complete(LENGA = full_seq(c(1, max(LENGA)), period = 1), fill = list(value = 0)) %>%
-    #pivot_longer(cols = "MEANS", names_to = "LENGA", values_to = "MEANS") %>%
-    pivot_wider(names_from = LENGA, values_from = MEANS)
-  
   # Replace NA with 0
-  ZEROSY <- TRANSY1 %>% #matches!
+  ZEROSY <- leng2 %>% mutate(MEAN1 = FACTOR * (SUM / COUNT)) %>% 
+    group_by(YEAR, LENGA) %>%
+    summarise(MEANS = sum(MEAN1, na.rm = TRUE), .groups = 'drop') %>% #this matches! :) (need to flesh out/expand colnames)
+    group_by(YEAR) %>%
+    complete(LENGA = full_seq(c(1, max(LENGA)), period = 1),
+             fill = list(value = 0)) %>%
+    pivot_wider(names_from = LENGA, values_from = MEANS) %>% #matches!
     mutate(across(where(is.numeric), ~ifelse(is.na(.), 0, .)))
   
   # Transpose ZEROSY 
@@ -559,47 +389,30 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
       SNVE = as.numeric(SNVE)
     )
   
-  print(FINALY)
-  
-  # By CRUISE
-  ABUND <- ABUND %>%
-    arrange(CRUCODE, STRATUM, AREA)
-  
   SAMPLES <- ABUND %>%
     count(CRUCODE, STRATUM, AREA, name = "COUNT")
-  
-  CRUTMPLT <- bind_rows(TEMPLATE, LENG)
-  LENGA <- CRUTMPLT %>%
+
+  LENGA <-  bind_rows(TEMPLATE, LENG) %>%
     mutate(
       LENGA = as.character(LENGTH),
       FREQUENCY = FREQUENCY / MINOUT * 20
-    ) %>%
-    arrange(CRUCODE, STRATUM, LENGA)
+    )
   
   LENG1 <- LENGA %>%
     group_by(CRUCODE, STRATUM, LENGA) %>%
     summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop')
   
   SAMPLES$FACTOR <- unname(unlist(Map(factor_assignment, SAMPLES$AREA, SAMPLES$STRATUM)))
-  LENG2 <- LENG1 %>%
-    full_join(SAMPLES, by = c("CRUCODE", "STRATUM")) %>%
-    filter(SUM > 0) %>%
-    mutate(MEAN1 = FACTOR * (SUM / COUNT)) %>%
+  
+  ZEROS <- LENG1 %>% full_join(SAMPLES, by = c("CRUCODE", "STRATUM")) %>%
+    filter(SUM > 0) %>% mutate(MEAN1 = FACTOR * (SUM / COUNT)) %>%
     group_by(CRUCODE, LENGA) %>%
-    summarise(MEANS = sum(MEAN1, na.rm = TRUE), .groups = 'drop')
-  
-  TRANS1 <- LENG2 %>%
-    pivot_wider(names_from = LENGA, values_from = MEANS)
-  
-  ZEROS <- TRANS1 %>%
+    summarise(MEANS = sum(MEAN1, na.rm = TRUE), .groups = 'drop') %>%
+    pivot_wider(names_from = LENGA, values_from = MEANS) %>%
     mutate(across(where(is.numeric), ~ifelse(is.na(.), 0, .)))
   
   TRANS2 <- ZEROS %>% #pick back up here! 7/30 probably similar fix as above...
     pivot_longer(cols = -CRUCODE, names_to = "NAME", values_to = "MEANS") #%>%
-    #mutate(LENGTH = ifelse(startsWith(NAME, "_"), substr(NAME, 2, 4), NAME)) %>%
-    #select(-NAME) %>%
-    #arrange(CRUCODE, LENGTH) %>%
-    #pivot_wider(names_from = LENGTH, values_from = MEANS)
   
   FINAL <- MEANS %>%
     full_join(ZEROS, by = "CRUCODE") %>%
@@ -608,59 +421,24 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     select(-CRUCODE, -CRUCODES)
   
   print(FINAL) #matches!
-  
-  # All STRATA COMBINED
-  STABUNDALL <- STABUNDALL %>%
-    arrange(STRATUM)
-  
-  STSAMPLESALL <- STABUNDALL %>%
-    count(STRATUM, name="COUNT")
-  
-  STYTEMPLTALL <- bind_rows(TEMPLATE, LENG)
-  STLENGYALL <- STYTEMPLTALL %>%
-    mutate(
-      STRATUM = 0,
-      LENGA = as.character(LENGTH),
-      FREQUENCY = FREQUENCY / MINOUT * 20
-    ) %>%
-    arrange(STRATUM, LENGA)
-  
-  STLENGY1ALL <- STLENGYALL %>%
+
+  STSAMPLESALL <- STABUNDALL %>% count(STRATUM, name="COUNT")
+
+  STLENG2 <- bind_rows(TEMPLATE, LENG) %>%
+    mutate(STRATUM = 0, LENGA = as.character(LENGTH), FREQUENCY = FREQUENCY / MINOUT * 20) %>%
     group_by(STRATUM, LENGA) %>%
-    summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop')
-  
-  STLENG2 <- STLENGY1ALL %>%
+    summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop') %>%
     full_join(STSAMPLESALL, by = "STRATUM") %>%
     filter(SUM > 0) %>%
     mutate(FACTOR = 1, MEAN1 = FACTOR * (SUM / COUNT)) %>%
     group_by(STRATUM, LENGA) %>%
     summarise(MEANS = sum(MEAN1, na.rm = TRUE), .groups = 'drop')
   
-  STTRANSY1ALL <- STLENG2 %>%
-    pivot_wider(names_from = LENGA, values_from = MEANS)
-  
-  STZEROSYALL <- STTRANSY1ALL %>%
-    mutate(across(where(is.numeric), ~ifelse(is.na(.), 0, .)))
-  
-  STTRANSY2AALL <- STZEROSYALL %>% #matches!
-    pivot_longer(cols = -STRATUM, names_to = "LENGTH", values_to = "MEANS") #%>%
-    #mutate(LENGTH = ifelse(startsWith(NAME, "_"), substr(NAME, 2, 4), NAME)) %>%
-    #select(-NAME) %>%
-    #arrange(STRATUM, LENGTH) %>%
-    #pivot_wider(names_from = LENGTH, values_from = MEANS)
-  
-  # Data transformation
-  #STTRANSY2AALL <- STTRANSY2ALL %>%
-  #  rowwise() %>%
-  #  mutate(LENGTH = ifelse(substr(_NAME_, 1, 1) == "_", substr(_NAME_, 2, 4), _NAME_)) %>%
-  #  select(-_NAME_)
-  
-  # Sorting
-  STTRANSY2AALL <- STTRANSY2AALL %>%
-    arrange(STRATUM, LENGTH)
-  
   # Transpose the data
-  STTRANSY3ALL <- STTRANSY2AALL %>% #MATCHES!
+  STTRANSY3ALL <- STLENG2 %>%
+    pivot_wider(names_from = LENGA, values_from = MEANS) %>%
+    mutate(across(where(is.numeric), ~ifelse(is.na(.), 0, .))) %>% #matches!
+    pivot_longer(cols = -STRATUM, names_to = "LENGTH", values_to = "MEANS") %>%
     pivot_wider(names_from = LENGTH, values_from = MEANS) #line 760
   
   STFINALYALL <- STYMEANSALL %>%
@@ -670,9 +448,6 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   print(STFINALYALL) #MATCHES!
   
   #BY STRATUM - NOT WEIGHTED BY STRATUM FACTORS*******************;
-  # Sort data
-  ABUND <- ABUND %>% arrange(STRATUM)
-  
   # Frequency table
   STSAMPLES <- ABUND %>%
     group_by(STRATUM) %>%
@@ -681,44 +456,19 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   
   # Append data
   STYTEMPLT <- TEMPLATE
-  STYTEMPLT <- bind_rows(STYTEMPLT, LENG)
-  
-  # Create STLENGY
-  STLENGY <- STYTEMPLT %>%
-    mutate(LENGA = LENGTH,
-           FREQUENCY = FREQUENCY / MINOUT * 20) %>%
-    group_by(STRATUM, LENGA) %>%
-    summarise(SUM = sum(FREQUENCY), .groups = 'drop')
-  
-  # Merge with STSAMPLES
-  STLENG2 <- STLENGY %>% #MATCHES
-    left_join(STSAMPLES, by = "STRATUM") %>%
-    filter(SUM > 0) %>%
-    mutate(FACTOR = 1,
-           MEAN1 = FACTOR * (SUM / COUNT))
-  
-  # Calculate means
-  STLENGY3 <- STLENG2 %>%
-    group_by(STRATUM, LENGA) %>%
-    summarise(MEANS = sum(MEAN1), .groups = 'drop')
-  
-  # Transpose data
-  STTRANSY1 <- STLENGY3 %>%
-    pivot_wider(names_from = LENGA, values_from = MEANS)
-  
-  # Replace NA with 0
-  STZEROSY <- STTRANSY1 %>%
-    mutate(across(where(is.numeric), ~ replace_na(., 0)))
-  
-  # Prepare STTRANSY2
-  STTRANSY2 <- STZEROSY %>%
-    pivot_longer(-STRATUM, names_to = "LENGTH", values_to = "MEANS") #%>%
-    #mutate(LENGTH = ifelse(substr(_NAME_, 1, 1) == "_", substr(_NAME_, 2, 3), _NAME_)) %>%
-    #select(-_NAME_)
   
   # Sort and transpose again
-  STTRANSY3 <- STTRANSY2 %>%
-    arrange(STRATUM, LENGTH) %>%
+  STTRANSY3 <- bind_rows(STYTEMPLT, LENG) %>%
+    mutate(LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
+    group_by(STRATUM, LENGA) %>% summarise(SUM = sum(FREQUENCY),
+                                           .groups = 'drop') %>% #MATCHES
+    left_join(STSAMPLES, by = "STRATUM") %>% filter(SUM > 0) %>%
+    mutate(FACTOR = 1, MEAN1 = FACTOR * (SUM / COUNT)) %>%
+    group_by(STRATUM, LENGA) %>%
+    summarise(MEANS = sum(MEAN1), .groups = 'drop') %>%
+    pivot_wider(names_from = LENGA, values_from = MEANS) %>%
+    mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%
+    pivot_longer(-STRATUM, names_to = "LENGTH", values_to = "MEANS")  %>%
     pivot_wider(names_from = LENGTH, values_from = MEANS)
   
   # Final merge and cleanup
@@ -738,70 +488,34 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   # Append final data
   STFINALY <- bind_rows(STFINALY, STFINALY1)
   
-  # Print final data
-  print(STFINALY)
-  
   #BY YEAR - WEIGHTED BY STRATUM FACTORS***STRAIGHT LFD, NOT CPUE****************;
-  # Sort data
-  ABUNDALL <- ABUNDALL %>% arrange(STRATUM, AREA)
-  
-  # Frequency table
-  SA <- ABUNDALL %>%
-    count(STRATUM, AREA, name="COUNT") %>%
-    ungroup() %>%
-    mutate(PERCENT = COUNT / sum(COUNT) * 100) #%>%
-    #select(-n)
   
   # Create LFWSA
-  LFWSA <- SA %>%
+  LFWSA <- ABUNDALL %>%
+    count(STRATUM, AREA, name="COUNT") %>%
+    ungroup() %>%
+    mutate(PERCENT = COUNT / sum(COUNT) * 100)  %>%
     mutate(YEAR = "ALLC") %>%
     select(-PERCENT, -COUNT)
-  
-  # Append data
-  LFWYTEMPLTALL <- bind_rows(TEMPLATE, LENG)
-  
-  # Create LFWLENGYALL
-  LFWLENGYALL <- LFWYTEMPLTALL %>%
-    mutate(YEAR = "ALLC",
-           LENGA = LENGTH,
-           FREQUENCY = FREQUENCY / MINOUT * 20) %>%
-    arrange(YEAR, STRATUM, LENGA)
-  
-  # Summarize frequency
-  LFWLENGY1ALL <- LFWLENGYALL %>%
-    group_by(YEAR, STRATUM, LENGA) %>%
-    summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop')
-  
   LFWSA$FACTOR <- unname(unlist(Map(factor_assignment, LFWSA$AREA, LFWSA$STRATUM)))
-  # Merge data
-  LFWLENG2 <- LFWLENGY1ALL %>%
-    inner_join(LFWSA, by = c("YEAR", "STRATUM")) %>%
-    filter(SUM > 0) %>%
-    mutate(WSUM = FACTOR * SUM)
-  
-  # Summarize WSUM
-  LFWLENGY3ALL <- LFWLENG2 %>%
-    group_by(YEAR, LENGA) %>%
-    summarise(WSUMSALL = sum(WSUM, na.rm = TRUE), .groups = 'drop')
-  
-  # Transpose data
-  LFWTRANSY1ALL <- LFWLENGY3ALL %>%
-    pivot_wider(names_from = LENGA, values_from = WSUMSALL)
   
   # Replace NA with 0
-  LFWZEROSYALL <- LFWTRANSY1ALL %>%
+  LFWZEROSYALL <- bind_rows(TEMPLATE, LENG) %>%
+    mutate(YEAR = "ALLC", LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
+    group_by(YEAR, STRATUM, LENGA) %>%
+    summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop') %>%
+    inner_join(LFWSA, by = c("YEAR", "STRATUM")) %>%
+    filter(SUM > 0) %>%
+    mutate(WSUM = FACTOR * SUM) %>%
+    group_by(YEAR, LENGA) %>%
+    summarise(WSUMSALL = sum(WSUM, na.rm = TRUE), .groups = 'drop') %>%
+    pivot_wider(names_from = LENGA, values_from = WSUMSALL) %>%
     mutate(across(where(is.numeric), ~ replace_na(., 0)))
   
   # Final merge
   LFWFINALYALL <- YMEANSALL %>% #MATCHES
     left_join(LFWZEROSYALL, by = "YEAR") %>%
     mutate(across(where(is.numeric), ~ replace_na(., 0))) %>% select(-NMEAN, -SNVE)
-  
-  # Print final result
-  print(LFWFINALYALL)
-  
-  # Sort data
-  ABUND <- ABUND %>% arrange(YEAR, STRATUM, AREA)
   
   # Frequency table
   YSA <- ABUND %>%
@@ -813,16 +527,9 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   
   # Append data
   YLSTTEMPLT$YEAR <- as.integer(YLSTTEMPLT$YEAR)
-  YLSTTEMPLT <- bind_rows(YLSTTEMPLT, LENG)
   
-  # Create YLSTLENGY
-  YLSTLENGY <- YLSTTEMPLT %>%
-    mutate(LENGA = LENGTH,
-           FREQUENCY = FREQUENCY / MINOUT * 20) %>%
-    arrange(YEAR, STRATUM, LENGA)
-  
-  # Summarize data
-  YLSTLENGY1 <- YLSTLENGY %>%
+  YLSTLENGY1 <- bind_rows(YLSTTEMPLT, LENG) %>%
+    mutate(LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
     group_by(YEAR, STRATUM, LENGA) %>%
     summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop')
   
@@ -831,22 +538,13 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     filter(SUM > 0)
   
   YLSTLENG2$FACTOR <- unname(unlist(Map(factor_assignment, YLSTLENG2$AREA, YLSTLENG2$STRATUM)))
-  # Macro equivalent
-  YLSTLENG2 <- YLSTLENG2 %>%
-    mutate(STSUM = FACTOR * SUM) %>%
-    arrange(YEAR, LENGA)
-  
-  # Summarize again
-  YLSTLENGY3 <- YLSTLENG2 %>%
-    group_by(YEAR, LENGA) %>%
-    summarise(STSUMS = sum(STSUM, na.rm = TRUE), .groups = 'drop')
-  
-  # Transpose data
-  YLSTTRANSY1 <- YLSTLENGY3 %>%
-    pivot_wider(names_from = LENGA, values_from = STSUMS)
   
   # Replace NA with 0
-  YLSTZEROSY <- YLSTTRANSY1 %>%
+  YLSTZEROSY <- YLSTLENG2 %>%
+    mutate(STSUM = FACTOR * SUM) %>%
+    group_by(YEAR, LENGA) %>%
+    summarise(STSUMS = sum(STSUM, na.rm = TRUE), .groups = 'drop') %>%
+    pivot_wider(names_from = LENGA, values_from = STSUMS) %>%
     mutate(across(everything(), ~ replace_na(., 0))) %>%
     filter(YEAR != "1901")
   
@@ -857,54 +555,29 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   
   # Final data structure
   YLSTFINALY <- rbind(LFWFINALYALL, YLSTFINALY1) 
-  
-  # Print the final result
-  print(YLSTFINALY)
+
   #BY YEAR - NOT WEIGHTED BY STRATUM FACTORS***STRAIGHT LFD, NOT CPUE****************;
   #NOT TESTED
   
   # Assuming ABUNDALL, TEMPLATE, LENG, and AM4 are data frames in R
   
-  # PROC MEANS equivalent
-  abundall_summary <- ABUNDALL %>%
-    summarise(N = n(), SUM = sum(NUMBER, na.rm = TRUE))
-  
   # Create LFALLTOTAL data frame
-  LFALLTOTAL <- abundall_summary %>%
+  LFALLTOTAL <- ABUNDALL %>%
+    summarise(N = n(), SUM = sum(NUMBER, na.rm = TRUE)) %>%
     mutate(YEAR = "ALLC") #%>%
-    #select(-_TYPE_, -_FREQ_)
-  
-  # Append LENG to TEMPLATE
-  LFYTEMPLTALL <- bind_rows(TEMPLATE, LENG)
-  
-  # Create LFLENGYALL data frame
-  LFLENGYALL <- LFYTEMPLTALL %>%
-    mutate(YEAR = "ALLC", LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20)
-  
-  # Sort and summarize by YEAR and LENGA
-  LFLENGY1ALL <- LFLENGYALL %>%
-    group_by(YEAR, LENGA) %>%
-    summarise(SUM = sum(FREQUENCY, na.rm = TRUE)) %>%
-    ungroup()
-  
-  # Transpose LFLENGY1ALL
-  LFTRANSY1ALL <- LFLENGY1ALL %>%
-    pivot_wider(names_from = LENGA, values_from = SUM)
   
   # Replace NA with 0
-  LFZEROSYALL <- LFTRANSY1ALL %>%
+  LFZEROSYALL <- bind_rows(TEMPLATE, LENG) %>%
+    mutate(YEAR = "ALLC", LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
+    group_by(YEAR, LENGA) %>%
+    summarise(SUM = sum(FREQUENCY, na.rm = TRUE)) %>%
+    ungroup() %>%
+    pivot_wider(names_from = LENGA, values_from = SUM) %>%
     mutate(across(where(is.numeric), ~ replace_na(., 0)))
   
   # Merge LFALLTOTAL and LFZEROSYALL
   LFFINALYALL <- full_join(LFALLTOTAL, LFZEROSYALL, by = "YEAR") %>%
     mutate(across(where(is.numeric), ~ replace_na(., 0)))
-  
-  # Print the final data frame
-  print(LFFINALYALL)
-  
-  # Sort ABUND by YEAR
-  ABUND <- ABUND %>%
-    arrange(YEAR)
   
   # Create YLSAMPLES data frame
   YLSAMPLES <- ABUND %>%
@@ -912,14 +585,10 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   
   # Append LENG to TEMPLATE
   TEMPLATE$YEAR <- as.integer(TEMPLATE$YEAR)
-  YLTEMPLT <- bind_rows(TEMPLATE, LENG)
-  
-  # Create YLLENGY data frame
-  YLLENGY <- YLTEMPLT %>%
-    mutate(LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20)
   
   # Sort and summarize by YEAR and LENGA
-  YLLENGY1 <- YLLENGY %>%
+  YLLENGY1 <- bind_rows(TEMPLATE, LENG) %>%
+    mutate(LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
     group_by(YEAR, LENGA) %>%
     summarise(SUM = sum(FREQUENCY, na.rm = TRUE)) %>%
     ungroup()
@@ -939,12 +608,9 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   YLLENGY2 <- rbind(expanded_df, YLLENGY2) %>% complete(YEAR, LENGA, fill = list(SUM = 0, n = 0)) 
   YLLENGY2 <- YLLENGY2[YLLENGY2$YEAR > 1901,]
   
-  # Transpose YLLENGY2
-  YLTRANSY1 <- YLLENGY2 %>%
-    pivot_wider(names_from = LENGA, values_from = SUM)
-  
   # Replace NA with 0 and remove specific year
-  YLZEROSY <- YLTRANSY1 %>%
+  YLZEROSY <- YLLENGY2 %>%
+    pivot_wider(names_from = LENGA, values_from = SUM) %>%
     mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%
     filter(YEAR != "1901")
   
@@ -960,9 +626,6 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   
   # Append YLFINALY1 to YLFINALY
   YLFINALY <- rbind(YLFINALY, YLFINALY1)
-  
-  # Print the final data frame
-  print(YLFINALY)
 
 return(list(FINALY, STFINALY, FINAL, YLFINALY, YLSTFINALY))} #finaly STFINALY
 
