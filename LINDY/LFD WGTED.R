@@ -296,21 +296,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   # NOPRINT means we only need the output dataset 'SAMPLES' which contains counts.
   SAMPLES <- ABUND %>%
     count(YEAR, STRATUM, AREA, name = "COUNT") # 'name' specifies the column name for the counts
-  
-  # DATA YTEMPLT;
-  # SET TEMPLATE;
-  ytemplt <- TEMPLATE %>% bind_rows(ytemplt, LENG)
-  # PROC APPEND BASE=YTEMPLT DATA=LENG;
-  # In R, this is simply row-binding.
-  #ytemplt$YEAR <- as.integer(ytemplt$YEAR)
-  
-  # DATA LENGY;
-  # LENGTH YEAR $4; # R handles types dynamically, no direct equivalent needed for length
-  # LENGTH LENGA $3; # R handles types dynamically, no direct equivalent needed for length
-  # SET YTEMPLT;
-  # YEAR=(INT(CRUCODE*.1));
-  # LENGA=LENGTH;
-  # FREQUENCY=FREQUENCY/MINOUT*20;
+
   lengy <- LENG %>%
     mutate(
       YEAR = floor(CRUCODE * 0.1), # INT() in SAS is floor() in R for positive numbers
@@ -369,10 +355,6 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     pivot_wider(names_from = LENGA, values_from = MEANS) %>% #matches!
     mutate(across(where(is.numeric), ~ifelse(is.na(.), 0, .)))
   
-  # Transpose ZEROSY 
-  TRANSY2 <- ZEROSY %>% #MATCHES
-    pivot_longer(cols = -YEAR, names_to = "NAME", values_to = "MEANS") 
-  
   # Merge with AM4 and filter
   FINALY1 <- AM4 %>% #matches here! LINE 619
     full_join(ZEROSY, by = "YEAR") %>%
@@ -411,20 +393,16 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     pivot_wider(names_from = LENGA, values_from = MEANS) %>%
     mutate(across(where(is.numeric), ~ifelse(is.na(.), 0, .)))
   
-  TRANS2 <- ZEROS %>% #pick back up here! 7/30 probably similar fix as above...
-    pivot_longer(cols = -CRUCODE, names_to = "NAME", values_to = "MEANS") #%>%
-  
   FINAL <- MEANS %>%
     full_join(ZEROS, by = "CRUCODE") %>%
     mutate(across(where(is.numeric), ~ifelse(is.na(.), 0, .))) %>%
     filter(CRUCODE != 19011) %>%
     select(-CRUCODE, -CRUCODES)
   
-  print(FINAL) #matches!
-
   STSAMPLESALL <- STABUNDALL %>% count(STRATUM, name="COUNT")
 
-  STLENG2 <- bind_rows(TEMPLATE, LENG) %>%
+  # Transpose the data
+  STTRANSY3ALL <- bind_rows(TEMPLATE, LENG) %>%
     mutate(STRATUM = 0, LENGA = as.character(LENGTH), FREQUENCY = FREQUENCY / MINOUT * 20) %>%
     group_by(STRATUM, LENGA) %>%
     summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop') %>%
@@ -432,10 +410,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     filter(SUM > 0) %>%
     mutate(FACTOR = 1, MEAN1 = FACTOR * (SUM / COUNT)) %>%
     group_by(STRATUM, LENGA) %>%
-    summarise(MEANS = sum(MEAN1, na.rm = TRUE), .groups = 'drop')
-  
-  # Transpose the data
-  STTRANSY3ALL <- STLENG2 %>%
+    summarise(MEANS = sum(MEAN1, na.rm = TRUE), .groups = 'drop') %>%
     pivot_wider(names_from = LENGA, values_from = MEANS) %>%
     mutate(across(where(is.numeric), ~ifelse(is.na(.), 0, .))) %>% #matches!
     pivot_longer(cols = -STRATUM, names_to = "LENGTH", values_to = "MEANS") %>%
@@ -444,9 +419,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   STFINALYALL <- STYMEANSALL %>%
     full_join(STTRANSY3ALL, by = "STRATUM") %>%
     mutate(across(where(is.numeric), ~ replace_na(., 0)))
-  
-  print(STFINALYALL) #MATCHES!
-  
+
   #BY STRATUM - NOT WEIGHTED BY STRATUM FACTORS*******************;
   # Frequency table
   STSAMPLES <- ABUND %>%
@@ -456,7 +429,6 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   
   # Append data
   STYTEMPLT <- TEMPLATE
-  
   # Sort and transpose again
   STTRANSY3 <- bind_rows(STYTEMPLT, LENG) %>%
     mutate(LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
@@ -524,7 +496,6 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   
   # Create YLSTTEMPLT
   YLSTTEMPLT <- TEMPLATE
-  
   # Append data
   YLSTTEMPLT$YEAR <- as.integer(YLSTTEMPLT$YEAR)
   
@@ -536,7 +507,6 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   # Merge data
   YLSTLENG2 <- left_join(YSA, YLSTLENGY1, by = c("YEAR", "STRATUM")) %>%
     filter(SUM > 0)
-  
   YLSTLENG2$FACTOR <- unname(unlist(Map(factor_assignment, YLSTLENG2$AREA, YLSTLENG2$STRATUM)))
   
   # Replace NA with 0
@@ -558,13 +528,10 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
 
   #BY YEAR - NOT WEIGHTED BY STRATUM FACTORS***STRAIGHT LFD, NOT CPUE****************;
   #NOT TESTED
-  
-  # Assuming ABUNDALL, TEMPLATE, LENG, and AM4 are data frames in R
-  
   # Create LFALLTOTAL data frame
   LFALLTOTAL <- ABUNDALL %>%
     summarise(N = n(), SUM = sum(NUMBER, na.rm = TRUE)) %>%
-    mutate(YEAR = "ALLC") #%>%
+    mutate(YEAR = "ALLC")
   
   # Replace NA with 0
   LFZEROSYALL <- bind_rows(TEMPLATE, LENG) %>%
@@ -585,7 +552,6 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   
   # Append LENG to TEMPLATE
   TEMPLATE$YEAR <- as.integer(TEMPLATE$YEAR)
-  
   # Sort and summarize by YEAR and LENGA
   YLLENGY1 <- bind_rows(TEMPLATE, LENG) %>%
     mutate(LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
@@ -604,12 +570,10 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   )
   df$LENGA <- list(c(1:160))
   expanded_df <- unnest(df, LENGA)
-  
-  YLLENGY2 <- rbind(expanded_df, YLLENGY2) %>% complete(YEAR, LENGA, fill = list(SUM = 0, n = 0)) 
-  YLLENGY2 <- YLLENGY2[YLLENGY2$YEAR > 1901,]
-  
+
   # Replace NA with 0 and remove specific year
-  YLZEROSY <- YLLENGY2 %>%
+  YLZEROSY <- rbind(expanded_df, YLLENGY2) %>%
+    complete(YEAR, LENGA, fill = list(SUM = 0, n = 0)) %>%
     pivot_wider(names_from = LENGA, values_from = SUM) %>%
     mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%
     filter(YEAR != "1901")
@@ -643,10 +607,11 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
     "Striped bass" = "MS"
   )
   FIRST <- read.dbf(file.path(mypath, paste0(value_map[myspp],"ABUN.dbf")))
+  if(!grepl("Lobster", myspp)) {
+    SECOND <- read.dbf(file.path(mypath, paste0(value_map[myspp],"LENG.dbf"))) 
+  }
   
-  if (myspp == "Black drum") {
-    SECOND <- read.dbf(file.path(mypath, "PCLENG.dbf"))
-  } else if (myspp == "Lobster - F (GE53mm)") {
+  if (myspp == "Lobster - F (GE53mm)") {
     #LOBSTER
     #Female index & catch at length (CAL), GE 53mm+ (i.e., lengths equal to 53 mm and greater)
     SECOND <- read.dbf(file.path(mypath, "HAXLENG.dbf"))
@@ -657,20 +622,6 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
     SECOND <- read.dbf(file.path(mypath, "HAXLENG.dbf"))
     SECOND <- SECOND[SECOND$SEX==1 & SECOND$LENGTH >= 53,]	
     SECOND$SEX <- NULL
-  } else if (myspp=="Scup") {
-    SECOND <- read.dbf(file.path(mypath, "SCLENG.dbf"))
-  } else if (myspp=="Spot") {
-    SECOND <- read.dbf(file.path(mypath, "LXLENG.dbf"))
-  } else if (myspp=="Summer flounder") {
-    SECOND <- read.dbf(file.path(mypath, "PDLENG.dbf"))
-  } else if (myspp=="Tautog") {
-    SECOND <- read.dbf(file.path(mypath, "TOLENG.dbf"))
-  } else if (myspp=="Weakfish") {
-    SECOND <- read.dbf(file.path(mypath, "CRLENG.dbf"))
-  } else if (myspp=="Atl croaker") {
-    SECOND <- read.dbf(file.path(mypath, "MULENG.dbf"))
-  } else if (myspp=="Striped bass") {
-    SECOND <- read.dbf(file.path(mypath, "MSLENG.dbf"))
   }
   
   LENG1 <- SECOND #%>% select(-COMMON, -LATIN)
