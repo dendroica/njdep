@@ -966,41 +966,48 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
 
 return(list(FINALY, STFINALY, FINAL, YLFINALY, YLSTFINALY))} #finaly STFINALY
 
-LFD <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
-  if (spp == "Black drum") {
-    FIRST <- read.dbf(file.path(mypath, "PCABUN.dbf"))
+LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
+  value_map <- c(
+    "Black drum" = "PC",
+    "Lobster - F (GE53mm)" = "HA53F",
+    "Lobster - M (GE53mm)" = "HA53M",
+    "Scup" = "SC",
+    "Spot" = "LX",
+    "Summer flounder" = "PD",
+    "Tautog" = "TO",
+    "Weakfish" = "CR",
+    "Atl croaker" = "MU",
+    "Striped bass" = "MS"
+  )
+  FIRST <- read.dbf(file.path(mypath, paste0(value_map[myspp],"ABUN.dbf")))
+  
+  if (myspp == "Black drum") {
     SECOND <- read.dbf(file.path(mypath, "PCLENG.dbf"))
-  } else if (spp == "Lobster - F (GE53mm)") {
+  } else if (myspp == "Lobster - F (GE53mm)") {
     #LOBSTER
     #Female index & catch at length (CAL), GE 53mm+ (i.e., lengths equal to 53 mm and greater)
-    FIRST <- read.dbf(file.path(mypath, "HA53FABUN.dbf"))
     SECOND <- read.dbf(file.path(mypath, "HAXLENG.dbf"))
     SECOND <- SECOND[SECOND$SEX==2 & SECOND$LENGTH >= 53,]	
     SECOND$SEX <- NULL
-  } else if (spp == "Lobster - M (GE53mm)") {
+  } else if (myspp == "Lobster - M (GE53mm)") {
     #Male index & catch at length (CAL), GE 53mm+ (i.e., lengths equal to 53 mm and greater)
-    FIRST <- read.dbf(file.path(mypath, "HA53MABUN.dbf"))
     SECOND <- read.dbf(file.path(mypath, "HAXLENG.dbf"))
     SECOND <- SECOND[SECOND$SEX==1 & SECOND$LENGTH >= 53,]	
     SECOND$SEX <- NULL
-  } else if (spp=="Scup") {
-    FIRST <- read.dbf(file.path(mypath, "SCABUN.dbf"))
+  } else if (myspp=="Scup") {
     SECOND <- read.dbf(file.path(mypath, "SCLENG.dbf"))
-  } else if (spp=="Spot") {
-    FIRST <- read.dbf(file.path(mypath, "LXABUN.dbf"))
+  } else if (myspp=="Spot") {
     SECOND <- read.dbf(file.path(mypath, "LXLENG.dbf"))
-  } else if (spp=="Summer flounder") {
-    FIRST <- read.dbf(file.path(mypath, "PDABUN.dbf"))
+  } else if (myspp=="Summer flounder") {
     SECOND <- read.dbf(file.path(mypath, "PDLENG.dbf"))
-  } else if (spp=="Tautog") {
-    FIRST <- read.dbf(file.path(mypath, "TOABUN.dbf"))
+  } else if (myspp=="Tautog") {
     SECOND <- read.dbf(file.path(mypath, "TOLENG.dbf"))
-  } else if (spp=="Weakfish") {
-    FIRST <- read.dbf(file.path(mypath, "CRABUN.dbf"))
+  } else if (myspp=="Weakfish") {
     SECOND <- read.dbf(file.path(mypath, "CRLENG.dbf"))
-  } else if (spp=="Atl croaker") {
-    FIRST <- read.dbf(file.path(mypath, "MUABUN.dbf"))
+  } else if (myspp=="Atl croaker") {
     SECOND <- read.dbf(file.path(mypath, "MULENG.dbf"))
+  } else if (myspp=="Striped bass") {
+    SECOND <- read.dbf(file.path(mypath, "MSLENG.dbf"))
   }
   
   LENG1 <- SECOND #%>% select(-COMMON, -LATIN)
@@ -1044,7 +1051,7 @@ LFD <- function(mypath, spp, area="ALL", cruise="ALL", outdir) {
   ABUND$TOW <- NULL
   TEMPLATE <- read.dbf(file.path(mypath, "LTEMPLTE.dbf"))
   out <- MACRO2(ABUND, LENG, TEMPLATE)
-  myfile <- paste(spp, paste0("strata",area), paste0("cru",cruise), sep="_")
+  myfile <- paste(myspp, paste0("strata",area), paste0("cru",cruise), sep="_")
   annual <- out[[1]]
   annual_yrs <- annual[-1, ]
   annual_yrs$YEAR <- as.integer(annual_yrs$YEAR)

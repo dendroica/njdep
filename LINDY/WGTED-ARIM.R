@@ -119,7 +119,8 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
     "Summer flounder" = "PD",
     "Tautog" = "TO",
     "Weakfish" = "CR",
-    "Atl croaker" = "MU"
+    "Atl croaker" = "MU",
+    "Striped bass" = "MS"
   )
   abund <- read.dbf(file.path(mypath, paste0(value_map[myspp],"ABUN.dbf")))
   abund$NUMBER <- abund$NUMBER / abund$MINOUT * 20
