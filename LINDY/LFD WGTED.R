@@ -169,7 +169,6 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
   LENG <- LENG[LENG$CRUISE %in% value_map[cruise],]
   ABUND$TOW <- NULL
   TEMPLATE <- read.dbf(file.path(mypath, "LTEMPLTE.dbf"))
-  
   TEMPLATE$YEAR <- as.numeric(as.character(TEMPLATE$YEAR))
   
   ABUNDALL <- ABUND %>%
