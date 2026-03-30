@@ -147,27 +147,26 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
     LENG <- LENG[!LENG$STRATUM %in% c(14,17,20,23,26),]
   }
   
-  cruiseno <- 1:6
+  value_map <- c(
+    "ALL" = 1:6,
+    "AprOct" = c(2,5),
+    "AugOct" = 4:5,
+    "Oct" = 5,
+    "AprthruOct" = 2:5,
+    "Spring" = 2:3,
+    "Apr" = 2
+  )
+  
   if(cruise=="AprOct") {
     ABUND <- ABUND[ABUND$YEAR > 1988,]
     LENG <- LENG[LENG$YEAR > 1988,]
-    cruiseno <- c(2,5)
-  } else if (cruise=="AugOct") {
-    cruiseno <- 4:5
-  } else if (cruise=="Oct") {
-    cruiseno <- 5
-  }  else if(cruise=="AprthruOct") {
-    cruiseno <- 2:5
+  } else if(cruise=="AprthruOct") {
     ABUND <- ABUND[ABUND$YEAR > 1988,]
     LENG <- LENG[LENG$YEAR > 1988,]
-  } else if (cruise=="Spring") {
-    cruiseno <- 2:3
-  } else if (cruise=="Apr") {
-    cruiseno <- 2
   }
   
-  ABUND <- ABUND[ABUND$CRUISE %in% cruiseno,]
-  LENG <- LENG[LENG$CRUISE %in% cruiseno,]
+  ABUND <- ABUND[ABUND$CRUISE %in% value_map[cruise],]
+  LENG <- LENG[LENG$CRUISE %in% value_map[cruise],]
   ABUND$TOW <- NULL
   TEMPLATE <- read.dbf(file.path(mypath, "LTEMPLTE.dbf"))
   
