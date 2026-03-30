@@ -31,6 +31,6 @@ outdir <- file.path("C:/Users", usr,
 #lf <- LFD(input, "Lobster - M (GE53mm)", cruise="Spring", outdir=outdir)
 #lf <- LFD(input, "Lobster - M (GE53mm)", cruise="Oct", outdir=outdir)
 
-index <- WgtedAriM(input, "Striped bass", cruise="Apr", outdir=outdir)
+#index <- WgtedAriM(input, "Striped bass", cruise="Apr", outdir=outdir)
 lf <- LFD(input, "Striped bass", cruise="Apr", outdir=outdir)
 

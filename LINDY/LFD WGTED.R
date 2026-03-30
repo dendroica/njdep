@@ -10,9 +10,8 @@ library(tidyr)
 #ABUND <- ABUND[ABUND$CRUISE %in% c(2,5) & ABUND$YEAR != 1988,]
 #LENG <- LENG[LENG$CRUISE %in% c(2,5) & LENG$YEAR != 1988,]
 
-factor_assignment <- function(area, stratum) { #MACRO1
+FactorAssignment <- function(area, stratum) { #MACRO1
   factor <- NA
-  
   if (area == "ALL") {
     if (stratum == 12) factor <- 0.008
     else if (stratum == 13) factor <- 0.018
@@ -101,7 +100,77 @@ factor_assignment <- function(area, stratum) { #MACRO1
   return(factor)
 }
 
-MACRO2 <- function(ABUND, LENG, TEMPLATE) {
+LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
+  value_map <- c(
+    "Black drum" = "PC",
+    "Lobster - F (GE53mm)" = "HA53F",
+    "Lobster - M (GE53mm)" = "HA53M",
+    "Scup" = "SC",
+    "Spot" = "LX",
+    "Summer flounder" = "PD",
+    "Tautog" = "TO",
+    "Weakfish" = "CR",
+    "Atl croaker" = "MU",
+    "Striped bass" = "MS"
+  )
+  ABUND <- read.dbf(file.path(mypath, paste0(value_map[myspp],"ABUN.dbf")))
+  ABUND$CRUCODE[ABUND$CRUCODE==19882] <- 19884
+  ABUND$CRUCODE[ABUND$CRUCODE==19883] <- 19885
+  ABUND$CRUISE <- substr(ABUND$CRUCODE,5,5)
+  ABUND$NUMBER <- ABUND$NUMBER/ABUND$MINOUT*20 #ABUN
+  ABUND <- ABUND %>% mutate(AREA="ALL")
+  
+  if(!grepl("Lobster", myspp)) {
+    SECOND <- read.dbf(file.path(mypath, paste0(value_map[myspp],"LENG.dbf"))) 
+  }
+  if (myspp == "Lobster - F (GE53mm)") {
+    #LOBSTER
+    #Female index & catch at length (CAL), GE 53mm+ (i.e., lengths equal to 53 mm and greater)
+    SECOND <- read.dbf(file.path(mypath, "HAXLENG.dbf"))
+    SECOND <- SECOND[SECOND$SEX==2 & SECOND$LENGTH >= 53,]	
+    SECOND$SEX <- NULL
+  } else if (myspp == "Lobster - M (GE53mm)") {
+    #Male index & catch at length (CAL), GE 53mm+ (i.e., lengths equal to 53 mm and greater)
+    SECOND <- read.dbf(file.path(mypath, "HAXLENG.dbf"))
+    SECOND <- SECOND[SECOND$SEX==1 & SECOND$LENGTH >= 53,]	
+    SECOND$SEX <- NULL
+  }
+  #need more code for lobster...
+  SECOND$CRUCODE[SECOND$CRUCODE==19882] <- 19884
+  SECOND$CRUCODE[SECOND$CRUCODE==19883] <- 19885 #LENGS
+  LENG <- SECOND %>% select(-TOW)
+  LENG$CRUISE <- substr(LENG$CRUCODE,5,5)
+  
+  if(area=="INM") {
+    ABUND <- ABUND[!ABUND$STRATUM %in% c(14,17,20,23,26),]
+    ABUND$AREA <- "INM"
+    LENG <- LENG[!LENG$STRATUM %in% c(14,17,20,23,26),]
+  }
+  
+  cruiseno <- 1:6
+  if(cruise=="AprOct") {
+    ABUND <- ABUND[ABUND$YEAR > 1988,]
+    LENG <- LENG[LENG$YEAR > 1988,]
+    cruiseno <- c(2,5)
+  } else if (cruise=="AugOct") {
+    cruiseno <- 4:5
+  } else if (cruise=="Oct") {
+    cruiseno <- 5
+  }  else if(cruise=="AprthruOct") {
+    cruiseno <- 2:5
+    ABUND <- ABUND[ABUND$YEAR > 1988,]
+    LENG <- LENG[LENG$YEAR > 1988,]
+  } else if (cruise=="Spring") {
+    cruiseno <- 2:3
+  } else if (cruise=="Apr") {
+    cruiseno <- 2
+  }
+  
+  ABUND <- ABUND[ABUND$CRUISE %in% cruiseno,]
+  LENG <- LENG[LENG$CRUISE %in% cruiseno,]
+  ABUND$TOW <- NULL
+  TEMPLATE <- read.dbf(file.path(mypath, "LTEMPLTE.dbf"))
+  
   TEMPLATE$YEAR <- as.numeric(as.character(TEMPLATE$YEAR))
   
   ABUNDALL <- ABUND %>%
@@ -114,7 +183,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
               NV = var(NUMBER, na.rm = TRUE),
               NN = n(), .groups = 'drop')
   
-  AMALL$FACTOR <- unname(unlist(Map(factor_assignment, AMALL$AREA, AMALL$STRATUM)))
+  AMALL$FACTOR <- unname(unlist(Map(FactorAssignment, AMALL$AREA, AMALL$STRATUM)))
   
   AM2ALL <-  AMALL %>% mutate(NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
     group_by(YEAR) %>%
@@ -140,7 +209,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
               NV = var(NUMBER, na.rm = TRUE),
               NN = n(),
               .groups = 'drop')
-  AM$FACTOR <- unname(unlist(Map(factor_assignment, AM$AREA, AM$STRATUM)))
+  AM$FACTOR <- unname(unlist(Map(FactorAssignment, AM$AREA, AM$STRATUM)))
   # Create AMW dataset
   AM2 <- AM %>% mutate(NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
     group_by(YEAR) %>%
@@ -164,11 +233,11 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
               NM = mean(NUMBER, na.rm = TRUE),
               NV = var(NUMBER, na.rm = TRUE),
               NN = n(), .groups = 'drop')
-
-  AMM$FACTOR <- unname(unlist(Map(factor_assignment, AMM$AREA, AMM$STRATUM)))
+  
+  AMM$FACTOR <- unname(unlist(Map(FactorAssignment, AMM$AREA, AMM$STRATUM)))
   AM2M <- AMM %>% mutate(NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
     group_by(CRUCODE) %>% summarise(NM2 = sum(NM1, na.rm = TRUE),
-              SNV2 = sum(SNV1, na.rm = TRUE), .groups = 'drop') %>%
+                                    SNV2 = sum(SNV1, na.rm = TRUE), .groups = 'drop') %>%
     mutate(CRUCODES = CRUCODE,
            CRUISE = substr(trimws(as.character(CRUCODES)), 5, 5),
            CRUISE = case_when(
@@ -185,7 +254,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
              CRUISE == "6" ~ "DECEMBER",
              TRUE ~ NA_character_
            )) #%>%
-    #select(-_FREQ_, -_TYPE_)
+  #select(-_FREQ_, -_TYPE_)
   
   # Sort and summarize again
   AM3M <- ABUND %>%
@@ -221,7 +290,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     group_by(STRATUM) %>%
     summarise(NM2 = sum(NM1, na.rm = TRUE),
               SNV2 = sum(SNV1, na.rm = TRUE), .groups = 'drop')
-
+  
   # Arithmetic
   STYMEANSALL <- STABUNDALL %>%
     group_by(STRATUM) %>%
@@ -229,7 +298,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     left_join(STAM2ALL, by = "STRATUM") %>%
     mutate(SNVE = sqrt(SNV2))  %>% mutate(NMEAN = NM2, SAMPLES=STAMWALL$NN) %>%
     select(-NM2, -SNV2)
-
+  
   # Calculate means for NM1 and SNV1
   STAM2 <- ABUND %>% group_by(STRATUM) %>%
     summarise(TN = sum(NUMBER, na.rm = TRUE), NM = mean(NUMBER, na.rm = TRUE),
@@ -242,15 +311,15 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   # Prepare STAM2Y
   #STAM2Y <- STAM2 %>%
   #  select(-c(_FREQ_, _TYPE_))
-
+  
   # Merge STAM3 and STAM2Y
   STAM4 <- ABUND %>%
     group_by(STRATUM) %>%
     summarise(TOTALN = sum(NUMBER, na.rm = TRUE), SAMPLES=n()) %>%
     left_join(STAM2, by = "STRATUM") %>%
     mutate(#SAMPLES = n(),
-           NMEAN = NM2,
-           SNVE = sqrt(SNV2)) %>%
+      NMEAN = NM2,
+      SNVE = sqrt(SNV2)) %>%
     select(-c(NM2, SNV2))
   
   # Append to STYMEANS
@@ -260,7 +329,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   SAMPLESALL <- ABUNDALL %>%
     count(YEAR, STRATUM, AREA, name="COUNT") %>%
     ungroup()
-
+  
   # Merge data
   LENG2 <- TEMPLATE %>% bind_rows(LENG) %>%
     mutate(YEAR = "ALLC", LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
@@ -269,7 +338,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
     inner_join(SAMPLESALL, by = c("YEAR", "STRATUM")) %>%
     filter(SUM > 0)
   
-  LENG2$FACTOR <- unname(unlist(Map(factor_assignment, LENG2$AREA, LENG2$STRATUM)))
+  LENG2$FACTOR <- unname(unlist(Map(FactorAssignment, LENG2$AREA, LENG2$STRATUM)))
   
   # Transpose again
   TRANSY2AALL <- LENG2 %>%
@@ -296,7 +365,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   # NOPRINT means we only need the output dataset 'SAMPLES' which contains counts.
   SAMPLES <- ABUND %>%
     count(YEAR, STRATUM, AREA, name = "COUNT") # 'name' specifies the column name for the counts
-
+  
   lengy <- LENG %>%
     mutate(
       YEAR = floor(CRUCODE * 0.1), # INT() in SAS is floor() in R for positive numbers
@@ -335,7 +404,7 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
   # MEAN1=FACTOR*(SUM/COUNT);
   # This calculation is applied directly to the 'leng2' data frame.
   # Assuming 'FACTOR' is a column in 'leng2' (which came from TEMPLATE/LENG via ytemplt).
-  leng2$FACTOR <- unname(unlist(Map(factor_assignment, leng2$AREA, leng2$STRATUM)))
+  leng2$FACTOR <- unname(unlist(Map(FactorAssignment, leng2$AREA, leng2$STRATUM)))
   
   # --- Displaying results (optional) ---
   
@@ -371,304 +440,8 @@ MACRO2 <- function(ABUND, LENG, TEMPLATE) {
       SNVE = as.numeric(SNVE)
     )
   
-  SAMPLES <- ABUND %>%
-    count(CRUCODE, STRATUM, AREA, name = "COUNT")
-
-  LENGA <-  bind_rows(TEMPLATE, LENG) %>%
-    mutate(
-      LENGA = as.character(LENGTH),
-      FREQUENCY = FREQUENCY / MINOUT * 20
-    )
-  
-  LENG1 <- LENGA %>%
-    group_by(CRUCODE, STRATUM, LENGA) %>%
-    summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop')
-  
-  SAMPLES$FACTOR <- unname(unlist(Map(factor_assignment, SAMPLES$AREA, SAMPLES$STRATUM)))
-  
-  ZEROS <- LENG1 %>% full_join(SAMPLES, by = c("CRUCODE", "STRATUM")) %>%
-    filter(SUM > 0) %>% mutate(MEAN1 = FACTOR * (SUM / COUNT)) %>%
-    group_by(CRUCODE, LENGA) %>%
-    summarise(MEANS = sum(MEAN1, na.rm = TRUE), .groups = 'drop') %>%
-    pivot_wider(names_from = LENGA, values_from = MEANS) %>%
-    mutate(across(where(is.numeric), ~ifelse(is.na(.), 0, .)))
-  
-  FINAL <- MEANS %>%
-    full_join(ZEROS, by = "CRUCODE") %>%
-    mutate(across(where(is.numeric), ~ifelse(is.na(.), 0, .))) %>%
-    filter(CRUCODE != 19011) %>%
-    select(-CRUCODE, -CRUCODES)
-  
-  STSAMPLESALL <- STABUNDALL %>% count(STRATUM, name="COUNT")
-
-  # Transpose the data
-  STTRANSY3ALL <- bind_rows(TEMPLATE, LENG) %>%
-    mutate(STRATUM = 0, LENGA = as.character(LENGTH), FREQUENCY = FREQUENCY / MINOUT * 20) %>%
-    group_by(STRATUM, LENGA) %>%
-    summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop') %>%
-    full_join(STSAMPLESALL, by = "STRATUM") %>%
-    filter(SUM > 0) %>%
-    mutate(FACTOR = 1, MEAN1 = FACTOR * (SUM / COUNT)) %>%
-    group_by(STRATUM, LENGA) %>%
-    summarise(MEANS = sum(MEAN1, na.rm = TRUE), .groups = 'drop') %>%
-    pivot_wider(names_from = LENGA, values_from = MEANS) %>%
-    mutate(across(where(is.numeric), ~ifelse(is.na(.), 0, .))) %>% #matches!
-    pivot_longer(cols = -STRATUM, names_to = "LENGTH", values_to = "MEANS") %>%
-    pivot_wider(names_from = LENGTH, values_from = MEANS) #line 760
-  
-  STFINALYALL <- STYMEANSALL %>%
-    full_join(STTRANSY3ALL, by = "STRATUM") %>%
-    mutate(across(where(is.numeric), ~ replace_na(., 0)))
-
-  #BY STRATUM - NOT WEIGHTED BY STRATUM FACTORS*******************;
-  # Frequency table
-  STSAMPLES <- ABUND %>%
-    group_by(STRATUM) %>%
-    summarise(COUNT = n(), .groups = 'drop') %>%
-    select(STRATUM, COUNT)
-  
-  # Append data
-  STYTEMPLT <- TEMPLATE
-  # Sort and transpose again
-  STTRANSY3 <- bind_rows(STYTEMPLT, LENG) %>%
-    mutate(LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
-    group_by(STRATUM, LENGA) %>% summarise(SUM = sum(FREQUENCY),
-                                           .groups = 'drop') %>% #MATCHES
-    left_join(STSAMPLES, by = "STRATUM") %>% filter(SUM > 0) %>%
-    mutate(FACTOR = 1, MEAN1 = FACTOR * (SUM / COUNT)) %>%
-    group_by(STRATUM, LENGA) %>%
-    summarise(MEANS = sum(MEAN1), .groups = 'drop') %>%
-    pivot_wider(names_from = LENGA, values_from = MEANS) %>%
-    mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%
-    pivot_longer(-STRATUM, names_to = "LENGTH", values_to = "MEANS")  %>%
-    pivot_wider(names_from = LENGTH, values_from = MEANS)
-  
-  # Final merge and cleanup
-  STFINALY1 <- STAM4 %>%
-    left_join(STTRANSY3, by = "STRATUM") %>%
-    filter(STRATUM != 0) %>%
-    mutate(across(where(is.numeric), ~ replace_na(., 0)))
-  
-  # Final data structure
-  STFINALY <- STFINALYALL %>%
-    mutate(STRATUM = as.integer(STRATUM),
-           SAMPLES = as.integer(SAMPLES),
-           TOTALN = as.integer(TOTALN),
-           NMEAN = as.integer(NMEAN),
-           SNVE = as.integer(SNVE))
-  
-  # Append final data
-  STFINALY <- bind_rows(STFINALY, STFINALY1)
-  
-  #BY YEAR - WEIGHTED BY STRATUM FACTORS***STRAIGHT LFD, NOT CPUE****************;
-  
-  # Create LFWSA
-  LFWSA <- ABUNDALL %>%
-    count(STRATUM, AREA, name="COUNT") %>%
-    ungroup() %>%
-    mutate(PERCENT = COUNT / sum(COUNT) * 100)  %>%
-    mutate(YEAR = "ALLC") %>%
-    select(-PERCENT, -COUNT)
-  LFWSA$FACTOR <- unname(unlist(Map(factor_assignment, LFWSA$AREA, LFWSA$STRATUM)))
-  
-  # Replace NA with 0
-  LFWZEROSYALL <- bind_rows(TEMPLATE, LENG) %>%
-    mutate(YEAR = "ALLC", LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
-    group_by(YEAR, STRATUM, LENGA) %>%
-    summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop') %>%
-    inner_join(LFWSA, by = c("YEAR", "STRATUM")) %>%
-    filter(SUM > 0) %>%
-    mutate(WSUM = FACTOR * SUM) %>%
-    group_by(YEAR, LENGA) %>%
-    summarise(WSUMSALL = sum(WSUM, na.rm = TRUE), .groups = 'drop') %>%
-    pivot_wider(names_from = LENGA, values_from = WSUMSALL) %>%
-    mutate(across(where(is.numeric), ~ replace_na(., 0)))
-  
-  # Final merge
-  LFWFINALYALL <- YMEANSALL %>% #MATCHES
-    left_join(LFWZEROSYALL, by = "YEAR") %>%
-    mutate(across(where(is.numeric), ~ replace_na(., 0))) %>% select(-NMEAN, -SNVE)
-  
-  # Frequency table
-  YSA <- ABUND %>%
-    count(YEAR, STRATUM, AREA) %>%
-    ungroup()
-  
-  # Create YLSTTEMPLT
-  YLSTTEMPLT <- TEMPLATE
-  # Append data
-  YLSTTEMPLT$YEAR <- as.integer(YLSTTEMPLT$YEAR)
-  
-  YLSTLENGY1 <- bind_rows(YLSTTEMPLT, LENG) %>%
-    mutate(LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
-    group_by(YEAR, STRATUM, LENGA) %>%
-    summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop')
-  
-  # Merge data
-  YLSTLENG2 <- left_join(YSA, YLSTLENGY1, by = c("YEAR", "STRATUM")) %>%
-    filter(SUM > 0)
-  YLSTLENG2$FACTOR <- unname(unlist(Map(factor_assignment, YLSTLENG2$AREA, YLSTLENG2$STRATUM)))
-  
-  # Replace NA with 0
-  YLSTZEROSY <- YLSTLENG2 %>%
-    mutate(STSUM = FACTOR * SUM) %>%
-    group_by(YEAR, LENGA) %>%
-    summarise(STSUMS = sum(STSUM, na.rm = TRUE), .groups = 'drop') %>%
-    pivot_wider(names_from = LENGA, values_from = STSUMS) %>%
-    mutate(across(everything(), ~ replace_na(., 0))) %>%
-    filter(YEAR != "1901")
-  
-  # Final merge
-  YLSTFINALY1 <- left_join(AM4, YLSTZEROSY, by = "YEAR") %>%
-    mutate(across(everything(), ~ replace_na(., 0))) %>%
-    select(-NMEAN, -SNVE)
-  
-  # Final data structure
-  YLSTFINALY <- rbind(LFWFINALYALL, YLSTFINALY1) 
-
-  #BY YEAR - NOT WEIGHTED BY STRATUM FACTORS***STRAIGHT LFD, NOT CPUE****************;
-  #NOT TESTED
-  # Create LFALLTOTAL data frame
-  LFALLTOTAL <- ABUNDALL %>%
-    summarise(N = n(), SUM = sum(NUMBER, na.rm = TRUE)) %>%
-    mutate(YEAR = "ALLC")
-  
-  # Replace NA with 0
-  LFZEROSYALL <- bind_rows(TEMPLATE, LENG) %>%
-    mutate(YEAR = "ALLC", LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
-    group_by(YEAR, LENGA) %>%
-    summarise(SUM = sum(FREQUENCY, na.rm = TRUE)) %>%
-    ungroup() %>%
-    pivot_wider(names_from = LENGA, values_from = SUM) %>%
-    mutate(across(where(is.numeric), ~ replace_na(., 0)))
-  
-  # Merge LFALLTOTAL and LFZEROSYALL
-  LFFINALYALL <- full_join(LFALLTOTAL, LFZEROSYALL, by = "YEAR") %>%
-    mutate(across(where(is.numeric), ~ replace_na(., 0)))
-  
-  # Create YLSAMPLES data frame
-  YLSAMPLES <- ABUND %>%
-    count(YEAR)
-  
-  # Append LENG to TEMPLATE
-  TEMPLATE$YEAR <- as.integer(TEMPLATE$YEAR)
-  # Sort and summarize by YEAR and LENGA
-  YLLENGY1 <- bind_rows(TEMPLATE, LENG) %>%
-    mutate(LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
-    group_by(YEAR, LENGA) %>%
-    summarise(SUM = sum(FREQUENCY, na.rm = TRUE)) %>%
-    ungroup()
-  
-  # Merge YLLENGY1 and YLSAMPLES
-  YLLENGY2 <- inner_join(YLLENGY1, YLSAMPLES, by = "YEAR") %>%
-    filter(!is.na(SUM))
-  
-  df <- data.frame(
-    YEAR = 1901,
-    SUM = 0, 
-    n = 0
-  )
-  df$LENGA <- list(c(1:160))
-  expanded_df <- unnest(df, LENGA)
-
-  # Replace NA with 0 and remove specific year
-  YLZEROSY <- rbind(expanded_df, YLLENGY2) %>%
-    complete(YEAR, LENGA, fill = list(SUM = 0, n = 0)) %>%
-    pivot_wider(names_from = LENGA, values_from = SUM) %>%
-    mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%
-    filter(YEAR != "1901")
-  
-  # Merge AM4 and YLZEROSY
-  YLFINALY1 <- full_join(AM4, YLZEROSY, by = "YEAR") %>%
-    mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%
-    select(-NMEAN, -SNVE, -n)
-  
-  # Create YLFINALY data frame
-  YLFINALY <- LFFINALYALL %>%
-    mutate(YEAR = as.character(YEAR), TOTALN = SUM, SAMPLES = N) %>%
-    select(-N, -SUM)
-  
-  # Append YLFINALY1 to YLFINALY
-  YLFINALY <- rbind(YLFINALY, YLFINALY1)
-
-return(list(FINALY, STFINALY, FINAL, YLFINALY, YLSTFINALY))} #finaly STFINALY
-
-LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
-  value_map <- c(
-    "Black drum" = "PC",
-    "Lobster - F (GE53mm)" = "HA53F",
-    "Lobster - M (GE53mm)" = "HA53M",
-    "Scup" = "SC",
-    "Spot" = "LX",
-    "Summer flounder" = "PD",
-    "Tautog" = "TO",
-    "Weakfish" = "CR",
-    "Atl croaker" = "MU",
-    "Striped bass" = "MS"
-  )
-  FIRST <- read.dbf(file.path(mypath, paste0(value_map[myspp],"ABUN.dbf")))
-  if(!grepl("Lobster", myspp)) {
-    SECOND <- read.dbf(file.path(mypath, paste0(value_map[myspp],"LENG.dbf"))) 
-  }
-  
-  if (myspp == "Lobster - F (GE53mm)") {
-    #LOBSTER
-    #Female index & catch at length (CAL), GE 53mm+ (i.e., lengths equal to 53 mm and greater)
-    SECOND <- read.dbf(file.path(mypath, "HAXLENG.dbf"))
-    SECOND <- SECOND[SECOND$SEX==2 & SECOND$LENGTH >= 53,]	
-    SECOND$SEX <- NULL
-  } else if (myspp == "Lobster - M (GE53mm)") {
-    #Male index & catch at length (CAL), GE 53mm+ (i.e., lengths equal to 53 mm and greater)
-    SECOND <- read.dbf(file.path(mypath, "HAXLENG.dbf"))
-    SECOND <- SECOND[SECOND$SEX==1 & SECOND$LENGTH >= 53,]	
-    SECOND$SEX <- NULL
-  }
-  
-  LENG1 <- SECOND #%>% select(-COMMON, -LATIN)
-  #need more code for lobster...
-  LENG1$CRUCODE[LENG1$CRUCODE==19882] <- 19884
-  LENG1$CRUCODE[LENG1$CRUCODE==19883] <- 19885 #LENGS
-  
-  FIRST$CRUCODE[FIRST$CRUCODE==19882] <- 19884
-  FIRST$CRUCODE[FIRST$CRUCODE==19883] <- 19885
-  FIRST$CRUISE <- substr(FIRST$CRUCODE,5,5)
-  FIRST$NUMBER <- FIRST$NUMBER/FIRST$MINOUT*20 #ABUN
-  
-  ABUND <- FIRST %>% mutate(AREA="ALL")
-  LENG <- LENG1 %>% select(-TOW)
-  LENG$CRUISE <- substr(LENG$CRUCODE,5,5)
-  
-  if(area=="INM") {
-    ABUND <- ABUND[!ABUND$STRATUM %in% c(14,17,20,23,26),]
-    ABUND$AREA <- "INM"
-    LENG <- LENG[!LENG$STRATUM %in% c(14,17,20,23,26),]
-  }
-  
-  cruiseno <- 1:6
-  if(cruise=="AprOct") {
-    ABUND <- ABUND[ABUND$YEAR > 1988,]
-    LENG <- LENG[LENG$YEAR > 1988,]
-    cruiseno <- c(2,5)
-  } else if (cruise=="AugOct") {
-    cruiseno <- 4:5
-  } else if (cruise=="Oct") {
-    cruiseno <- 5
-  }  else if(cruise=="AprthruOct") {
-    cruiseno <- 2:5
-    ABUND <- ABUND[ABUND$YEAR > 1988,]
-    LENG <- LENG[LENG$YEAR > 1988,]
-  } else if (cruise=="Spring") {
-    cruiseno <- 2:3
-  } else if (cruise=="Apr") {
-    cruiseno <- 2
-  }
-  ABUND <- ABUND[ABUND$CRUISE %in% cruiseno,]
-  LENG <- LENG[LENG$CRUISE %in% cruiseno,]
-  ABUND$TOW <- NULL
-  TEMPLATE <- read.dbf(file.path(mypath, "LTEMPLTE.dbf"))
-  out <- MACRO2(ABUND, LENG, TEMPLATE)
   myfile <- paste(myspp, paste0("strata",area), paste0("cru",cruise), sep="_")
-  annual <- out[[1]]
+  annual <- FINALY
   annual_yrs <- annual[-1, ]
   annual_yrs$YEAR <- as.integer(annual_yrs$YEAR)
   annual_yrs <- annual_yrs %>%
@@ -680,7 +453,7 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
   #annual$strata <- area
   #write.csv(out[[2]], file = file.path(outdir, paste(myfile, "CAL-STRATA.csv", sep="_")), row.names=F)
   write.csv(annual, file = file.path(outdir, paste(myfile, "CAL-ANNUAL.csv", sep="_")), row.names=F)
-return(out)}
+return(annual)}
 
 # --- 0. Set up dummy data for demonstration ---
 # Replace these with your actual data loading
