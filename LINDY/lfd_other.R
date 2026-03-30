@@ -2,6 +2,9 @@
 #if you need it, paste back into LFD_WGTED.R right under where FINALY
 #is specified 
 
+TEMPLATE <- read.dbf(file.path(mypath, "LTEMPLTE.dbf"))
+TEMPLATE$YEAR <- as.numeric(as.character(TEMPLATE$YEAR))
+
 SAMPLES <- ABUND %>%
   count(CRUCODE, STRATUM, AREA, name = "COUNT")
 
