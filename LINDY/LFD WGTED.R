@@ -178,22 +178,16 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
               NM = mean(NUMBER, na.rm = TRUE),
               NV = var(NUMBER, na.rm = TRUE),
               NN = n(), .groups = 'drop')
-  
   AMALL$FACTOR <- unname(unlist(Map(FactorAssignment, AMALL$AREA, AMALL$STRATUM)))
-  
   AMALL <-  AMALL %>% mutate(NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
     group_by(YEAR) %>%
     summarise(NM2 = sum(NM1, na.rm = TRUE),
               SNV2 = sum(SNV1, na.rm = TRUE), .groups = 'drop')
   
-  #AM2YALL <- AM2ALL %>% LOOK OUT HERE FOR NEEDING TO RENAME THIS DF
-  #  select(-_FREQ_, -_TYPE_)
-  
-  AM3ALL <- ABUNDALL %>%
+  YMEANSALL <- ABUNDALL %>%
     group_by(YEAR) %>%
-    summarise(TOTALN = sum(NUMBER, na.rm = TRUE), SAMPLES=n(), .groups = 'drop')
-  
-  YMEANSALL <- left_join(AM3ALL, AMALL, by = "YEAR") %>%
+    summarise(TOTALN = sum(NUMBER, na.rm = TRUE), SAMPLES=n(),
+              .groups = 'drop') %>% left_join(AMALL, by = "YEAR") %>%
     mutate(SNVE = sqrt(SNV2)) %>%
     mutate(NMEAN = NM2) %>%
     select(YEAR, SAMPLES, TOTALN, NMEAN, SNVE)
@@ -250,16 +244,14 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
   #select(-_FREQ_, -_TYPE_)
   
   # Sort and summarize again
-  AM3M <- ABUND %>%
+  MEANS <- ABUND %>%
     group_by(CRUCODE) %>%
-    summarise(TOTALN = sum(NUMBER, na.rm = TRUE), SAMPLES = n(), .groups = 'drop')
-  
-  # Create MEANS
-  MEANS <- left_join(AM3M, AMM, by = "CRUCODE") %>%
+    summarise(TOTALN = sum(NUMBER, na.rm = TRUE), SAMPLES = n(),
+              .groups = 'drop') %>% left_join(AMM, by = "CRUCODE") %>%
     mutate(YEAR = substr(CRUCODES, 1, 4), SNVE = sqrt(SNV2)) %>%
     mutate(NMEAN = NM2) %>%
     select(-NM2, -SNV2)
-  
+    
   # All strata combined
   STABUNDALL <- ABUND %>%
     mutate(STRATUM = 0) %>%
@@ -378,14 +370,8 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
   # VAR FREQUENCY;
   # OUTPUT OUT=LENGY1 SUM=SUM;
   lengy <- lengy %>% group_by(YEAR, STRATUM, LENGA) %>%
-    summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop')
-  
-  # DATA LENG2;
-  # MERGE LENGY1 SAMPLES;
-  # BY YEAR STRATUM;
-  # IF SUM>.; # In SAS, '.' is missing. SUM>. means SUM is not missing.
-  lengy <- left_join(lengy, SAMPLES, by = c("YEAR", "STRATUM")) %>%
-    filter(!is.na(SUM)) # Equivalent to IF SUM>. in SAS
+    summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop') %>%
+    left_join(SAMPLES, by = c("YEAR", "STRATUM")) %>% filter(!is.na(SUM))
   
   # %MACRO1;
   # MEAN1=FACTOR*(SUM/COUNT);

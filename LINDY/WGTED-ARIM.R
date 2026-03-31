@@ -138,23 +138,23 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
     abund$AREA <- "INM"
   }
 
-  cruiseno <- 1:6
   if (cruise == "AprOct") {
     abund <- abund[abund$YEAR > 1988, ]
-    cruiseno <- c(2, 5)
-  } else if (cruise == "AugOct") {
-    cruiseno <- 4:5
-  } else if (cruise == "Oct") {
-    cruiseno <- 5
   } else if (cruise == "AprthruOct") {
-    cruiseno <- 2:5
     abund <- abund[abund$YEAR > 1988, ]
-  } else if (cruise == "Spring") {
-    cruiseno <- 2:3
-  } else if (cruise=="Apr") {
-    cruiseno <- 2
   }
-  abund <- abund[abund$CRUISE %in% cruiseno, ]
+  
+  cruiseno <- case_when(
+    cruise == "ALL" ~ list(1:6),
+    cruise == "AprOct" ~ list(c(2,5)),
+    cruise == "AugOct" ~ list(4:5),
+    cruise == "Oct" ~ list(5),
+    cruise == "AprthruOct" ~ list(2:5),
+    cruise == "Spring" ~ list(2:3),
+    cruise == "Apr" ~ list(2)
+  )
+  
+  abund <- abund[abund$CRUISE %in% unlist(cruiseno), ]
   factor <- unname(unlist(Map(function(AREA, STRATUM) {
     factor <- NA
     if (AREA == "ALL") {
