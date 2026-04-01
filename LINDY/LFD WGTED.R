@@ -118,7 +118,7 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
   ABUND$CRUCODE[ABUND$CRUCODE==19883] <- 19885
   ABUND$CRUISE <- substr(ABUND$CRUCODE,5,5)
   ABUND$NUMBER <- ABUND$NUMBER/ABUND$MINOUT*20 #ABUN
-  ABUND <- ABUND %>% mutate(AREA="ALL")
+  ABUND <- ABUND %>% mutate(AREA=area)
   
   if(!grepl("Lobster", myspp)) {
     SECOND <- read.dbf(file.path(mypath, paste0(value_map[myspp],"LENG.dbf"))) 
@@ -143,7 +143,6 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
   
   if(area=="INM") {
     ABUND <- ABUND[!ABUND$STRATUM %in% c(14,17,20,23,26),]
-    ABUND$AREA <- "INM"
     LENG <- LENG[!LENG$STRATUM %in% c(14,17,20,23,26),]
   }
   
@@ -168,6 +167,7 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
   ABUND <- ABUND[ABUND$CRUISE %in% unlist(cruiseno),]
   ABUND$FACTOR <- unname(unlist(Map(FactorAssignment, ABUND$AREA, ABUND$STRATUM)))
   LENG <- LENG[LENG$CRUISE %in% unlist(cruiseno),]
+  LENG <- LENG %>% mutate(AREA=area)
   LENG$FACTOR <- unname(unlist(Map(FactorAssignment, LENG$AREA, LENG$STRATUM)))
   ABUND$TOW <- NULL
   
@@ -175,7 +175,7 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
     mutate(YEAR = "ALLC")
   
   AMALL <- ABUNDALL %>%
-    group_by(YEAR, STRATUM, AREA) %>%
+    group_by(YEAR, STRATUM, AREA, FACTOR) %>%
     summarise(TN = sum(NUMBER, na.rm = TRUE),
               NM = mean(NUMBER, na.rm = TRUE),
               NV = var(NUMBER, na.rm = TRUE),
@@ -194,7 +194,7 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
     select(YEAR, SAMPLES, TOTALN, NMEAN, SNVE)
   
   AM <- ABUND %>%
-    group_by(YEAR, STRATUM, AREA) %>%
+    group_by(YEAR, STRATUM, AREA, FACTOR) %>%
     summarise(TN = sum(NUMBER, na.rm = TRUE),
               NM = mean(NUMBER, na.rm = TRUE),
               NV = var(NUMBER, na.rm = TRUE),
@@ -213,7 +213,7 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
     select(-c(NM2, SNV2))
   
   AMM <- ABUND %>%
-    group_by(CRUCODE, STRATUM, AREA) %>%
+    group_by(CRUCODE, STRATUM, AREA, FACTOR) %>%
     summarise(TN = sum(NUMBER, na.rm = TRUE),
               NM = mean(NUMBER, na.rm = TRUE),
               NV = var(NUMBER, na.rm = TRUE),
@@ -310,7 +310,7 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
   
   LENG2 <- LENG %>%
     mutate(YEAR = "ALLC", LENGA = LENGTH, FREQUENCY = FREQUENCY / MINOUT * 20) %>%
-    group_by(YEAR, STRATUM, LENGA) %>%
+    group_by(YEAR, STRATUM, LENGA, FACTOR) %>%
     summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop') %>%
     inner_join(SAMPLESALL, by = c("YEAR", "STRATUM")) %>%
     filter(SUM > 0)
@@ -365,7 +365,7 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
   # BY YEAR STRATUM LENGA;
   # VAR FREQUENCY;
   # OUTPUT OUT=LENGY1 SUM=SUM;
-  lengy <- lengy %>% group_by(YEAR, STRATUM, LENGA) %>%
+  lengy <- lengy %>% group_by(YEAR, STRATUM, LENGA, FACTOR) %>%
     summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop') %>%
     left_join(SAMPLES, by = c("YEAR", "STRATUM")) %>% filter(!is.na(SUM)) %>%
     mutate(MEAN1 = FACTOR * (SUM / COUNT)) %>% 
