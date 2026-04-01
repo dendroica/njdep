@@ -166,7 +166,9 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
   }
   
   ABUND <- ABUND[ABUND$CRUISE %in% unlist(cruiseno),]
+  ABUND$FACTOR <- unname(unlist(Map(FactorAssignment, ABUND$AREA, ABUND$STRATUM)))
   LENG <- LENG[LENG$CRUISE %in% unlist(cruiseno),]
+  LENG$FACTOR <- unname(unlist(Map(FactorAssignment, LENG$AREA, LENG$STRATUM)))
   ABUND$TOW <- NULL
   
   ABUNDALL <- ABUND %>%
@@ -177,9 +179,8 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
     summarise(TN = sum(NUMBER, na.rm = TRUE),
               NM = mean(NUMBER, na.rm = TRUE),
               NV = var(NUMBER, na.rm = TRUE),
-              NN = n(), .groups = 'drop')
-  AMALL$FACTOR <- unname(unlist(Map(FactorAssignment, AMALL$AREA, AMALL$STRATUM)))
-  AMALL <-  AMALL %>% mutate(NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
+              NN = n(), .groups = 'drop') %>%
+    mutate(NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
     group_by(YEAR) %>%
     summarise(NM2 = sum(NM1, na.rm = TRUE),
               SNV2 = sum(SNV1, na.rm = TRUE), .groups = 'drop')
@@ -198,10 +199,7 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
               NM = mean(NUMBER, na.rm = TRUE),
               NV = var(NUMBER, na.rm = TRUE),
               NN = n(),
-              .groups = 'drop')
-  AM$FACTOR <- unname(unlist(Map(FactorAssignment, AM$AREA, AM$STRATUM)))
-  # Create AMW dataset
-  AM <- AM %>% mutate(NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
+              .groups = 'drop') %>% mutate(NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
     group_by(YEAR) %>%
     summarise(NM2 = sum(NM1, na.rm = TRUE),
               SNV2 = sum(SNV1, na.rm = TRUE),
@@ -219,12 +217,11 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
     summarise(TN = sum(NUMBER, na.rm = TRUE),
               NM = mean(NUMBER, na.rm = TRUE),
               NV = var(NUMBER, na.rm = TRUE),
-              NN = n(), .groups = 'drop')
-  
-  AMM$FACTOR <- unname(unlist(Map(FactorAssignment, AMM$AREA, AMM$STRATUM)))
-  AMM <- AMM %>% mutate(NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
+              NN = n(), .groups = 'drop') %>%
+    mutate(NM1 = FACTOR * NM, SNV1 = NV / NN * FACTOR^2) %>%
     group_by(CRUCODE) %>% summarise(NM2 = sum(NM1, na.rm = TRUE),
-                                    SNV2 = sum(SNV1, na.rm = TRUE), .groups = 'drop') %>%
+                                    SNV2 = sum(SNV1, na.rm = TRUE),
+                                    .groups = 'drop') %>%
     mutate(CRUCODES = CRUCODE,
            CRUISE = substr(trimws(as.character(CRUCODES)), 5, 5),
            CRUISE = case_when(
@@ -317,7 +314,6 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
     summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop') %>%
     inner_join(SAMPLESALL, by = c("YEAR", "STRATUM")) %>%
     filter(SUM > 0)
-  LENG2$FACTOR <- unname(unlist(Map(FactorAssignment, LENG2$AREA, LENG2$STRATUM)))
   
   # Transpose again
   LENG2 <- LENG2 %>%
@@ -371,16 +367,8 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
   # OUTPUT OUT=LENGY1 SUM=SUM;
   lengy <- lengy %>% group_by(YEAR, STRATUM, LENGA) %>%
     summarise(SUM = sum(FREQUENCY, na.rm = TRUE), .groups = 'drop') %>%
-    left_join(SAMPLES, by = c("YEAR", "STRATUM")) %>% filter(!is.na(SUM))
-  
-  # %MACRO1;
-  # MEAN1=FACTOR*(SUM/COUNT);
-  # This calculation is applied directly to the 'leng2' data frame.
-  # Assuming 'FACTOR' is a column in 'leng2' (which came from TEMPLATE/LENG via ytemplt).
-  lengy$FACTOR <- unname(unlist(Map(FactorAssignment, lengy$AREA, lengy$STRATUM)))
-  
-  # Replace NA with 0
-  ZEROSY <- lengy %>% mutate(MEAN1 = FACTOR * (SUM / COUNT)) %>% 
+    left_join(SAMPLES, by = c("YEAR", "STRATUM")) %>% filter(!is.na(SUM)) %>%
+    mutate(MEAN1 = FACTOR * (SUM / COUNT)) %>% 
     group_by(YEAR, LENGA) %>%
     summarise(MEANS = sum(MEAN1, na.rm = TRUE), .groups = 'drop') %>% #this matches! :) (need to flesh out/expand colnames)
     group_by(YEAR) %>%
@@ -391,7 +379,7 @@ LFD <- function(mypath, myspp, area="ALL", cruise="ALL", outdir) {
   
   # Merge with AM4 and filter
   FINALY1 <- AM4 %>% #matches here! LINE 619
-    full_join(ZEROSY, by = "YEAR") %>%
+    full_join(lengy, by = "YEAR") %>%
     filter(YEAR != "1901") %>%
     mutate(across(where(is.numeric), ~ifelse(is.na(.), 0, .)))
   
