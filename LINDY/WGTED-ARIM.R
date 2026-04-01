@@ -41,13 +41,14 @@ Macro20 <- function(abund, timescale = "month") {
 
 # setups here would have to be a data frame of NUMBER,WEIGHT
 Macro6 <- function(setups) {
-  tsam <- setups %>% mutate(SPTOW = ifelse(NUMBER > 0, 1, 0)) %>%
+  tsam <- setups %>%
+    mutate(SPTOW = ifelse(NUMBER > 0, 1, 0)) %>%
     summarise(
       TN = sum(NUMBER, na.rm = T), # 10469.680381
       NM = mean(NUMBER, na.rm = T),
       NMSE = sd(NUMBER, na.rm = T) / sqrt(n()),
       NV = var(NUMBER, na.rm = T),
-      NN = n(), WN = n(), SPTOW = sum(SPTOW, na.rm=T)
+      NN = n(), WN = n(), SPTOW = sum(SPTOW, na.rm = T)
     )
   if ("WEIGHT" %in% colnames(setups)) {
     weight <- setups %>% summarise(
@@ -122,7 +123,7 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
     "Atl croaker" = "MU",
     "Striped bass" = "MS"
   )
-  abund <- read.dbf(file.path(mypath, paste0(value_map[myspp],"ABUN.dbf")))
+  abund <- read.dbf(file.path(mypath, paste0(value_map[myspp], "ABUN.dbf")))
   abund$NUMBER <- abund$NUMBER / abund$MINOUT * 20
   if (!myspp %in% c("Lobster - F (GE53mm)", "Lobster - M (GE53mm)")) {
     abund$WEIGHT <- abund$WEIGHT / abund$MINOUT * 20
@@ -143,17 +144,17 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
   } else if (cruise == "AprthruOct") {
     abund <- abund[abund$YEAR > 1988, ]
   }
-  
+
   cruiseno <- case_when(
     cruise == "ALL" ~ list(1:6),
-    cruise == "AprOct" ~ list(c(2,5)),
+    cruise == "AprOct" ~ list(c(2, 5)),
     cruise == "AugOct" ~ list(4:5),
     cruise == "Oct" ~ list(5),
     cruise == "AprthruOct" ~ list(2:5),
     cruise == "Spring" ~ list(2:3),
     cruise == "Apr" ~ list(2)
   )
-  
+
   abund <- abund[abund$CRUISE %in% unlist(cruiseno), ]
   factor <- unname(unlist(Map(function(AREA, STRATUM) {
     factor <- NA
@@ -297,7 +298,7 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
       } else if (STRATUM == 26) factor <- 0.229
     } else if (AREA == "PST") factor <- 1
   }, abund$AREA, abund$STRATUM)))
-  
+
   abund$factor <- factor
 
   for (grouping in c("YEAR")) { # c("YEAR", "STRATUM", "CRUISE", "CRUCODE"),
@@ -307,10 +308,13 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
         Macro6() %>%
         Macro7() %>%
         group_by(across(all_of(grouping))) %>%
-        Macro8() %>% mutate(
+        Macro8() %>%
+        mutate(
           STRATUM = 0,
           # SPTOW = n(),
-          PERCENTF = ifelse(SAMPLES > 0, SPTOW / SAMPLES, 0)) %>% rename(
+          PERCENTF = ifelse(SAMPLES > 0, SPTOW / SAMPLES, 0)
+        ) %>%
+        rename(
           TOTALN = TNSUM,
           STRATNM = NMSUM,
           STRATNSE = NMSESUM
@@ -347,7 +351,7 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
       # PERCENTF = 0,
       # TOTALN = 0, STRATNM = 0, STRATNSE = 0,
       # TOTALW = 0, STRATWM = 0, STRATWSE = 0) %>% select(-STRAT) %>% #line 368 drop more for TSystratS?
-      
+
       tsstrata <- abund %>%
         group_by(across(all_of(c("STRATUM", "AREA", "factor")))) %>%
         Macro6() %>%
@@ -355,10 +359,15 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
         Macro8() %>%
         mutate(
           YEAR = "Grand Total",
-          STRATUM = 0, MONTHN = "1") %>% rename(TOTALN = TNSUM, TOTALW = TWSUM, 
-                                  STRATNM = NMSUM, STRATNSE = NMSESUM,
-                                  STRATWM = WMSUM, STRATWSE = WMSESUM) %>%
-        mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%  mutate(
+          STRATUM = 0, MONTHN = "1"
+        ) %>%
+        rename(
+          TOTALN = TNSUM, TOTALW = TWSUM,
+          STRATNM = NMSUM, STRATNSE = NMSESUM,
+          STRATWM = WMSUM, STRATWSE = WMSESUM
+        ) %>%
+        mutate(across(where(is.numeric), ~ replace_na(., 0))) %>%
+        mutate(
           PERCENTF = ifelse(SAMPLES > 0, SPTOW / SAMPLES, 0),
           MONTH = "Grand Total"
         )
@@ -367,19 +376,19 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
         ystrat <- tsstrata
         keepercols <- c("YEAR", "SAMPLES", "SPTOW", "PERCENTF", "TOTALN", "STRATNM", "STRATNSE")
         if ("TOTALW" %in% colnames(ystrat)) {
-          #ystrat <- ystrat %>% rename(TOTALW = TWSUM, STRATWM = WMSUM, STRATWSE = WMSESUM)
+          # ystrat <- ystrat %>% rename(TOTALW = TWSUM, STRATWM = WMSUM, STRATWSE = WMSESUM)
           keepercols <- c(keepercols, c("TOTALW", "STRATWM", "STRATWSE"))
         }
         yam2 <- yam2[, keepercols]
-        #ystrat <- yam2 %>% summarise(
+        # ystrat <- yam2 %>% summarise(
         #  SAMPLES = sum(SAMPLES),
         #  SPTOW = sum(SPTOW),
         #  PERCENTF = sum(SPTOW) / sum(SAMPLES),
         #  TOTALN = sum(TOTALN),
-        #  
-        #)
-        ystrat <- rbind(yam2[, which(colnames(yam2) %in% colnames(ystrat))], ystrat[,keepercols]) #%>%
-          #rename(TOTALN = TNSUM, STRATNM = NMSUM, STRATNSE = NMSESUM)
+        #
+        # )
+        ystrat <- rbind(yam2[, which(colnames(yam2) %in% colnames(ystrat))], ystrat[, keepercols]) # %>%
+        # rename(TOTALN = TNSUM, STRATNM = NMSUM, STRATNSE = NMSESUM)
       }
 
       if (grouping == "CRUISE") {
@@ -404,12 +413,13 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
       abund$factor <- 1
       tsamw <- abund %>%
         group_by(across(all_of(grouping))) %>%
-        Macro6() %>% Macro7()
-      #factor <- 1
-      #tsamw <- Macro2(tsamw, factor = factor)
+        Macro6() %>%
+        Macro7()
+      # factor <- 1
+      # tsamw <- Macro2(tsamw, factor = factor)
       setups <- tsamw %>% # beware that in the original code line 251 drops from tsamw itself
         select(-NV, -NN, -WN)
-      
+
       TSSTRATS <- merge(setups, stratsp, by = grouping, all = TRUE) %>%
         mutate(
           PERCENTF = ifelse(tsamw$SAMPLES > 0, SPTOW / tsamw$SAMPLES, 0),
