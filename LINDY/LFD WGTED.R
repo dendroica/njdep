@@ -157,7 +157,7 @@ FactorAssignment <- function(area, stratum) { # MACRO1
   return(factor)
 }
 
-LFD <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
+LFD <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir, totlenin = F) {
   value_map <- c(
     "Black drum" = "PC",
     "Lobster - F (GE53mm)" = "HA53F",
@@ -191,6 +191,10 @@ LFD <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
     SECOND <- read.dbf(file.path(mypath, "HAXLENG.dbf"))
     SECOND <- SECOND[SECOND$SEX == 1 & SECOND$LENGTH >= 53, ]
     SECOND$SEX <- NULL
+  }
+  
+  if(totlenin && myspp == "Striped bass" && cruise == "Apr") {
+    SECOND$LENGTH <- floor(SECOND$LENGTH/2.54*1.0512723 + 0.4349993)
   }
   # need more code for lobster...
   SECOND$CRUCODE[SECOND$CRUCODE == 19882] <- 19884
@@ -512,7 +516,11 @@ LFD <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
   # annual$month <- cruise
   # annual$strata <- area
   # write.csv(out[[2]], file = file.path(outdir, paste(myfile, "CAL-STRATA.csv", sep="_")), row.names=F)
-  write.csv(annual, file = file.path(outdir, paste(myfile, "CAL-ANNUAL.csv", sep = "_")), row.names = F)
+  outfilename <- "CAL-ANNUAL.csv"
+  if(totlenin) {
+    outfilename <- "CAL-ANNUAL_TOTLENIN.csv"
+  }
+  write.csv(annual, file = file.path(outdir, paste(myfile, outfilename, sep = "_")), row.names = F)
   return(annual)
 }
 
