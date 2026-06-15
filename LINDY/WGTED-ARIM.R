@@ -121,7 +121,8 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
     "Tautog" = "TO",
     "Weakfish" = "CR",
     "Atl croaker" = "MU",
-    "Striped bass" = "MS"
+    "Striped bass" = "MS",
+    "Atl sturgeon" = "AO"
   )
   abund <- read.dbf(file.path(mypath, paste0(value_map[myspp], "ABUN.dbf")))
   abund$NUMBER <- abund$NUMBER / abund$MINOUT * 20
@@ -152,7 +153,8 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
     cruise == "Oct" ~ list(5),
     cruise == "AprthruOct" ~ list(2:5),
     cruise == "Spring" ~ list(2:3),
-    cruise == "Apr" ~ list(2)
+    cruise == "Apr" ~ list(2),
+    cruise == "noAug" ~ list(1:3,5:6)
   )
 
   abund <- abund[abund$CRUISE %in% unlist(cruiseno), ]
