@@ -5,6 +5,12 @@
 #THIS IS SETUP TO GENERATE OUR OUTLIERS FOR REVIEW IN-HOUSE
 library(mriptools)
 
+###EDIT THIS#########
+comparison_timespan = c(2017:2019, 2021:2024)
+prelim_yr = 2025
+waves = 5 #c(2, 3, 4, 5, 6)
+#########
+
 myspecies <- c(
   "ATLANTIC CROAKER",
   "BLACK DRUM",
@@ -18,21 +24,9 @@ myspecies <- c(
   "TAUTOG", "ATLANTIC MENHADEN", "SMOOTH DOGFISH", "WHITE PERCH", "SCUP",
   "SPINY DOGFISH", "SPOT", "WEAKFISH", "WINTER FLOUNDER"
 )
-comparison_timespan = c(2017:2019, 2021:2024)
-prelim_yr = 2025
-waves = 5 #c(2, 3, 4, 5, 6)
+
 modes = c("CHARTER BOAT", "PARTY BOAT", "PRIVATE/RENTAL BOAT", "SHORE")
 areas = c("INLAND", "OCEAN (<= 3 MI)", "OCEAN (> 3 MI)")
-#state <- 24
-
-MRIPData <- CompileMRIPData(
-  comparison_timespan,
-  prelim_yr,
-  waves,
-  areas,
-  modes,
-  state = 34
-)
 
 Map(function(state, z) {
 MRIPData <- CompileMRIPData(
@@ -45,7 +39,7 @@ MRIPData <- CompileMRIPData(
 ) # indir="~/data/MRIP",
 #return(list(catchall, effortall))
 
-my_outdir <- file.path("V:/Marine Fish/MRIP/Outlier", prelim_yr, waves)
+my_outdir <- file.path(Sys.getenv("OUT"), prelim_yr, waves)
 combined_catch <- OutlieMRIP(MRIPData[[1]], MRIPData[[2]], comparison_timespan, prelim_yr, species=myspecies)
 
 #combined_catch2 <- OutlieMRIP(MRIPData[[1]], MRIPData[[2]], start_yr, end_yr, 
