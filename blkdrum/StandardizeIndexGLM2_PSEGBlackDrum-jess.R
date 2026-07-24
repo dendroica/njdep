@@ -54,9 +54,10 @@ graphics.off()
 #==>Make sure response values (frequencies) are counts
 #==>If data missing, cells should be blank; some programs will put a period into blanks cells-->these need to be
 #==>deleted (cleared)
-indir <- file.path(Sys.getenv("FILEPATH"), "BlackDrum/BlackDrum/PSEG Black Drum")
-source(file.path(indir,"HighstatLibV13.R"))	#==>change path as needed; contains 'corvif' function
+indir <- file.path(Sys.getenv("FILEPATH"), "data/blackdrum")
+source(file.path("./blkdrum","HighstatLibV13.R"))	#==>change path as needed; contains 'corvif' function
 file1 <- file.path(Sys.getenv("FILEPATH"),"BLACK DRUM-catch_Beach Seine.csv")			#==>change file name as needed
+blk <- read.csv(file.path(Sys.getenv("FILEPATH"),"BLACK DRUM_length.csv"))
 indata <- read.csv(file1, header = TRUE, colClasses = c(SAMPLE_ID = "character", SAMPLNO="character", DBO_ES_ST_SAMPLE_SAMPLE_ID="character")) 	#==>reads in tab-delimited file
 indata$DBO_ES_ST_SAMPLE_SAMPLE_ID <- sapply(indata$SAMPLE_ID, function(q) {
   if(nchar(q) > 9) { a <- paste0(substr(q, 1, 6), substr(q, 12, 14))
@@ -67,7 +68,7 @@ indata$ID_SAMPLES <- as.character(as.integer(indata$DBO_ES_ST_SAMPLE_SAMPLE_ID))
 file <- file.path(indir,"AllHaulsCatchTable_woSuspendedStations_YOY.txt")				#==>change file name as needed
 indata2 <- read.delim(file, header = TRUE, sep = "\t", colClasses = c(ID_SAMPLES = "character")) 	#==>reads in tab-delimited file
 #indata2[indata2$ID_SAMPLES=="960927027",]
-blk <- read.csv(file.path(Sys.getenv("FILEPATH"),"BLACK DRUM_length.csv"))
+
 indata <- indata[which(indata$SITE_ID %in% c(unique(indata2$STATION), "BWS28B")),] #Lindy's pull must have recoded this station
 indata$DATE <- as.POSIXct(indata$DATE)
 indata$Year <- as.integer(format(indata$DATE, "%Y"))
