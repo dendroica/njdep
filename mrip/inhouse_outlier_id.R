@@ -3,6 +3,7 @@
 #devtools::update_packages("mriptools")
 
 #THIS IS SETUP TO GENERATE OUR OUTLIERS FOR REVIEW IN-HOUSE
+#Run at office so output "OUT" goes to V drive
 library(mriptools)
 
 ###EDIT THIS#########
