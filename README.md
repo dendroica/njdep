@@ -1,3 +1,5 @@
-- **crab** has the blue crab report pieces
-  - crabreport_jess.Rmd generates my favorite/final version of the crab report update
-- **LINDY** has Lindy's SAS index code converted to R
+## crab
+crabreport_jess.Rmd generates my favorite/final version of the blue crab report update
+
+## LINDY
+Lindy's SAS index code converted to R. How to...
