@@ -1,0 +1,5 @@
+library(sf)
+polygons <- st_read("~/PSEG/psegstrata.gpkg")
+sf_use_s2(FALSE)
+polygons$area <- st_area(polygons)
+st_write(polygons, "~/PSEG/pseg.gpkg")
