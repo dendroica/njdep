@@ -1,1 +1,1 @@
-this is the folder connected to the git repo "njdep"
+LINDY has Lindy's SAS index code converted to R
