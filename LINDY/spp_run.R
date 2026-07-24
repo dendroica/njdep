@@ -1,14 +1,10 @@
-usr <- "jgorzo"
 # input <- "C:/Users/galax/Downloads/SASLoads/SASLoads"
-input <- "V:/Marine Fish/Lindy/OceanTrawl/SASLoads"
-repo_path <- file.path("C:/Users", usr, "Documents/njdep/LINDY")
+input <- Sys.getenv("MYPATH")
+repo_path <- Sys.getenv("LOC")
 setwd(repo_path)
 source("WGTED-ARIM.R")
 source("LFD WGTED.R")
-outdir <- file.path(
-  "C:/Users", usr,
-  "OneDrive - New Jersey Office of Information Technology/Documents/output/sasr"
-)
+outdir <- file.path(Sys.getenv("FILEPATH"),"output/sasr")
 
 # index <- WgtedAriM(input, "Black drum", area="INM", cruise="Oct", outdir=outdir)
 # index <- WgtedAriM(input, "Scup", outdir=outdir) #"INM", "AugOct"
