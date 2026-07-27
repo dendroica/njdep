@@ -1,11 +1,10 @@
 # input <- "C:/Users/galax/Downloads/SASLoads/SASLoads"
 input <- Sys.getenv("MYPATH")
-repo_path <- Sys.getenv("LOC")
-setwd(repo_path)
-source("WGTED-ARIM.R")
-source("LFD WGTED.R")
+source("./LINDY/WGTED-ARIM.R")
+source("./LINDY/LFD WGTED.R")
 outdir <- file.path(Sys.getenv("FILEPATH"),"output/sasr")
 
+index <- WgtedAriM(input, "Atl sturgeon", area="INM", cruise="noAug", outdir=outdir)
 # index <- WgtedAriM(input, "Black drum", area="INM", cruise="Oct", outdir=outdir)
 # index <- WgtedAriM(input, "Scup", outdir=outdir) #"INM", "AugOct"
 # index <- WgtedAriM(input, spp="Spot", area="INM", cruise="AugOct", outdir=outdir)
@@ -31,4 +30,3 @@ outdir <- file.path(Sys.getenv("FILEPATH"),"output/sasr")
 
 # index <- WgtedAriM(input, "Striped bass", cruise="Apr", outdir=outdir)
 #lf <- LFD(input, "Striped bass", cruise = "Apr", outdir = outdir, totlenin=T)
-index <- WgtedAriM(input, "Atl sturgeon", area="INM", cruise="noAug", outdir=outdir)
