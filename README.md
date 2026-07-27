@@ -1,5 +1,6 @@
 ### crab
-`crabreport_jess.Rmd` generates my favorite/final version of the blue crab report update
+- `crabreport_asis.Rmd` is the crab report updated through 2024
+- `crabreport_jess.Rmd` generates my favorite/final version of the blue crab report update
 
 ### LINDY
 Lindy's SAS index code converted to R. How to...
