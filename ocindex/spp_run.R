@@ -1,6 +1,6 @@
 input <- Sys.getenv("MYPATH")
-source("./LINDY/WGTED-ARIM.R")
-source("./LINDY/LFD WGTED.R")
+source("./ocindex/WGTED-ARIM.R")
+source("./ocindex/LFD WGTED.R")
 outdir <- file.path(Sys.getenv("FILEPATH"),"output/sasr")
 
 index <- WgtedAriM(input, "Atl sturgeon", area="INM", cruise="noAug", outdir=outdir)
