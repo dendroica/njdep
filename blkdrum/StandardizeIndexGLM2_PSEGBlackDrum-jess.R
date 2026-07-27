@@ -54,10 +54,10 @@ graphics.off()
 #==>Make sure response values (frequencies) are counts
 #==>If data missing, cells should be blank; some programs will put a period into blanks cells-->these need to be
 #==>deleted (cleared)
-indir <- file.path(Sys.getenv("FILEPATH"), "data/blackdrum")
+indir <- file.path(Sys.getenv("LINDY"), "Transition/BlackDrum/PSEG Black Drum")
 source(file.path("./blkdrum","HighstatLibV13.R"))	#==>change path as needed; contains 'corvif' function
-file1 <- file.path(Sys.getenv("FILEPATH"),"BLACK DRUM-catch_Beach Seine.csv")			#==>change file name as needed
-blk <- read.csv(file.path(Sys.getenv("FILEPATH"),"BLACK DRUM_length.csv"))
+file1 <- file.path(Sys.getenv("VPATH"),"bldrum/BLACK DRUM-catch_Beach Seine.csv")			#you need to re-pull this
+blk <- read.csv(file.path(Sys.getenv("VPATH"),"bldrum/BLACK DRUM_length.csv"))
 indata <- read.csv(file1, header = TRUE, colClasses = c(SAMPLE_ID = "character", SAMPLNO="character", DBO_ES_ST_SAMPLE_SAMPLE_ID="character")) 	#==>reads in tab-delimited file
 indata$DBO_ES_ST_SAMPLE_SAMPLE_ID <- sapply(indata$SAMPLE_ID, function(q) {
   if(nchar(q) > 9) { a <- paste0(substr(q, 1, 6), substr(q, 12, 14))

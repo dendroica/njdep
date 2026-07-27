@@ -49,7 +49,7 @@ df <- sfc %>%
     lat = sf::st_coordinates(.)[, 2]
   )
 
-strata <- read_sf(file.path(root, "data/pseg_strata.gpkg"))
+strata <- read_sf(file.path(root, "data/PSEG/pseg_strata.gpkg"))
 joined_points <- st_join(df, strata, join = st_intersects)
 
 lvl2 <- Map(function(x, y) {
