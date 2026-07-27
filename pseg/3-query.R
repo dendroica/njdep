@@ -1,20 +1,24 @@
 # scan for sturgeon (Atlantic and short nose) and turtle (all species) records and join only those records
 # source("2-pseg_datafix.R")
-
-root <- Sys.getenv("FILEPATH")
-path <- file.path(root, "data/PSEG/PSEG_Data_compiled.RData")
-load(path)
 library(sf)
 sf::sf_use_s2(FALSE)
 library(dplyr)
+root <- Sys.getenv("FILEPATH")
+path <- file.path(root, "data/PSEG/PSEG_Data_compiled.RData")
+load(path)
+load(file.path(root, "data/PSEG/pseg_dict.RData"))
+beachlocs <- read.csv(file.path(root, "data/PSEG/PSEG 2025 Beach Seine Locations.csv"))
+trawllocs <- read.csv(file.path(root, "data/PSEG/PSEG Bottom Trawl Locations.csv"))[, 1:3]
+strata <- read_sf(file.path(root, "data/PSEG/pseg_strata.gpkg"))
+####WHAT YOU NEED TO EDIT###
+sppofinterest <- "BLACK DRUM"
+#########
 
 fullnames <- gsub("(Level [0-9]_[A-Za-z ]* [0-9]{4}).*", "\\1", names(dups))
 gears <- unique(sapply(fullnames, function(y) gsub("Level [0-9]_([A-Za-z ]*) [0-9]{4}.*", "\\1", y)))
 samples <- sapply(gears, function(x) {
   sum(sapply(dups[which(grepl(paste0("Level 1_", x), fullnames))], nrow))
 })
-
-sppofinterest <- "BLACK DRUM"
 
 getspp <- function(x) {
   if ("COMMON_NAME" %in% names(x)) {
@@ -27,8 +31,6 @@ getspp <- function(x) {
 turtle <- lapply(dups, getspp)
 turtle <- turtle[sapply(turtle, nrow) > 0]
 
-load(file.path(root, "data/PSEG/pseg_dict.RData"))
-beachlocs <- read.csv(file.path(root, "data/PSEG/PSEG 2025 Beach Seine Locations.csv"))
 coords <- apply(beachlocs[, 2:3], 2, strsplit, " ")
 deg <- apply(as.data.frame(lapply(coords, function(x) unlist(lapply(x, "[[", 1)))), 2, as.numeric)
 min <- apply(as.data.frame(lapply(coords, function(x) unlist(lapply(x, "[[", 2)))), 2, as.numeric) / 60
@@ -36,7 +38,6 @@ beachlocs <- as.data.frame(deg + min)
 beachlocs$sta <- 1:nrow(beachlocs)
 beachlocs$lng <- beachlocs$lng * -1
 
-trawllocs <- read.csv(file.path(root, "data/PSEG/PSEG Bottom Trawl Locations.csv"))[, 1:3]
 df_sf <- st_as_sf(
   x = trawllocs,
   coords = c("Easting", "Northing"),
@@ -49,7 +50,6 @@ df <- sfc %>%
     lat = sf::st_coordinates(.)[, 2]
   )
 
-strata <- read_sf(file.path(root, "data/PSEG/pseg_strata.gpkg"))
 joined_points <- st_join(df, strata, join = st_intersects)
 
 lvl2 <- Map(function(x, y) {
