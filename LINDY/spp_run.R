@@ -1,4 +1,3 @@
-# input <- "C:/Users/galax/Downloads/SASLoads/SASLoads"
 input <- Sys.getenv("MYPATH")
 source("./LINDY/WGTED-ARIM.R")
 source("./LINDY/LFD WGTED.R")
