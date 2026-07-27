@@ -1,3 +1,5 @@
+See the wiki for instructions on how to...
+
 ### crab
 - `crabreport_asis.Rmd` is the crab report updated through 2024
 - `crabreport_jess.Rmd` generates my favorite/final version of the blue crab report update
