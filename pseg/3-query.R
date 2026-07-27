@@ -4,6 +4,7 @@ library(sf)
 sf::sf_use_s2(FALSE)
 library(dplyr)
 root <- Sys.getenv("FILEPATH")
+out <- root
 path <- file.path(root, "data/PSEG/PSEG_Data_compiled.RData")
 load(path)
 load(file.path(root, "data/PSEG/pseg_dict.RData"))
@@ -305,7 +306,7 @@ return(lvl2data)})
 outdata <- outdata[sapply(outdata, nrow) > 0]
 lapply(outdata, function(d) {
   d <- d[, colSums(!is.na(d)) > 0]
-  write.csv(d, file = file.path(root, paste0(sppofinterest, "-catch_", d$GEAR_TYPE[1], ".csv")), row.names = F)
+  write.csv(d, file = file.path(out, paste0(sppofinterest, "-catch_", d$GEAR_TYPE[1], ".csv")), row.names = F)
 })
 
 #outdata <- bind_rows(lvl2s)
@@ -337,7 +338,7 @@ outdata3 <- bind_rows(outdata3)
 
 mismatch <- outdata3[outdata3$expand < 1 & !is.na(outdata3$expand), ]
 good <- outdata3[outdata3$expand >= 1 & !is.na(outdata3$expand), ]
-write.csv(outdata3, file.path(root, paste0(sppofinterest,"_length.csv")), row.names = F)
+write.csv(outdata3, file.path(out, paste0(sppofinterest,"_length.csv")), row.names = F)
 
 # EDA
 summary_data <- mismatch %>%
