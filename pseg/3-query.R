@@ -11,7 +11,6 @@ load(file.path(root, "data/PSEG/pseg_dict.RData"))
 beachlocs <- read.csv(file.path(root, "data/PSEG/PSEG 2025 Beach Seine Locations.csv"))
 trawllocs <- read.csv(file.path(root, "data/PSEG/PSEG Bottom Trawl Locations.csv"))[, 1:3]
 strata <- read_sf(file.path(root, "data/PSEG/pseg_strata.gpkg"))
-####WHAT YOU NEED TO EDIT###
 sppofinterest <- "BLACK DRUM"
 #########
 
