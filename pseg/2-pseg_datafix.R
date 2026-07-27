@@ -1,4 +1,4 @@
-myroot <- Sys.getenv("FILEPATH")
+myroot <- Sys.getenv("VPATH")
 mypath <- file.path("./pseg/1-pseg_data.R")
 #"~/code/pseg/1-pseg_data.R"
 source(mypath)
@@ -680,4 +680,4 @@ LENGTH_TYPE_NAME <- c("FL", "NM", "O", "TL", "U") # need this to import similarl
 # LENGTH_TYPE and ID_LENGTH_TYPE are just "which" position matches to the above vector
 
 names(dups) <- dataa # 27 and 30: is SPECIES the same as nodc_code?
-#save(dups, file = file.path(myroot, "data/PSEG/PSEG_Data_compiled.RData"))
+#save(dups, file = file.path(myroot, "pseg/PSEG_Data_compiled.RData"))

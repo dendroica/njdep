@@ -1,8 +1,8 @@
 library(purrr)
 library(dplyr)
 library(tidyverse)
-root <- Sys.getenv("FILEPATH")
-path <- file.path(root, "data/PSEG/pseg_data.RData") #
+root <- Sys.getenv("VPATH")
+path <- file.path(root, "pseg/pseg_data.RData") #
 #"~/data/PSEG/pseg_data.RData"
 load(path)
 flattendb <- flatten(mydbs)

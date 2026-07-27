@@ -5,14 +5,14 @@ sf::sf_use_s2(FALSE)
 library(dplyr)
 sppofinterest <- "BLACK DRUM"
 
-root <- Sys.getenv("FILEPATH")
+root <- Sys.getenv("VPATH")
 out <- root
-path <- file.path(root, "data/PSEG/PSEG_Data_compiled.RData")
+path <- file.path(root, "pseg/PSEG_Data_compiled.RData")
 load(path)
-load(file.path(root, "data/PSEG/pseg_dict.RData"))
-beachlocs <- read.csv(file.path(root, "data/PSEG/PSEG 2025 Beach Seine Locations.csv"))
-trawllocs <- read.csv(file.path(root, "data/PSEG/PSEG Bottom Trawl Locations.csv"))[, 1:3]
-strata <- read_sf(file.path(root, "data/PSEG/pseg_strata.gpkg"))
+load(file.path(root, "pseg/pseg_dict.RData"))
+beachlocs <- read.csv(file.path(root, "pseg/PSEG 2025 Beach Seine Locations.csv"))
+trawllocs <- read.csv(file.path(root, "pseg/PSEG Bottom Trawl Locations.csv"))[, 1:3]
+strata <- read_sf(file.path(root, "pseg/pseg_strata.gpkg"))
 #########
 
 fullnames <- gsub("(Level [0-9]_[A-Za-z ]* [0-9]{4}).*", "\\1", names(dups))
