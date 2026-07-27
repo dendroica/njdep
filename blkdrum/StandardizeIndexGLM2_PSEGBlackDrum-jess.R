@@ -55,18 +55,23 @@ graphics.off()
 #==>If data missing, cells should be blank; some programs will put a period into blanks cells-->these need to be
 #==>deleted (cleared)
 indir <- file.path(Sys.getenv("LINDY"), "Transition/BlackDrum/PSEG Black Drum")
+file <- file.path(indir,"AllHaulsCatchTable_woSuspendedStations_YOY.txt")	
 source(file.path("./blkdrum","HighstatLibV13.R"))	#==>change path as needed; contains 'corvif' function
 file1 <- file.path(Sys.getenv("VPATH"),"bldrum/BLACK DRUM-catch_Beach Seine.csv")			#you need to re-pull this
 blk <- read.csv(file.path(Sys.getenv("VPATH"),"bldrum/BLACK DRUM_length.csv"))
+out <- indir
+#############
+
 indata <- read.csv(file1, header = TRUE, colClasses = c(SAMPLE_ID = "character", SAMPLNO="character", DBO_ES_ST_SAMPLE_SAMPLE_ID="character")) 	#==>reads in tab-delimited file
+indata2 <- read.delim(file, header = TRUE, sep = "\t", colClasses = c(ID_SAMPLES = "character")) 	#==>reads in tab-delimited file
+
 indata$DBO_ES_ST_SAMPLE_SAMPLE_ID <- sapply(indata$SAMPLE_ID, function(q) {
   if(nchar(q) > 9) { a <- paste0(substr(q, 1, 6), substr(q, 12, 14))
   } else { a <- q}
   return(a)})
 indata$ID_SAMPLES <- as.character(as.integer(indata$DBO_ES_ST_SAMPLE_SAMPLE_ID))
+			#==>change file name as needed
 
-file <- file.path(indir,"AllHaulsCatchTable_woSuspendedStations_YOY.txt")				#==>change file name as needed
-indata2 <- read.delim(file, header = TRUE, sep = "\t", colClasses = c(ID_SAMPLES = "character")) 	#==>reads in tab-delimited file
 #indata2[indata2$ID_SAMPLES=="960927027",]
 
 indata <- indata[which(indata$SITE_ID %in% c(unique(indata2$STATION), "BWS28B")),] #Lindy's pull must have recoded this station
@@ -488,7 +493,7 @@ segments(x0=yr.mean[,1],x1=yr.mean[,1],y0=yr.mean[,5],y1=yr.mean[,6])
 #-Write Out Results-----------------------------------------------------------------------------------------------------
 #==>change indirectory path as needed
 
-write.csv(yr.mean,file=file.path(indir, "PSEGNegBinomialIndex-jess.csv"))	
+write.csv(yr.mean,file=file.path(out, "PSEGNegBinomialIndex.csv"))	
 
 #######################################################################################################################
 ##THE END ##########################################################################################
