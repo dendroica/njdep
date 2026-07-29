@@ -3,7 +3,7 @@ source("./ocindex/WGTED-ARIM.R")
 source("./ocindex/LFD WGTED.R")
 outdir <- file.path(Sys.getenv("FILEPATH"),"output/sasr")
 
-index <- WgtedAriM(input, "Atl sturgeon", area="INM", cruise="noAug", outdir=outdir)
+index <- WgtedAriM(input, "Jonah crab", outdir=outdir)
 # index <- WgtedAriM(input, "Black drum", area="INM", cruise="Oct", outdir=outdir)
 # index <- WgtedAriM(input, "Scup", outdir=outdir) #"INM", "AugOct"
 # index <- WgtedAriM(input, spp="Spot", area="INM", cruise="AugOct", outdir=outdir)
