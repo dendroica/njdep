@@ -1,5 +1,5 @@
 source("./hsc/NJOTDeltaDist_JessG-update.R")
 #hsc("female", "spring")
 #hsc("male", "fall")
-#index is the plotting dataframe with missing years removed
-#Index is the index with missing years kept in
+#hsc()[[2]] index is for plotting with missing years removed
+#hsc()[[1]] Index is the index with missing years kept in
