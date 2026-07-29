@@ -1,4 +1,4 @@
-source("C:/Users/jgorzo/OneDrive - New Jersey Office of Information Technology/Documents/code/NJOTDeltaDist_JessG-update.R")
+source("./hsc/NJOTDeltaDist_JessG-update.R")
 #hsc("female", "spring")
 #hsc("male", "fall")
 
