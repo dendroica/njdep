@@ -15,7 +15,7 @@ library(sf)
 ## Nests
 
 ```{r map-chunk}
-basepath <- "C:/Users/jgorzo/OneDrive - New Jersey Office of Information Technology/Attachments/"
+basepath <- Sys.getenv("GIS")
 gdb_path <- "osprey.gdb"
 #st_layers(file.path(basepath, gdb_path))
 my_layer <- read_sf(dsn = file.path(basepath, gdb_path), layer = "soa_osprey")
