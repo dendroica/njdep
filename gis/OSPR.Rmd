@@ -6,7 +6,7 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
+knitr::oospr_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
 library(mapview)
 mapviewOptions(leafletWidth = "100%", leafletHeight = 600)
 library(sf)
@@ -15,24 +15,24 @@ library(sf)
 ## Nests
 
 ```{r map-chunk}
-basepath <- Sys.getenv("GIS")
+base_path <- Sys.getenv("GIS")
 gdb_path <- "osprey.gdb"
-#st_layers(file.path(basepath, gdb_path))
-my_layer <- read_sf(dsn = file.path(basepath, gdb_path), layer = "soa_osprey")
-pts <- sf::st_centroid(my_layer)
-nj <- read_sf(dsn=file.path(basepath, "NJ_Counties_3424_3190026769482268997.gpkg"))
-nj <- nj[nj$COUNTY=="MONMOUTH",]
-towns <- read_sf(dsn=file.path(basepath, "NJ_Municipalities_3857_-482933278821945072.gpkg"))
+#st_layers(file.path(base_path, gdb_path))
+my_layer <- read_sf(dsn = file.path(base_path, gdb_path), layer = "soa_osprey")
+ospr <- sf::st_centroid(my_layer)
+co <- read_sf(dsn=file.path(base_path, "NJ_Counties_3424_3190026769482268997.gpkg"))
+co <- co[co$COUNTY=="MONMOUTH",]
+towns <- read_sf(dsn=file.path(base_path, "NJ_Municipalities_3857_-482933278821945072.gpkg"))
 towns <- towns[towns$MUN %in% c("WILDWOOD CREST BORO", "STONE HARBOR BORO", "SEA ISLE CITY", "AVALON BORO"),]
-river <- read_sf(file.path(basepath, "Watershed_Management_Areas_in_New_Jersey/Watershed_Management_Areas_in_New_Jersey.shp"))
+river <- read_sf(file.path(base_path, "Watershed_Management_Areas_in_New_Jersey/Watershed_Management_Areas_in_New_Jersey.shp"))
 rivers <- river[river$WMA_NAME %in% c("Hackensack, Hudson, and Pascack",
                                       "North and South Branch Raritan",
                                      "Lower Raritan, South River, and Lawrence",
                                      "Barnegat Bay","Great Egg Harbor","Cape May"),]
-sedge <- read_sf(file.path(basepath, "sedge.geojson"))
+sedge <- read_sf(file.path(base_path, "sedge.geojson"))
 great <- st_bbox(c(xmin = -74.5, xmax = -74.2, ymax = 39.6, ymin = 39.3), crs= st_crs(4326)) #Great Bay
 # Create the interactive map
-mapview(nj, zcol="COUNTY", col.regions="red") +
+mapview(co, zcol="COUNTY", col.regions="red") +
   mapview(rivers, zcol="WMA_NAME") + mapview(sedge, col.regions="orange") +
-  mapview(great) + mapview(towns, zcol="MUN", col.regions=c("aliceblue", "antiquewhite", "antiquewhite1", "antiquewhite2")) + mapview(pts)
+  mapview(great) + mapview(towns, zcol="MUN", col.regions=c("aliceblue", "antiquewhite", "antiquewhite1", "antiquewhite2")) + mapview(ospr)
 ```
