@@ -56,7 +56,7 @@ graphics.off()
 #==>deleted (cleared)
 indir <- file.path(Sys.getenv("LINDY"), "Transition/BlackDrum/PSEG Black Drum")
 file <- file.path(indir,"AllHaulsCatchTable_woSuspendedStations_YOY.txt")	
-source(file.path("./blkdrum","HighstatLibV13.R"))	#==>change path as needed; contains 'corvif' function
+source(file.path("./black-drum","HighstatLibV13.R"))	#==>change path as needed; contains 'corvif' function
 file1 <- file.path(Sys.getenv("VPATH"),"bldrum/BLACK DRUM-catch_Beach Seine.csv")			#you need to re-pull this
 blk <- read.csv(file.path(Sys.getenv("VPATH"),"bldrum/BLACK DRUM_length.csv"))
 out <- indir
