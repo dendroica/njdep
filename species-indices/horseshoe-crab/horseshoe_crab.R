@@ -1,4 +1,4 @@
-source("./hsc/NJOTDeltaDist.R")
+source("./horseshoe-crab/NJOT_delta.R")
 #hsc("female", "spring")
 #hsc("male", "fall")
 #hsc()[[2]] index is for plotting with missing years removed
