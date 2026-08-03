@@ -42,6 +42,7 @@ bp.vals <- function(x, probs = c(0.1, 0.25, 0.75, .9)) {
 }
 
 theme_set(theme_bw() + theme(text = element_text(size=12, family="Arial")))
+root <- Sys.getenv("CRAB")
 ```
 
 ## Ocean Trawl
@@ -49,7 +50,7 @@ We calculated a geometric mean of the number of crabs caught annually, per strat
 
 ```{r oc,echo=FALSE, include=FALSE}
 midstrata <- c(13, 16, 19, 22, 25)
-load("~/data/crab/crab.RData") #boats is name of data frame with all of the blue crab data
+load(file.path(root, "crab.RData")) #boats is name of data frame with all of the blue crab data
 tows <- tows %>% filter(!is.na(STRATUM), STRATUM < 99, !ID %in% boats$ID) %>%
   mutate(mo = as.integer(sapply(YRMODA, function(x) substr(x, 5, 6)))) #,
          #day = as.integer(sapply(tows$YRMODA, function(x) substr(x, 7, 8))))
@@ -183,7 +184,7 @@ Crabs ranged from `r min(len$LENGTH[len$LENGTH > 0 & len$cru %in% c(4,5)])` cm t
 We calculated a geometric mean of the number of crabs caught monthly, annually, and regionally. Annual and regional means only included data Aug - Oct. The 2020 sampling year was excluded, due to COVID-19 statewide shutdowns. 
 
 ```{r de,echo=FALSE}
-crab <- read.csv("~/data/crab/BLUE CRAB TOTALS.csv")
+crab <- read.csv(file.path(root, "BLUE CRAB TOTALS.csv"))
 crab$date <- as.POSIXct(strptime(crab$Date, "%m/%d/%Y"))
 crab$mo <- as.integer(format(crab$date, "%m"))
 crab$day <- as.integer(format(crab$date, "%d"))
@@ -276,7 +277,7 @@ Crabs ranged from `r min(totln[totln > 0], na.rm=T)` mm to `r max(totln, na.rm=T
 We calculated a geometric mean of the number of crabs caught monthly, annually, and by station. The 2020 sampling year was excluded, due to COVID-19 statewide shutdowns. 
 
 ```{r bay,echo=FALSE}
-crab <- read.csv("~/data/crab/Blue Crab catch.csv")
+crab <- read.csv(file.path(root, "Blue Crab catch.csv"))
 crab$date <- strptime(crab$Date, "%m/%d/%Y")
 ```
 
@@ -367,7 +368,7 @@ ggplot(crabsta, aes(x = as.character(STATION), y = no0, group = STATION)) +
 ggplot(crabsta, aes(x = as.character(STATION), y = no0, group = STATION)) +
   geom_boxplot() + labs(y="Crabs Caught", x="Station")
 
-totln <- read.csv("~/data/crab/BlueCrab_LENGTHS.csv")
+totln <- read.csv(file.path(root, "BlueCrab_LENGTHS.csv"))
 ```
 
 ### Lengths
@@ -376,8 +377,8 @@ Crabs ranged from `r min(totln$LENGTH, na.rm=T)` mm to `r max(totln$LENGTH, na.r
 ## River Herring Young-of-the-Year Seine Survey
 We calculated a geometric mean of the number of crabs caught monthly, annually, and by station. The 2020 sampling year was excluded, due to COVID-19 statewide shutdowns; 2021 sampling started in August. Stations with extremely low salinity were excluded from the analysis due to a lack of catch of blue crabs.
 ```{r crab,echo=FALSE}
-crab <- read.csv("~/data/crab/River Herring Seine Blue Crab Data_catch.csv")
-crab_effort <- read.csv("~/data/crab/River Herring Seine Blue Crab Data_head.csv", blank.lines.skip = T)
+crab <- read.csv(file.path(root, "River Herring Seine Blue Crab Data_catch.csv"))
+crab_effort <- read.csv(file.path(root, "River Herring Seine Blue Crab Data_head.csv", blank.lines.skip = T))
 crab$STATION[crab$STATION == "GEH03"] <- "GEHS03"
 crab$WATERBODY[crab$WATERBODY == "GERH"] <- "GREAT EGG HARBOR RIVER"
 crab_effort$STATION[crab_effort$STATION == "GEHSO3"] <- "GEHS03"
@@ -497,7 +498,7 @@ ggplot(crab, aes(x = factor(STATION), y = no0)) +
 ggplot(crab, aes(x = STATION, y = no0, group = STATION)) +
   geom_boxplot() +
   facet_wrap(~WATERBODY, scales = "free") + labs(y="Crabs Caught", x="Station")
-len <- read.csv("~/data/crab/River Herring Seine Blue Crab Data_length.csv")
+len <- read.csv(file.path(root, "River Herring Seine Blue Crab Data_length.csv"))
 len$TOTALLENGTH[is.na(len$TOTALLENGTH)] <- 0
 ```
 
