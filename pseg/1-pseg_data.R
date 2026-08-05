@@ -39,7 +39,9 @@ data_tbls <- lapply(data_tbls, function(x) {
   }
   return(x)
 })
-
+data_tbls <- lapply(data_tbls, function(x) {
+  colnames(x) <- tolower(colnames(x))
+  return(x)})
 #checking to see if consecutive tables have the same headers
 same_names <- c(FALSE, sapply(seq(2:length(data_tbls)) + 1, function(x) all(names(data_tbls[[x]]) == names(data_tbls[[x - 1]]))))
 same_data_chunked <- split(which(same_names), cumsum(c(1, diff(which(same_names)) != 1)))
@@ -49,9 +51,10 @@ database_names <- unlist(lapply(can_be_merged_chunks, function(x) names(x)[1]))
 merged_chunks <- purrr::map(can_be_merged_chunks, bind_rows)
 names(merged_chunks) <- database_names
 # dups <- lapply(dups, function(x) do.call(rbind, x))
-flattened <- as.integer(unlist(same_data_chunked))
-first_df <- setdiff(min(flattened):max(flattened), flattened) # indices of the tables with no consecutive tables with the same column names (i.e. missing from above)
-first_dfs <- data_tbls[first_df]
+flattened <- as.integer(unlist(same_data_chunks))
+nonconforming <- setdiff(min(flattened):max(flattened), flattened) #where the breaks happen
+unmatched <- data_tbls[nonconforming]
+
 ###### CHECK ALONG THE MERGED CHUNKS FOR FURTHER MERGING OF TABLES WITH THE SAME HEADERS
 ##i.e. now check to see if there are tables with the same headers, but they were not consecutive
 tbls <- lapply(seq_along(merged_chunks), function(x) { # which tables have all of the column names of each "nonconform" table
@@ -87,10 +90,10 @@ for (x in seq_along(tbls)) {
 
 merged_chunks <- merged_chunks[!is.na(merged_chunks)]
 
-########## OF THE SETS THAT MATCHED NOTHING SERIALLY (i.e. the gaps) DO THEY MATCH WITH JUST DIFFERENT CAPS?
-tbls <- lapply(seq_along(first_dfs), function(x) { # which tables have all of the column names of each "nonconform" table
-  surveyx <- names(first_dfs)[x]
-  x <- first_dfs[[x]]
+########## OF THE SETS THAT MATCHED NOTHING SERIALLY (i.e. the gaps)...now check if they match anything in the merged chunks non-serially
+tbls <- lapply(seq_along(unmatched), function(x) {
+  surveyx <- names(unmatched)[x]
+  x <- unmatched[[x]]
   surveyx <- gsub("(Level [0-9]_[A-Za-z ]*) [0-9].*", "\\1", surveyx)
   which(
     unlist(
@@ -99,7 +102,7 @@ tbls <- lapply(seq_along(first_dfs), function(x) { # which tables have all of th
         y <- merged_chunks[[y]]
         surveyy <- gsub("(Level [0-9]_[A-Za-z ]*) [0-9].*", "\\1", surveyy)
         comparetbls <- unlist(
-          all(tolower(names(x)) == tolower(names(y)))
+          all(names(x) == names(y))
         )
         return(c(comparetbls & surveyx == surveyy))
       })
@@ -112,16 +115,16 @@ meld <- sapply(seq_along(tbls), function(x) {
   if (length(tbls[[x]]) > 0) {
     primary <- merged_chunks[[tbls[[x]]]]
     names(primary) <- tolower(names(primary))
-    secondary <- first_dfs[[x]]
+    secondary <- unmatched[[x]]
     names(secondary) <- tolower(names(secondary))
     bind_rows(primary, secondary)
   }
 })
 
 merged_chunks[unlist(tbls)] <- meld[which(!sapply(meld, is.null))] # merged in tables to the main dataset that just needed a NA filled column
-nonconform <- first_dfs[is.na(tbls > 0)] # now, this is tables that haven't been merged in with anything else
+nonconform <- unmatched[is.na(tbls > 0)] # now, this is tables that haven't been merged in with anything else
 
-######### OF THE SETS LEFT THAT DIDN'T MATCH SERIALLY, CAN WE COMBINE THEM WITH THE SAME DATASETS BY NA FILL?
+######### OF THE SETS LEFT THAT DIDN'T MATCH SERIALLY, CAN WE COMBINE THEM BY NA FILL?
 tbls <- unlist(lapply(seq_along(nonconform), function(x) { # which tables have all of the column names of each "nonconform" table
   surveyx <- names(nonconform)[x]
   x <- nonconform[[x]]

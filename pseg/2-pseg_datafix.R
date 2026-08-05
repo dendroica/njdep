@@ -6,33 +6,33 @@ source(mypath)
 pseg <- dups
 pseg[[1]]$col_date <- NULL
 # these are the changes instructed in Alissa's excel sheet: Data tracking for PSEG Baywide Seine Survey
-pseg[[1]][pseg[[1]]$SAMPLNO == "9608291135006A420", ]$LOC_CODE <- "0006"
-pseg[[1]][pseg[[1]]$SAMPLNO == "9609110805006A420", ]$LOC_CODE <- "0006"
-pseg[[1]][pseg[[1]]$SAMPLNO == "9609260845006A420", ]$LOC_CODE <- "0006"
-pseg[[1]][pseg[[1]]$SAMPLNO == "9610130945006A420", ]$LOC_CODE <- "0006"
-pseg[[1]][pseg[[1]]$SAMPLNO == "9610290946006A420", ]$LOC_CODE <- "0006"
-pseg[[1]][pseg[[1]]$SAMPLNO == "96101311130005420", ]$LOC_CODE <- "0034"
-pseg[[1]][pseg[[1]]$SAMPLNO == "97080511380014420", ]$LOC_CODE <- "0013"
-pseg[[1]][pseg[[1]]$SAMPLNO == "9708081143006A420", ]$LOC_CODE <- "0006"
-pseg[[1]][pseg[[1]]$SAMPLNO == "9708261545006A420", ]$LOC_CODE <- "0006"
-pseg[[1]][pseg[[1]]$SAMPLNO == "97100512430008420", ]$LOC_CODE <- "0038"
-pseg[[1]][pseg[[1]]$SAMPLNO == "97102314110023420", ]$LOC_CODE <- "0024"
-pseg[[1]][pseg[[1]]$SAMPLNO == "98092812015005420", ]$LOC_CODE <- "0005"
+pseg[[1]][pseg[[1]]$samplno == "9608291135006A420", ]$loc_code <- "0006"
+pseg[[1]][pseg[[1]]$samplno == "9609110805006A420", ]$loc_code <- "0006"
+pseg[[1]][pseg[[1]]$samplno == "9609260845006A420", ]$loc_code <- "0006"
+pseg[[1]][pseg[[1]]$samplno == "9610130945006A420", ]$loc_code <- "0006"
+pseg[[1]][pseg[[1]]$samplno == "9610290946006A420", ]$loc_code <- "0006"
+pseg[[1]][pseg[[1]]$samplno == "96101311130005420", ]$loc_code <- "0034"
+pseg[[1]][pseg[[1]]$samplno == "97080511380014420", ]$loc_code <- "0013"
+pseg[[1]][pseg[[1]]$samplno == "9708081143006A420", ]$loc_code <- "0006"
+pseg[[1]][pseg[[1]]$samplno == "9708261545006A420", ]$loc_code <- "0006"
+pseg[[1]][pseg[[1]]$samplno == "97100512430008420", ]$loc_code <- "0038"
+pseg[[1]][pseg[[1]]$samplno == "97102314110023420", ]$loc_code <- "0024"
+pseg[[1]][pseg[[1]]$samplno == "98092812015005420", ]$loc_code <- "0005"
 
-pseg[[1]][pseg[[1]]$SAMPLNO == "9608291135006A420", ]$SAMPLNO <- "96082911350006420"
-pseg[[1]][pseg[[1]]$SAMPLNO == "9609110805006A420", ]$SAMPLNO <- "96091108050006420"
-pseg[[1]][pseg[[1]]$SAMPLNO == "9609260845006A420", ]$SAMPLNO <- "96092608450006420"
-pseg[[1]][pseg[[1]]$SAMPLNO == "9610130945006A420", ]$SAMPLNO <- "96101309450006420"
-pseg[[1]][pseg[[1]]$SAMPLNO == "9610290946006A420", ]$SAMPLNO <- "96102909460006420"
-pseg[[1]][pseg[[1]]$SAMPLNO == "96101311130005420", ]$SAMPLNO <- "96101311130034420"
+pseg[[1]][pseg[[1]]$samplno == "9608291135006A420", ]$samplno <- "96082911350006420"
+pseg[[1]][pseg[[1]]$samplno == "9609110805006A420", ]$samplno <- "96091108050006420"
+pseg[[1]][pseg[[1]]$samplno == "9609260845006A420", ]$samplno <- "96092608450006420"
+pseg[[1]][pseg[[1]]$samplno == "9610130945006A420", ]$samplno <- "96101309450006420"
+pseg[[1]][pseg[[1]]$samplno == "9610290946006A420", ]$samplno <- "96102909460006420"
+pseg[[1]][pseg[[1]]$samplno == "96101311130005420", ]$samplno <- "96101311130034420"
 
-pseg[[1]][pseg[[1]]$SAMPLNO == "97080511380014420", ]$SAMPLNO <- "97080511380014420"
-pseg[[1]][pseg[[1]]$SAMPLNO == "9708081143006A420", ]$SAMPLNO <- "97080811430006420"
-pseg[[1]][pseg[[1]]$SAMPLNO == "9708261545006A420", ]$SAMPLNO <- "97082615450006420"
-pseg[[1]][pseg[[1]]$SAMPLNO == "97100512430008420", ]$SAMPLNO <- "97100512430038420"
-pseg[[1]][pseg[[1]]$SAMPLNO == "97102314110023420", ]$SAMPLNO <- "97102314110024420"
+pseg[[1]][pseg[[1]]$samplno == "97080511380014420", ]$samplno <- "97080511380014420"
+pseg[[1]][pseg[[1]]$samplno == "9708081143006A420", ]$samplno <- "97080811430006420"
+pseg[[1]][pseg[[1]]$samplno == "9708261545006A420", ]$samplno <- "97082615450006420"
+pseg[[1]][pseg[[1]]$samplno == "97100512430008420", ]$samplno <- "97100512430038420"
+pseg[[1]][pseg[[1]]$samplno == "97102314110023420", ]$samplno <- "97102314110024420"
 
-pseg[[1]][pseg[[1]]$SAMPLNO == "98092812015005420", ]$SAMPLNO <- "98092812010005420"
+pseg[[1]][pseg[[1]]$samplno == "98092812015005420", ]$samplno <- "98092812010005420"
 
 pseg[[2]][4509, ]$dbo_es_st_sample_sample_id <- "000071146" # missing sample ID
 # filling with what looks like the logical sequence, matches level 2 data
@@ -40,18 +40,18 @@ pseg[[2]][4509, ]$dbo_es_st_sample_sample_id <- "000071146" # missing sample ID
 # I'm not sure this should be changed given GPS_Group_ID_lookup table
 # pseg[[2]][pseg[[2]]$sample_description=="082720141019BWS28",]$gps_group_id <- "BWS28" #non-unique sample desc?
 
-pseg[[11]][pseg[[11]]$SAMPLNO == "9608291135006A420", ]$SAMPLNO <- "96082911350006420"
-pseg[[11]][pseg[[11]]$SAMPLNO == "9609110805006A420", ]$SAMPLNO <- "96091108050006420"
-pseg[[11]][pseg[[11]]$SAMPLNO == "9609260845006A420", ]$SAMPLNO <- "96092608450006420"
-pseg[[11]][pseg[[11]]$SAMPLNO == "9610130945006A420", ]$SAMPLNO <- "96101309450006420"
-pseg[[11]][pseg[[11]]$SAMPLNO == "9610290946006A420", ]$SAMPLNO <- "96102909460006420"
-pseg[[11]][pseg[[11]]$SAMPLNO == "96101311130005420", ]$SAMPLNO <- "96101311130034420"
+pseg[[11]][pseg[[11]]$samplno == "9608291135006A420", ]$samplno <- "96082911350006420"
+pseg[[11]][pseg[[11]]$samplno == "9609110805006A420", ]$samplno <- "96091108050006420"
+pseg[[11]][pseg[[11]]$samplno == "9609260845006A420", ]$samplno <- "96092608450006420"
+pseg[[11]][pseg[[11]]$samplno == "9610130945006A420", ]$samplno <- "96101309450006420"
+pseg[[11]][pseg[[11]]$samplno == "9610290946006A420", ]$samplno <- "96102909460006420"
+pseg[[11]][pseg[[11]]$samplno == "96101311130005420", ]$samplno <- "96101311130034420"
 
-pseg[[11]][pseg[[11]]$SAMPLNO == "97080511380014420", ]$SAMPLNO <- "97080511380014420"
-pseg[[11]][pseg[[11]]$SAMPLNO == "9708081143006A420", ]$SAMPLNO <- "97080811430006420"
-pseg[[11]][pseg[[11]]$SAMPLNO == "9708261545006A420", ]$SAMPLNO <- "97082615450006420"
-pseg[[11]][pseg[[11]]$SAMPLNO == "97100512430008420", ]$SAMPLNO <- "97100512430038420"
-pseg[[11]][pseg[[11]]$SAMPLNO == "97102314110023420", ]$SAMPLNO <- "97102314110024420"
+pseg[[11]][pseg[[11]]$samplno == "97080511380014420", ]$samplno <- "97080511380014420"
+pseg[[11]][pseg[[11]]$samplno == "9708081143006A420", ]$samplno <- "97080811430006420"
+pseg[[11]][pseg[[11]]$samplno == "9708261545006A420", ]$samplno <- "97082615450006420"
+pseg[[11]][pseg[[11]]$samplno == "97100512430008420", ]$samplno <- "97100512430038420"
+pseg[[11]][pseg[[11]]$samplno == "97102314110023420", ]$samplno <- "97102314110024420"
 
 lng <- c(
   pseg[[4]][pseg[[4]]$dbo_es_st_sample_sample_id == "000072717", ]$end_lat_dd,
@@ -73,18 +73,18 @@ pseg[[4]][pseg[[4]]$dbo_es_st_sample_sample_id == "000072717", ]$end_lon_dd <- l
 pseg[[4]][pseg[[4]]$dbo_es_st_sample_sample_id == "000072717", ]$end_lon_mm <- lng[2]
 pseg[[4]][pseg[[4]]$dbo_es_st_sample_sample_id == "000072717", ]$end_lon_ss <- lng[3]
 
-pseg[[21]][pseg[[21]]$SAMPLNO == "9608291135006A420", ]$SAMPLNO <- "96082911350006420"
-pseg[[21]][pseg[[21]]$SAMPLNO == "9609110805006A420", ]$SAMPLNO <- "96091108050006420"
-pseg[[21]][pseg[[21]]$SAMPLNO == "9609260845006A420", ]$SAMPLNO <- "96092608450006420"
-pseg[[21]][pseg[[21]]$SAMPLNO == "9610130945006A420", ]$SAMPLNO <- "96101309450006420"
-pseg[[21]][pseg[[21]]$SAMPLNO == "9610290946006A420", ]$SAMPLNO <- "96102909460006420"
-pseg[[21]][pseg[[21]]$SAMPLNO == "96101311130005420", ]$SAMPLNO <- "96101311130034420"
+pseg[[21]][pseg[[21]]$samplno == "9608291135006A420", ]$samplno <- "96082911350006420"
+pseg[[21]][pseg[[21]]$samplno == "9609110805006A420", ]$samplno <- "96091108050006420"
+pseg[[21]][pseg[[21]]$samplno == "9609260845006A420", ]$samplno <- "96092608450006420"
+pseg[[21]][pseg[[21]]$samplno == "9610130945006A420", ]$samplno <- "96101309450006420"
+pseg[[21]][pseg[[21]]$samplno == "9610290946006A420", ]$samplno <- "96102909460006420"
+pseg[[21]][pseg[[21]]$samplno == "96101311130005420", ]$samplno <- "96101311130034420"
 
-pseg[[21]][pseg[[21]]$SAMPLNO == "97080511380014420", ]$SAMPLNO <- "97080511380014420"
-pseg[[21]][pseg[[21]]$SAMPLNO == "9708081143006A420", ]$SAMPLNO <- "97080811430006420"
-pseg[[21]][pseg[[21]]$SAMPLNO == "9708261545006A420", ]$SAMPLNO <- "97082615450006420"
-pseg[[21]][pseg[[21]]$SAMPLNO == "97100512430008420", ]$SAMPLNO <- "97100512430038420"
-pseg[[21]][pseg[[21]]$SAMPLNO == "97102314110023420", ]$SAMPLNO <- "97102314110024420"
+pseg[[21]][pseg[[21]]$samplno == "97080511380014420", ]$samplno <- "97080511380014420"
+pseg[[21]][pseg[[21]]$samplno == "9708081143006A420", ]$samplno <- "97080811430006420"
+pseg[[21]][pseg[[21]]$samplno == "9708261545006A420", ]$samplno <- "97082615450006420"
+pseg[[21]][pseg[[21]]$samplno == "97100512430008420", ]$samplno <- "97100512430038420"
+pseg[[21]][pseg[[21]]$samplno == "97102314110023420", ]$samplno <- "97102314110024420"
 
 pseg[[2]]$comments <- NULL
 pseg[[2]]$depth_sample_max <- NULL
@@ -315,7 +315,7 @@ pseg <- lapply(pseg, function(x) {
     x$site_id <- x$GPS_GROUP_ID
     x$GPS_GROUP_ID <- NULL
   } else if ("LOC_CODE" %in% names(x) && !"SITE_ID" %in% names(x)) {
-    # x$GPS_GROUP_ID <- x$LOC_CODE
+    # x$GPS_GROUP_ID <- x$loc_code
     x$site_id <- as.character(x$LOC_CODE)
     x$LOC_CODE <- NULL # drop LOCATION_ID
   } else if ("GRID" %in% names(x) && !"SITE_ID" %in% names(x)) {
