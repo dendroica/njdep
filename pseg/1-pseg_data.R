@@ -2,8 +2,8 @@ library(purrr)
 library(dplyr)
 library(tidyverse)
 root <- Sys.getenv("VPATH")
-path <- file.path(root, "pseg/pseg_data.RData") #
-# "~/data/PSEG/pseg_data.RData"
+#this is generated from function in accessdb.R
+path <- file.path(root, "pseg/pseg_data.RData")
 load(path)
 tbls_list <- flatten(mydbs)
 # tbls_list <- sort(tbls_list)
