@@ -40,6 +40,7 @@ data_tbls <- lapply(data_tbls, function(x) {
   return(x)
 })
 
+#checking to see if consecutive tables have the same headers
 same_names <- c(FALSE, sapply(seq(2:length(data_tbls)) + 1, function(x) all(names(data_tbls[[x]]) == names(data_tbls[[x - 1]]))))
 same_data_chunked <- split(which(same_names), cumsum(c(1, diff(which(same_names)) != 1)))
 same_data_chunks <- lapply(same_data_chunked, function(x) c(x[1] - 1, x))
@@ -52,16 +53,17 @@ flattened <- as.integer(unlist(same_data_chunked))
 first_df <- setdiff(min(flattened):max(flattened), flattened) # indices of the tables with no consecutive tables with the same column names (i.e. missing from above)
 first_dfs <- data_tbls[first_df]
 ###### CHECK ALONG THE MERGED CHUNKS FOR FURTHER MERGING OF TABLES WITH THE SAME HEADERS
+##i.e. now check to see if there are tables with the same headers, but they were not consecutive
 tbls <- lapply(seq_along(merged_chunks), function(x) { # which tables have all of the column names of each "nonconform" table
   db_name <- names(merged_chunks)[x]
   merged_chunk <- merged_chunks[[x]]
   db_name <- gsub("(Level [0-9]_[A-Za-z ]*) [0-9].*", "\\1", db_name)
-  which(
+  which( #return which data tables are the same level and gear, that also have the same exact column names
     unlist(
       lapply(seq_along(merged_chunks), function(y) {
-        surveyy <- names(merged_chunks)[y]
+        db_name_match <- names(merged_chunks)[y]
         y <- merged_chunks[[y]]
-        surveyy <- gsub("(Level [0-9]_[A-Za-z ]*) [0-9].*", "\\1", surveyy)
+        surveyy <- gsub("(Level [0-9]_[A-Za-z ]*) [0-9].*", "\\1", db_name_match)
         comparetbls <- unlist(
           all((names(merged_chunk)) == names(y))
         )
