@@ -17,7 +17,7 @@ oceantrawl <- function(pathtodb, outfile) {
 } 
 #oceantrawl(trawl, outfile)
 
-outfile <- "C:/Users/jgorzo/Documents/weakfish.RData"
+outfile <- "weakfish.RData"
 seine <- file.path(Sys.getenv("VIN"), "Delaware River Seine Survey/Delaware River Seine 1980-2024_2-26-25.mdb")
 weakfish_seine <- function(pathtodb, outfile) {
   dummy_db <- odbcConnectAccess2007(access.file = pathtodb)
