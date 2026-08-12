@@ -1,0 +1,6 @@
+library(devtools)
+dev_mode(on=T)
+#devtools::install_github("dendroica/mriptools@data")
+detach("package:mriptools", unload = TRUE)
+devtools::update_packages("mriptools")
+dev_mode(on = FALSE)
