@@ -23,7 +23,7 @@ ospr <- sf::st_centroid(my_layer)
 co <- read_sf(dsn=file.path(base_path, "NJ_Counties_3424_3190026769482268997.gpkg"))
 co <- co[co$COUNTY=="MONMOUTH",]
 towns <- read_sf(dsn=file.path(base_path, "NJ_Municipalities_3857_-482933278821945072.gpkg"))
-towns <- towns[towns$MUN %in% c("WILDWOOD CREST BORO", "STONE HARBOR BORO", "SEA ISLE CITY", "AVALON BORO"),]
+towny <- towns[towns$MUN %in% c("WILDWOOD CREST BORO", "STONE HARBOR BORO", "SEA ISLE CITY", "AVALON BORO"),]
 river <- read_sf(file.path(base_path, "Watershed_Management_Areas_in_New_Jersey/Watershed_Management_Areas_in_New_Jersey.shp"))
 rivers <- river[river$WMA_NAME %in% c("Hackensack, Hudson, and Pascack",
                                       "North and South Branch Raritan",
@@ -34,5 +34,5 @@ great <- st_bbox(c(xmin = -74.5, xmax = -74.2, ymax = 39.6, ymin = 39.3), crs= s
 # Create the interactive map
 mapview(co, zcol="COUNTY", col.regions="red") +
   mapview(rivers, zcol="WMA_NAME") + mapview(sedge, col.regions="orange") +
-  mapview(great) + mapview(towns, zcol="MUN", col.regions=c("aliceblue", "antiquewhite", "antiquewhite1", "antiquewhite2")) + mapview(ospr)
+  mapview(great) + mapview(towny, zcol="MUN", col.regions=c("aliceblue", "antiquewhite", "antiquewhite1", "antiquewhite2")) + mapview(ospr)
 ```
