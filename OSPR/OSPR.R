@@ -124,8 +124,9 @@ habitat_focal <- st_intersection(habitat, focal_areas)
 #habitat_focal$FDATE <- NULL
 #habitat_focal$PERMANENT_IDENTIFIER <- NULL
 #habitat_focal$COMID <- NULL
-
 habitat_focal$area_acres <- st_area(habitat_focal) / 43560
+#write_sf(habitat_focal, file.path(Sys.getenv("FILEPATH"), "data/ospr/focal_areas.gpkg"))
+
 habitat_focal$n_points <- lengths(st_intersects(habitat_focal, ospr_areas))
 habitat_focal$density <- habitat_focal$n_points / habitat_focal$area_acres
 
