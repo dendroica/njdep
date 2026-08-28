@@ -1,12 +1,13 @@
 input <- Sys.getenv("MYPATH")
-source("./ocindex/WGTED-ARIM.R")
-source("./ocindex/LFD WGTED.R")
+source("./species-indices/njot-index-stratified/WGTED-ARIM.R")
+source("./species-indices/njot-index-stratified/LFD WGTED.R")
 outdir <- file.path(Sys.getenv("FILEPATH"),"output/sasr")
 
-index <- WgtedAriM(input, "Jonah crab", outdir=outdir)
+#index <- WgtedAriM(input, "Jonah crab", outdir=outdir)
 # index <- WgtedAriM(input, "Black drum", area="INM", cruise="Oct", outdir=outdir)
 # index <- WgtedAriM(input, "Scup", outdir=outdir) #"INM", "AugOct"
-# index <- WgtedAriM(input, spp="Spot", area="INM", cruise="AugOct", outdir=outdir)
+#index <- WgtedAriM(input, myspp="Spot", area="INM", cruise="AugOct", outdir=outdir)
+index <- WgtedAriM(input, "Spot", outdir=outdir)
 # index <- WgtedAriM(input, "Summer flounder", outdir=outdir)
 # index <- WgtedAriM(input, "Summer flounder", cruise="AprthruOct", outdir=outdir)
 # index <- WgtedAriM(input, "Tautog", outdir=outdir)
@@ -29,3 +30,4 @@ index <- WgtedAriM(input, "Jonah crab", outdir=outdir)
 
 # index <- WgtedAriM(input, "Striped bass", cruise="Apr", outdir=outdir)
 #lf <- LFD(input, "Striped bass", cruise = "Apr", outdir = outdir, totlenin=T)
+lf <- LFD(input, "Spot", outdir = outdir)
