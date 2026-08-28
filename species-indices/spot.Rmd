@@ -1,0 +1,75 @@
+---
+title: "Spot NJOT Index"
+author: "Jess Gorzo"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = F)
+knitr::opts_chunk$set(out.width = "100%")
+library(ggplot2)
+library(dplyr)
+library(slider)
+input <- Sys.getenv("MYPATH")
+source("./njot-index-stratified/WGTED-ARIM.R")
+source("./njot-index-stratified/LFD WGTED.R")
+outdir <- file.path(Sys.getenv("FILEPATH"),"output/sasr")
+
+index_annual <- WgtedAriM(input, "Spot", outdir=outdir)
+index <- WgtedAriM(input, myspp="Spot", area="INM", cruise="AugOct", outdir=outdir)
+lf <- LFD(input, "Spot", outdir = outdir)
+```
+
+## Annual
+
+```{r cars}
+knitr::kable(index_annual)
+df <- index_annual[[1]][-nrow(index_annual[[1]]), ]
+df <- df %>%
+  mutate(avg_3 = slide_dbl(STRATNM, mean, .before = 2, .complete = TRUE),
+         avg_3w = slide_dbl(STRATWM, mean, .before = 2, .complete = TRUE))
+```
+
+## Aug-Oct Inshore/Mid Strata
+
+```{r car}
+knitr::kable(index)
+df <- index[[1]][-nrow(index[[1]]), ]
+df$YEAR <- as.integer(df$YEAR)
+df <- df %>%
+  mutate(avg_3 = slide_dbl(STRATNM, mean, .before = 2, .complete = TRUE),
+         avg_3w = slide_dbl(STRATWM, mean, .before = 2, .complete = TRUE))
+
+df <- df %>%
+    complete(
+      YEAR = full_seq(c(1988, max(YEAR)), period = 1), # Fills sequence based on min/max in group
+      fill = list(value = NA)
+    ) %>% # Fills new value columns with NA
+    ungroup()
+```
+
+## Plot
+
+```{r pressure, fig.width = 10}
+scale_factor <- 0.0409020451
+
+ggplot(df, aes(x = YEAR, group=1)) +
+  geom_line(aes(y = STRATNM), color="blue", linewidth = 1) +
+  geom_line(aes(y = STRATWM / scale_factor), color="red", linewidth = 1) +
+  geom_line(aes(y = avg_3), color="blue", linetype = "dashed") +
+  geom_line(aes(y = avg_3w / scale_factor), color="red", linetype = "dashed") +
+  scale_y_continuous(
+    name = "Stratified Mean CPUE (n)",
+    # sec.axis reverses the mathematical scale transformation for the display labels
+    sec.axis = sec_axis(~ . * scale_factor, name = "Stratified Mean Biomass per Tow (kg)")
+  ) +
+  theme_minimal()
+
+```
+
+## CAL
+
+```{r cas}
+knitr::kable(lf)
+```
