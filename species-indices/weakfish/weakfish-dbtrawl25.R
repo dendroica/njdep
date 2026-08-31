@@ -1,6 +1,22 @@
 library(dplyr)
 #generate from accessdb, will have to update query annually
 load(file.path(Sys.getenv("VPATH"), "weakfish.RData"))
+tows$STATION <- as.character(tows$STATION)
+
+#2025 Data
+headcatch <- read.csv(file.path(Sys.getenv("VPATH"),"report/species/weakfish/detrawl/HEADCATCH.csv"))
+headcatch$DATE <- as.Date(headcatch$DATE, format="%m/%d/%Y")
+headcatch[headcatch$SALINITY=="N/A",]$SALINITY <- NA
+headcatch$SALINITY <- as.numeric(headcatch$SALINITY)
+headcatch[headcatch$TEMP=="N/A",]$TEMP <- NA
+headcatch$TEMP <- as.numeric(headcatch$TEMP)
+headcatch[headcatch$DO=="N/A",]$DO <- NA
+headcatch$DO <- as.numeric(headcatch$DO)
+headcatch[headcatch$pH=="N/A",]$pH <- NA
+headcatch$pH <- as.numeric(headcatch$pH)
+
+lengths <- read.csv(file.path(Sys.getenv("VPATH"),"report/species/weakfish/detrawl/LENGTHS.csv"))
+lengths$DATE <- as.Date(lengths$DATE, format="%m/%d/%Y")
 
 geom_mean <- function(x) {
   exp(mean(log(x)))
@@ -28,10 +44,19 @@ bp.vals <- function(x, probs = c(0.1, 0.25, 0.75, .9)) {
   r
 }
 
-boats$ID <- paste(boats$DATE, boats$STATION, sep="_")
+
+#boats$ID <- paste(boats$DATE, boats$STATION, sep="_")
+#boats$no1 <- boats$NUMBER + 1 
+#boats$no0 <- boats$NUMBER 
+
+tows <- bind_rows(tows, headcatch)
+tows <- tows[order(tows$DATE),]
+tows$ID <- paste(tows$DATE, tows$STATION, sep="_")
+
+boats <- tows[tows$Common_Name=="Weakfish",]
 boats$no1 <- boats$NUMBER + 1 
 boats$no0 <- boats$NUMBER 
-tows$ID <- paste(tows$DATE, tows$STATION, sep="_")
+
 tows <- tows[!duplicated(tows$ID),]
 tows <- tows[!tows$ID %in% boats$ID,]
 tows$no0 <- 0
@@ -51,6 +76,8 @@ weakfish_annual <- weakfish %>%
 
 # First, read in all length freq data, split into separate tows, and calc fraction < month-specific cutoffs
 lens <- length
+lens$STATION <- as.character(lens$STATION)
+lens <- bind_rows(lens, lengths)
 lens$ID <- paste(lens$DATE, lens$STATION, sep="_")
 y <- split(lens,lens$ID)
 
@@ -99,6 +126,7 @@ all$newCatch[is.na(all$newCatch)] <- 0
 
 # Calculate geometric mean for June-August
 all$Month <- format(all$DATE,"%m")
+
 index <- data.frame(
   "index"=with(all[is.element(as.numeric(all$Month),6:8),],
                tapply(newCatch,format(DATE,"%Y"),geom_mean0))
