@@ -19,6 +19,7 @@ base_path <- Sys.getenv("GIS")
 gdb_path <- "osprey.gdb"
 #st_layers(file.path(base_path, gdb_path))
 my_layer <- read_sf(dsn = file.path(base_path, gdb_path), layer = "soa_osprey")
+my_layer <- my_layer[my_layer$FEAT_DESC=="Foraging",]
 ospr <- sf::st_centroid(my_layer)
 co <- read_sf(dsn=file.path(base_path, "NJ_Counties_3424_3190026769482268997.gpkg"))
 co <- co[co$COUNTY=="MONMOUTH",]
