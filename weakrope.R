@@ -26,13 +26,13 @@ names(haul)[names(haul)=="Non-Target Species (bycatch) Caught (list species)"] <
 #haul$`Wind Direction...25` <- NULL
 #haul$`Sea Surface (f)...27` <- NULL
 #haul$`Current (Knots)...28` <- NULL
-#calculate the haul date/time from estimated soak etc if it's wrong
 
 haul$Vessel <- tolower(haul$Vessel)
 haul$Set <- as.POSIXct(haul$Set, format="%m/%d/%Y %I:%M %p")
 haul$`Expected Soak Time`[grep("[0-9]$", haul$`Expected Soak Time`)] <- paste(haul$`Expected Soak Time`[grep("[0-9]$", haul$`Expected Soak Time`)], "hr")
 #haul$`Expected Soak Time` still need to change value "1-2 hrs"
-# wind_speed choose which side of range (min or max) to keep
+#wind_speed choose which side of range (min or max) to keep
+#as.numeric(unname(unlist(lapply(sapply(haul$wind_speed, function(x) str_split(x, "-")), "[[", 1)))) for lower bound
 haul$wind_direction <- toupper(haul$wind_direction)
 haul$wind_direction <- gsub(",", "", haul$wind_direction)
 haul$wind_direction[grep("[0-9]$", haul$wind_direction)] <- NA
@@ -154,7 +154,7 @@ spp <- sapply(haul$nontarget, function(x) str_split(x, ", "))
 spp <- lapply(spp, sort)
 spp_char <- unname(unlist(lapply(spp, function(x) paste(x, collapse=", "))))
 spp_char[which(spp_char=="")] <- NA
-haul$nontarget <- spp_char #this needs to get assigned back to nontarget
+haul$nontarget <- spp_char
 
 subset_df <- haul[grepl("weakfish", haul$nontarget), ]
 
@@ -186,9 +186,6 @@ string$`Tie Down Length (in)` <- as.integer(string$`Tie Down Length (in)`)
 string$`Footrope Diameter (in)` <- unname(sapply(string$`Footrope Diameter (in)`, function(x) eval(parse(text=x))))
 string$footrope_mfg <- toupper(string$footrope_mfg)
 string$`Headrope Diameter (in)` <- unname(sapply(string$`Headrope Diameter (in)`, function(x) eval(parse(text=x))))
-
-#convert fractions to numeric Bouyline Diameter (in)
-#fix Headrope MFG (manafacture), look at others too
 
 protected <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG3.xlsx"), sheet="Protected species interactions")
 names(protected)[names(protected)=="string id"] <- "stringid"
