@@ -4,6 +4,12 @@ library(stringr)
 #in -JMG2 file version:
 #I fixed a typo in the name of the sheet to correct it to "Protected species interactions"
 
+#what's left to do...
+#1. fix erroneous duration value
+#2. fix units in estimated soak duration, convert durations to difftime
+#3. fix Haul where you can from this
+#4. choose values if range is given
+
 haul <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG3.xlsx"), sheet="Hauling Data")
 haul[,c(5:6, 19:20, 22)] <- NULL
 names(haul)[4] <- "stringid"
@@ -29,6 +35,7 @@ haul$`Expected Soak Time`[grep("[0-9]$", haul$`Expected Soak Time`)] <- paste(ha
 # wind_speed choose which side of range (min or max) to keep
 haul$wind_direction <- toupper(haul$wind_direction)
 haul$wind_direction <- gsub(",", "", haul$wind_direction)
+haul$wind_direction[grep("[0-9]$", haul$wind_direction)] <- NA
 # `Wave Length (ft)` choose which side of range (min or max) to keep
 haul$current <- as.numeric(haul$current)
 haul$Substrate <- toupper(haul$Substrate)
