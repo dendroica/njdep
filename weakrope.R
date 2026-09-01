@@ -1,11 +1,6 @@
 library(ggplot2, quietly = TRUE, verbose=FALSE)
 library(readxl, quietly = TRUE, verbose=FALSE)
 library(stringr)
-#in -JMG file version:
-#I manually deleted columns in the hidden columns on Hauling Data that were duplicates
-#I rearranged the order of columns in String ID so I could better read the sheet grouped by parts of the net
-#I fixed a typo in the name of the sheet to correct it to "Protected species interactions"
-
 #in -JMG2 file version:
 #I fixed a typo in the name of the sheet to correct it to "Protected species interactions"
 
@@ -29,6 +24,8 @@ names(haul)[names(haul)=="Non-Target Species (bycatch) Caught (list species)"] <
 
 haul$Vessel <- tolower(haul$Vessel)
 haul$Set <- as.POSIXct(haul$Set, format="%m/%d/%Y %I:%M %p")
+haul$`Expected Soak Time`[grep("[0-9]$", haul$`Expected Soak Time`)] <- paste(haul$`Expected Soak Time`[grep("[0-9]$", haul$`Expected Soak Time`)], "hr")
+#haul$`Expected Soak Time` still need to change value "1-2 hrs"
 # wind_speed choose which side of range (min or max) to keep
 haul$wind_direction <- toupper(haul$wind_direction)
 haul$wind_direction <- gsub(",", "", haul$wind_direction)
@@ -154,17 +151,19 @@ haul$nontarget <- spp_char #this needs to get assigned back to nontarget
 
 subset_df <- haul[grepl("weakfish", haul$nontarget), ]
 
-string <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG2.xlsx"), sheet="String ID")
+string <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG3.xlsx"), sheet="String ID")
 names(string)[names(string)=="String ID"] <- "stringid"
 names(string)[names(string)=="Control or experimental"] <- "net"
-names(string)[names(string)=="Footrope MFG (manfacture)"] <- "footrope_mfg"
-names(string)[names(string)=="Footrope Bouyancy (lb)"] <- "footrope_buoy"
-names(string)[names(string)=="Headrope MFG (manafacture)"] <- "headrope_mfg"
-names(string)[names(string)=="Headrope Bouyancy (lb)"] <- "headrope_buoy"
-names(string)[names(string)=="Bouyline Length (ft)"] <- "buoy_l"
-names(string)[names(string)=="Bouyline Diameter (in)"] <- "buoy_d"
-names(string)[names(string)=="Bouyline MFG (manfacture)"] <- "buoy_mfg"
-names(string)[names(string)=="Bouyline Bouyancy (lb)"] <- "buoy_buoy"
+#names(string)[names(string)=="Footrope MFG (manfacture)"] <- "footrope_mfg"
+#names(string)[names(string)=="Footrope Bouyancy (lb)"] <- "footrope_buoy"
+names(string)[names(string)=="Footrope Buoyancy  (lb)"] <- "footrope_buoy"
+#names(string)[names(string)=="Headrope MFG (manafacture)"] <- "headrope_mfg"
+#names(string)[names(string)=="Headrope Bouyancy (lb)"] <- "headrope_buoy"
+#names(string)[names(string)=="Bouyline Length (ft)"] <- "buoy_l"
+#names(string)[names(string)=="Bouyline Diameter (in)"] <- "buoy_d"
+#names(string)[names(string)=="Bouyline MFG (manfacture)"] <- "buoy_mfg"
+#names(string)[names(string)=="Bouyline Bouyancy (lb)"] <- "buoy_buoy"
+names(string)[names(string)=="Buoy line Buoyancy  (lb)"] <- "buoy_buoy"
 
 string$net <- tolower(string$net)
 string[which(string$Treatment=="Weak End Line"),]$Treatment <- "Weak endline"
@@ -184,7 +183,7 @@ string$`Headrope Diameter (in)` <- unname(sapply(string$`Headrope Diameter (in)`
 #convert fractions to numeric Bouyline Diameter (in)
 #fix Headrope MFG (manafacture), look at others too
 
-protected <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG2.xlsx"), sheet="Protected species interactions")
+protected <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG3.xlsx"), sheet="Protected species interactions")
 names(protected)[names(protected)=="string id"] <- "stringid"
 names(protected)[names(protected)=="net type"] <- "net"
 names(protected)[names(protected)=="Haul date"] <- "Haul"
@@ -206,7 +205,7 @@ protected[protected$`on the animal?`=="head,gilled",]$`on the animal?` <- "head 
 #if alive, what was the state when released needs cleanup
 #injury needs cleanup
 
-panel <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG2.xlsx"), sheet="Panel Damage & Loss Information")
+panel <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG3.xlsx"), sheet="Panel Damage & Loss Information")
 names(panel)[names(panel)=="haul date"] <- "Haul"
 names(panel)[names(panel)=="string id"] <- "stringid"
 names(panel)[names(panel)=="were pannels lost"] <- "panel_loss"
