@@ -1,0 +1,117 @@
+---
+title: "Osprey Nest Density"
+author: "Jess Gorzo"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE)
+library(mapview)
+mapviewOptions(leafletWidth = "100%", leafletHeight = 600)
+library(sf)
+library(sf)
+library(dplyr)
+library(tidyverse)
+library(mapview)
+library(stringr)
+
+habitat_focal <- read_sf(file.path(Sys.getenv("FILEPATH"), "data/ospr/focal_areas.gpkg"))
+```
+
+## Opsrey Nests 
+Patrick Woerner provided osprey observation data, including nest data, that he
+had via the Bureau of GIS which was from largely before 2012. Kathy Clark said 
+that data is more currently being kept in Osprey Watch, so I downloaded the KML
+available online. This data, however, does not include the level of detail in
+the attributes as what was available in-house. It would be ideal to get access
+to the detailed current data I imagine is available through ENSP or Conserve Wildlife. Nonetheless,
+the points here and represented in the total density are the combination of the old
+and modern data.
+
+## Opsrey Monitoring Areas and Habitat 
+In lieu of spatial data delineating monitoring areas, I computed
+minimum convex hulls around osprey nests within a list of focal areas
+sent to us by Joe. My goal was to limit spatial extent reasonably to areas that 
+are surveyed within each focal area for nests (e.g. keep areas of Monmouth Co. 
+that appear to be monitored, rather than compute density on the entire
+areal extent of the county). I coarsely defined
+opsrey nesting habitat to be within a 1km buffer around water or a 500m wetland
+buffer, informed by available life history information. I used the
+Land Use/Land Cover of New Jersey 2015 dataset hosted by our NJDEP Bureau of
+GIS, which is in vector format, lending well to these types of spatial data
+operations. I then subset the National Land Cover Database (NLCD) 2023 to
+unsuitable nesting habitat types,
+namely evergreen forest, mixed forest, scrub/shrub and grassland/herbacoues land
+cover categories. No nests occurred in these land cover types, which also fits
+with known life history traits. Thus, I subtracted these unsuitable land cover
+types from the habitat layer above within ideal distance of aquatic habitats. 
+The area computed to roughly estimate density is this proxy of 
+osprey nesting habitat within each minimum convex polygon.
+
+```{r cars, echo=F}
+ensp <- read_sf(file.path(Sys.getenv("FILEPATH"), "data/ospr/INPUT/ENSP_OSPR.gpkg"))
+ensp_nest <- ensp[ensp$FEAT_DESC=="Nest",]
+
+ospr <- read.csv(file.path(Sys.getenv("FILEPATH"), "data/ospr/INPUT/OspreyWatch.csv"))
+ospr <- ospr %>% 
+  separate(Coords, into = c("lon", "lat"), sep = ",", convert = TRUE) %>%
+  st_as_sf(coords = c("lon", "lat"), crs = 4326)
+ospr <- st_transform(ospr, crs=st_crs(ensp_nest))
+
+ensp_match <- ensp_nest
+ensp_match$ID <- ensp_match$SF_ID 
+ensp_match$Nickname <- as.character(ensp_match$LINK_ID) 
+ensp_match$Substrate <- "ENSP Unrecorded"
+ensp_match$Last.Watched <- str_extract(ensp_match$LAST_OBS, "\\d{4}")
+ensp_match$Status <- "unknown"
+ensp_match$City.County <- NA
+ensp_match$State <- "New Jersey"
+ensp_match$Postal.Code <- NA
+ensp_match <- ensp_match[,names(ensp_match) %in% names(ospr)]
+all_nests <- bind_rows(ospr, ensp_match)
+#write_sf(all_nests, "ospr_nests.gpkg")
+
+ospr_na <- ospr[ospr$Substrate %in% c("", "Other", "CM 'LB'", "Coal Dist Arm", "CM",
+                              "Don't Know", "Nothing Here", "New Jersey Osprey Project",
+                              "Inactive. No Nest",
+                              "Other (Specify)") | is.na(ospr$Substrate),]
+ospr_natural <- ospr[ospr$Substrate %in% c("Dead Tree", "Live Tree", "Marsh", "Island",
+                                   "Snag In Water", "Branches/twigs",
+                                   "Old Red Tail Hawk Nest",
+                                   "Dead Tree W/ Platform Supports",
+                                   "Ground Nest") & !is.na(ospr$Substrate),]
+ospr_naturals <- rbind(ospr_na, ospr_natural)
+#mapview(ensp_nest[13,]) + mapview(ospr[19,])
+#mapview(all_nests, color="red") + mapview(ospr_naturals)
+
+ospr26 <- ospr[ospr$Last.Watched=="2026",]
+
+#load habitat_focal from focal_areas.gpkg
+habitat_focal <- read_sf(file.path(Sys.getenv("FILEPATH"), "data/ospr/focal_areas_refined.gpkg"))
+all_nests <- st_transform(all_nests, crs=st_crs(habitat_focal))
+ospr_naturals <- st_transform(ospr_naturals, crs=st_crs(habitat_focal)) #focal_areas.gpkg
+
+habitat_focal$n_points_nat <- lengths(st_intersects(habitat_focal, ospr_naturals))
+habitat_focal$density_nat <- habitat_focal$n_points_nat / habitat_focal$area_acres
+
+habitat_focal$n_points_all <- lengths(st_intersects(habitat_focal, all_nests))
+habitat_focal$density_all <- habitat_focal$n_points_all / habitat_focal$area_acres
+
+habitat_focal$n_points26 <- lengths(st_intersects(habitat_focal, ospr26))
+habitat_focal$density26 <- habitat_focal$n_points26 / habitat_focal$area_acres
+
+mapview(habitat_focal, zcol="NAME") + mapview(all_nests)
+```
+
+## Nest Density
+
+```{r pressure, echo=FALSE}
+sumtab <- as.data.frame(habitat_focal[,c(2:3, 7:10)])
+sumtab$geom <- NULL
+names(sumtab) <- c("Region", "Area (acres)", "# Nests (all years)", "Density", "# Nests (2026)", "Density (2026)")
+sumtab[3,1] <- "Great Egg Harbor"
+sumtab[7,1] <- "Monmouth County"
+sumtab[9,1] <- "Sea Isle City"
+knitr::kable(sumtab)
+```

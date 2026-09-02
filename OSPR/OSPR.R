@@ -101,8 +101,12 @@ focal_areas[2,] <- st_difference(focal_areas[2, ], st_union(focal_areas[4,]))
 
 habitat <- read_sf(file.path(Sys.getenv("FILEPATH"), "data/ospr/ospr_habitat.gpkg"))
 habitat <- st_as_sf(st_transform(habitat, crs=st_crs(co)))
+habitat_unsuit <- read_sf(file.path(Sys.getenv("FILEPATH"), "ospr_habitat_minus_unsuitable.gpkg"))
+habitat_unsuit <- st_as_sf(st_transform(habitat_unsuit, crs=st_crs(co)))
 habitat[,2:48] <- NULL
+habitat_unsuit[,2:48] <- NULL
 habitat_focal <- st_intersection(habitat, focal_areas)
+habitat_focal_refine <- st_intersection(habitat_unsuit, focal_areas)
 #habitat_focal$ACRES <- NULL
 #habitat_focal$SHAPE_Length <- NULL
 #habitat_focal$SHAPE_Area <- NULL
@@ -125,8 +129,9 @@ habitat_focal <- st_intersection(habitat, focal_areas)
 #habitat_focal$PERMANENT_IDENTIFIER <- NULL
 #habitat_focal$COMID <- NULL
 habitat_focal$area_acres <- st_area(habitat_focal) / 43560
+habitat_focal_refine$area_acres <- st_area(habitat_focal_refine) / 43560
 #write_sf(habitat_focal, file.path(Sys.getenv("FILEPATH"), "data/ospr/focal_areas.gpkg"))
-
+#write_sf(habitat_focal_refine, file.path(Sys.getenv("FILEPATH"), "data/ospr/focal_areas_refined.gpkg"))
 habitat_focal$n_points <- lengths(st_intersects(habitat_focal, ospr_areas))
 habitat_focal$density <- habitat_focal$n_points / habitat_focal$area_acres
 

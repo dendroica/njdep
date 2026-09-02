@@ -41,6 +41,8 @@ mapview(all_nests, color="red") + mapview(ospr_naturals)
 ospr26 <- ospr[ospr$Last.Watched=="2026",]
 
 #load habitat_focal from focal_areas.gpkg
+habitat_focal <- read_sf(file.path(Sys.getenv("FILEPATH"), "data/ospr/focal_areas.gpkg"))
+
 all_nests <- st_transform(all_nests, crs=st_crs(habitat_focal))
 ospr_naturals <- st_transform(ospr_naturals, crs=st_crs(habitat_focal))
 

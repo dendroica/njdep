@@ -12,9 +12,8 @@ mapviewOptions(leafletWidth = "100%", leafletHeight = 600)
 library(sf)
 ```
 
-## Nests
 
-```{r map-chunk}
+```{r foraging}
 base_path <- Sys.getenv("GIS")
 gdb_path <- "osprey.gdb"
 #st_layers(file.path(base_path, gdb_path))
