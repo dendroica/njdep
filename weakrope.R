@@ -8,8 +8,6 @@ library(stringr)
 #1. fix erroneous duration value
 #2. fix units in estimated soak duration, convert durations to difftime
 #3. fix Haul where you can from this
-#4. max_swell = s?
-#5. Wind Speed (knots) "wsw"   "w"
 
 haul <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG3.xlsx"), sheet="Hauling Data")
 haul[,c(5:6, 19:20, 22)] <- NULL
@@ -28,10 +26,22 @@ names(haul)[names(haul)=="Non-Target Species (bycatch) Caught (list species)"] <
 #haul$`Sea Surface (f)...27` <- NULL
 #haul$`Current (Knots)...28` <- NULL
 
+#stand-in fixes...
+haul$max_swell[haul$max_swell=="s"] <- NA
+haul$`Wind Speed (knots)`[grep("w$", haul$`Wind Speed (knots)`)] <- NA
+haul$`Estimated Soak Duration`[grep("E", haul$`Estimated Soak Duration`)] <- NA
+########
+
 haul$Vessel <- tolower(haul$Vessel)
 haul$Set <- as.POSIXct(haul$Set, format="%m/%d/%Y %I:%M %p")
 haul$`Expected Soak Time`[grep("[0-9]$",
                                haul$`Expected Soak Time`)] <- paste(haul$`Expected Soak Time`[grep("[0-9]$", haul$`Expected Soak Time`)], "hr")
+haul$`Estimated Soak Duration`[grep("[0-9]$",
+                               haul$`Estimated Soak Duration`)] <- paste(haul$`Estimated Soak Duration`[grep("[0-9]$",
+                                                                                                             haul$`Estimated Soak Duration`)], "hr")
+haul$`Estimated Soak Duration` <- gsub("hrs", "hr", haul$`Estimated Soak Duration`)
+haul$`Estimated Soak Duration` <- gsub("mins", "min", haul$`Estimated Soak Duration`)
+haul$`Estimated Soak Duration` <- gsub("minns", "min", haul$`Estimated Soak Duration`)
 #haul$`Expected Soak Time` still need to change value "1-2 hrs"
 #wind_speed choose which side of range (min or max) to keep, change to 2 for max
 haul$wind_speed <- as.numeric(unname(unlist(lapply(sapply(haul$wind_speed, function(x) str_split(x, "-")), "[[", 1))))
