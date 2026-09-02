@@ -8,7 +8,8 @@ library(stringr)
 #1. fix erroneous duration value
 #2. fix units in estimated soak duration, convert durations to difftime
 #3. fix Haul where you can from this
-#4. choose values if range is given
+#4. max_swell = s?
+#5. Wind Speed (knots) "wsw"   "w"
 
 haul <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG3.xlsx"), sheet="Hauling Data")
 haul[,c(5:6, 19:20, 22)] <- NULL
@@ -29,14 +30,16 @@ names(haul)[names(haul)=="Non-Target Species (bycatch) Caught (list species)"] <
 
 haul$Vessel <- tolower(haul$Vessel)
 haul$Set <- as.POSIXct(haul$Set, format="%m/%d/%Y %I:%M %p")
-haul$`Expected Soak Time`[grep("[0-9]$", haul$`Expected Soak Time`)] <- paste(haul$`Expected Soak Time`[grep("[0-9]$", haul$`Expected Soak Time`)], "hr")
+haul$`Expected Soak Time`[grep("[0-9]$",
+                               haul$`Expected Soak Time`)] <- paste(haul$`Expected Soak Time`[grep("[0-9]$", haul$`Expected Soak Time`)], "hr")
 #haul$`Expected Soak Time` still need to change value "1-2 hrs"
-#wind_speed choose which side of range (min or max) to keep
-#as.numeric(unname(unlist(lapply(sapply(haul$wind_speed, function(x) str_split(x, "-")), "[[", 1)))) for lower bound
+#wind_speed choose which side of range (min or max) to keep, change to 2 for max
+haul$wind_speed <- as.numeric(unname(unlist(lapply(sapply(haul$wind_speed, function(x) str_split(x, "-")), "[[", 1))))
+#haul$`Wind Speed (knots)` <- as.numeric(unname(unlist(lapply(sapply(haul$`Wind Speed (knots)`, function(x) str_split(x, "-")), "[[", 1))))
 haul$wind_direction <- toupper(haul$wind_direction)
 haul$wind_direction <- gsub(",", "", haul$wind_direction)
 haul$wind_direction[grep("[0-9]$", haul$wind_direction)] <- NA
-# `Wave Length (ft)` choose which side of range (min or max) to keep
+haul$`Wave Length (ft)` <- as.numeric(unname(unlist(lapply(sapply(haul$`Wave Length (ft)`, function(x) str_split(x, "-")), "[[", 1))))
 haul$current <- as.numeric(haul$current)
 haul$Substrate <- toupper(haul$Substrate)
 haul$`Target Species` <- tolower(haul$`Target Species`)
@@ -56,7 +59,7 @@ haul$lon <- as.numeric(haul$lon)
 haul$Haul <- as.POSIXct(haul$Haul, format="%m/%d/%Y %I:%M %p")
 haul$panel <- tolower(haul$panel)
 haul$`Protected Species Interaction` <- tolower(haul$`Protected Species Interaction`)
-# max_swell choose which side of range (min or max) to keep
+haul$max_swell <- as.numeric(unname(unlist(lapply(sapply(haul$max_swell, function(x) str_split(x, "-")), "[[", 1))))
 haul$nontarget <- tolower(haul$nontarget)
 haul$nontarget <- gsub("n/a", NA, haul$nontarget)
 haul$nontarget <- gsub("none", NA, haul$nontarget)
@@ -121,7 +124,6 @@ haul$nontarget <- gsub(",  ", ", ", haul$nontarget)
 haul$nontarget <- gsub(", muddy nets", "", haul$nontarget)
 haul$nontarget <- gsub("black tip", "blacktip", haul$nontarget)
 haul$nontarget <- gsub("spanish ,", "spanish mackerel,", haul$nontarget)
-#haul$nontarget <- gsub("skate, bait", "bait, skate", haul$nontarget)
 haul$nontarget <- gsub("thresher sand", "thresher shark, sand", haul$nontarget)
 haul$nontarget <- gsub("thresher little", "thresher shark, little", haul$nontarget)
 haul$nontarget <- gsub("sandbar cownose", "sandbar shark, cownose", haul$nontarget)
@@ -149,7 +151,6 @@ haul$nontarget <- gsub("spinner$", "spinner shark", haul$nontarget)
 haul$nontarget <- gsub("thresher$", "thresher shark", haul$nontarget)
 haul$nontarget <- gsub("butter$", "butterfish", haul$nontarget)
 haul$nontarget <- gsub("mac$", "mackerel", haul$nontarget)
-#look for ""
 spp <- sapply(haul$nontarget, function(x) str_split(x, ", "))
 spp <- lapply(spp, sort)
 spp_char <- unname(unlist(lapply(spp, function(x) paste(x, collapse=", "))))
@@ -157,6 +158,14 @@ spp_char[which(spp_char=="")] <- NA
 haul$nontarget <- spp_char
 
 subset_df <- haul[grepl("weakfish", haul$nontarget), ]
+haul$`Wind Direction...25` <- toupper(haul$`Wind Direction...25`)
+haul$`Wind Direction...25` <- gsub(",", "", haul$`Wind Direction...25`)
+haul$`Wind Direction...25` <- gsub(" ", "", haul$`Wind Direction...25`)
+haul$`Wind Direction...25`[grep("[0-9]$", haul$`Wind Direction...25`)] <- NA
+haul$`Wind Direction...25`[grep("A$", haul$`Wind Direction...25`)] <- NA
+
+haul$`Wave Height (ft)` <- as.numeric(unname(unlist(lapply(sapply(haul$`Wave Height (ft)`, function(x) str_split(x, "-")), "[[", 1))))
+haul$`Current (Knots)...28` <- as.numeric(haul$`Current (Knots)...28`)
 
 string <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG3.xlsx"), sheet="String ID")
 names(string)[names(string)=="String ID"] <- "stringid"
