@@ -7,7 +7,7 @@ library(stringr)
 #what's left to do...
 #1. fix Haul where you can from estimated_soak
 
-haul <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG3.xlsx"), sheet="Hauling Data")
+haul <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG4.xlsx"), sheet="Hauling Data")
 haul[,c(5:6, 19:20, 22)] <- NULL
 names(haul)[4] <- "stringid"
 names(haul)[names(haul)=="Lattitude (DD.dddd)"] <- "lat"
@@ -183,7 +183,7 @@ haul$`Wind Direction...25`[grep("A$", haul$`Wind Direction...25`)] <- NA
 haul$`Wave Height (ft)` <- as.numeric(unname(unlist(lapply(sapply(haul$`Wave Height (ft)`, function(x) str_split(x, "-")), "[[", 1))))
 haul$`Current (Knots)...28` <- as.numeric(haul$`Current (Knots)...28`)
 
-string <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG3.xlsx"), sheet="String ID")
+string <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG4.xlsx"), sheet="String ID")
 names(string)[names(string)=="String ID"] <- "stringid"
 names(string)[names(string)=="Control or experimental"] <- "net"
 #names(string)[names(string)=="Footrope MFG (manfacture)"] <- "footrope_mfg"
@@ -213,7 +213,7 @@ string$`Footrope Diameter (in)` <- unname(sapply(string$`Footrope Diameter (in)`
 string$`Footrope MFG` <- toupper(string$`Footrope MFG`)
 string$`Headrope Diameter (in)` <- unname(sapply(string$`Headrope Diameter (in)`, function(x) eval(parse(text=x))))
 
-protected <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG3.xlsx"), sheet="Protected species interactions")
+protected <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG4.xlsx"), sheet="Protected species interactions")
 names(protected)[names(protected)=="string id"] <- "stringid"
 names(protected)[names(protected)=="net type"] <- "net"
 names(protected)[names(protected)=="Haul date"] <- "Haul"
