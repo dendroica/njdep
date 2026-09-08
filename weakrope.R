@@ -31,6 +31,7 @@ haul$`Estimated Soak Duration`[grep("E", haul$`Estimated Soak Duration`)] <- "1 
 ########
 
 haul$Vessel <- tolower(haul$Vessel)
+haul$Haul <- as.POSIXct(haul$Haul, format="%m/%d/%Y %I:%M %p")
 haul$Set <- as.POSIXct(haul$Set, format="%m/%d/%Y %I:%M %p")
 haul$`Expected Soak Time`[grep("[0-9]$",
                                haul$`Expected Soak Time`)] <- paste(haul$`Expected Soak Time`[grep("[0-9]$", haul$`Expected Soak Time`)], "hr")
@@ -72,7 +73,6 @@ haul$`Target Species` <- gsub("mackeral", "mackerel", haul$`Target Species`)
 haul$`Est. Target Catch (lbs)` <- as.numeric(haul$`Est. Target Catch (lbs)`)
 haul$lat <- as.numeric(haul$lat)
 haul$lon <- as.numeric(haul$lon)
-haul$Haul <- as.POSIXct(haul$Haul, format="%m/%d/%Y %I:%M %p")
 haul$panel <- tolower(haul$panel)
 haul$`Protected Species Interaction` <- tolower(haul$`Protected Species Interaction`)
 haul$max_swell <- as.numeric(unname(unlist(lapply(sapply(haul$max_swell, function(x) str_split(x, "-")), "[[", 1))))
@@ -209,7 +209,8 @@ string[string$`# Tie Downs` %in% c("N/A", "N/a"),]$`# Tie Downs` <- NA
 string[string$`Tie Down Length (in)` %in% c("N/A", "N/a", "n/a", "na"),]$`Tie Down Length (in)` <- NA
 string$`Tie Down Length (in)` <- as.integer(string$`Tie Down Length (in)`)
 string$`Footrope Diameter (in)` <- unname(sapply(string$`Footrope Diameter (in)`, function(x) eval(parse(text=x))))
-string$footrope_mfg <- toupper(string$footrope_mfg)
+#string$footrope_mfg <- toupper(string$footrope_mfg)
+string$`Footrope MFG` <- toupper(string$`Footrope MFG`)
 string$`Headrope Diameter (in)` <- unname(sapply(string$`Headrope Diameter (in)`, function(x) eval(parse(text=x))))
 
 protected <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG3.xlsx"), sheet="Protected species interactions")
