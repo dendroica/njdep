@@ -27,7 +27,7 @@ names(haul)[names(haul)=="Non-Target Species (bycatch) Caught (list species)"] <
 #stand-in fixes...
 haul$max_swell[haul$max_swell=="s"] <- NA
 haul$`Wind Speed (knots)`[grep("w$", haul$`Wind Speed (knots)`)] <- NA
-haul$`Estimated Soak Duration`[grep("E", haul$`Estimated Soak Duration`)] <- NA
+haul$`Estimated Soak Duration`[grep("E", haul$`Estimated Soak Duration`)] <- "1 hr 38 mins"
 ########
 
 haul$Vessel <- tolower(haul$Vessel)
