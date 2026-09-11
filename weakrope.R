@@ -1,6 +1,9 @@
 library(ggplot2, quietly = TRUE, verbose=FALSE)
 library(readxl, quietly = TRUE, verbose=FALSE)
 library(stringr)
+library(leaps)
+library(car)
+library(MuMIn)
 #in -JMG2 file version:
 #I fixed a typo in the name of the sheet to correct it to "Protected species interactions"
 
@@ -19,6 +22,7 @@ names(haul)[names(haul)=="Current (Knots)...13"] <- "current"
 names(haul)[names(haul)=="Wind Speed (Knots)"] <- "wind_speed"
 names(haul)[names(haul)=="Max Swell Durin Soak (ft)"] <- "max_swell"
 names(haul)[names(haul)=="Non-Target Species (bycatch) Caught (list species)"] <- "nontarget"
+names(haul)[names(haul)=="Est. Target Catch (lbs)"] <- "catch"
 #haul$`Wind Speed (knots)` <- NULL name for set/haul
 #haul$`Wind Direction...25` <- NULL
 #haul$`Sea Surface (f)...27` <- NULL
@@ -29,7 +33,14 @@ haul$max_swell[haul$max_swell=="s"] <- NA
 haul$`Wind Speed (knots)`[grep("w$", haul$`Wind Speed (knots)`)] <- NA
 haul$`Estimated Soak Duration`[grep("E", haul$`Estimated Soak Duration`)] <- "1 hr 38 mins"
 ########
-
+haul$stringid <- tolower(haul$stringid)
+haul$stringid[haul$stringid=="monk cont" & !is.na(haul$stringid)] <- "monk control"
+haul$stringid[haul$stringid=="blue control" & !is.na(haul$stringid)] <- "4 1/4 blue control"
+haul$stringid[haul$stringid=="blue exp" & !is.na(haul$stringid)] <- "4 1/4 blue exp"
+haul$stringid[haul$stringid=="3 monk" & !is.na(haul$stringid)] <- "monk 3"
+haul$stringid[haul$stringid=="5 monk" & !is.na(haul$stringid)] <- "monk 5"
+haul$stringid[haul$stringid=="4 monk" & !is.na(haul$stringid)] <- "monk 4"
+haul$stringid[haul$stringid=="6 monk" & !is.na(haul$stringid)] <- "monk 6"
 haul$Vessel <- tolower(haul$Vessel)
 haul$Haul <- as.POSIXct(haul$Haul, format="%m/%d/%Y %I:%M %p")
 haul$Set <- as.POSIXct(haul$Set, format="%m/%d/%Y %I:%M %p")
@@ -70,7 +81,7 @@ haul$`Target Species` <- gsub("monk fish", "monkfish", haul$`Target Species`)
 haul$`Target Species` <- gsub("/monk", ", monkfish", haul$`Target Species`)
 haul$`Target Species` <- gsub("bluefish, monk", "bluefish, monkfish", haul$`Target Species`)
 haul$`Target Species` <- gsub("mackeral", "mackerel", haul$`Target Species`)
-haul$`Est. Target Catch (lbs)` <- as.numeric(haul$`Est. Target Catch (lbs)`)
+haul$catch <- as.numeric(haul$catch)
 haul$lat <- as.numeric(haul$lat)
 haul$lon <- as.numeric(haul$lon)
 haul$panel <- tolower(haul$panel)
@@ -197,8 +208,10 @@ names(string)[names(string)=="Footrope Buoyancy  (lb)"] <- "footrope_buoy"
 #names(string)[names(string)=="Bouyline Bouyancy (lb)"] <- "buoy_buoy"
 names(string)[names(string)=="Buoy line Buoyancy  (lb)"] <- "buoy_buoy"
 
+string$stringid <- tolower(string$stringid)
 string$net <- tolower(string$net)
 string[which(string$Treatment=="Weak End Line"),]$Treatment <- "Weak endline"
+string[which(string$Name=="Tim Kriessmenn"),]$Name <- "Tim Kriegsmann"
 string[which(string$Treatment=="N/A"),]$Treatment <- NA 
 string$`Net Color` <- tolower(string$`Net Color`)
 string[string$`Net Color`=="lt green",]$`Net Color` <- "light green"
@@ -212,6 +225,8 @@ string$`Footrope Diameter (in)` <- unname(sapply(string$`Footrope Diameter (in)`
 #string$footrope_mfg <- toupper(string$footrope_mfg)
 string$`Footrope MFG` <- toupper(string$`Footrope MFG`)
 string$`Headrope Diameter (in)` <- unname(sapply(string$`Headrope Diameter (in)`, function(x) eval(parse(text=x))))
+string$`Buoy line Diameter (in)` <- unname(sapply(string$`Headrope Diameter (in)`, function(x) eval(parse(text=x))))
+string$`Twine Size` <- as.numeric(string$`Twine Size`)
 
 protected <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG4.xlsx"), sheet="Protected species interactions")
 names(protected)[names(protected)=="string id"] <- "stringid"
@@ -235,10 +250,102 @@ protected[protected$`on the animal?`=="head,gilled",]$`on the animal?` <- "head 
 #if alive, what was the state when released needs cleanup
 #injury needs cleanup
 
-panel <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG3.xlsx"), sheet="Panel Damage & Loss Information")
+panel <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG4.xlsx"), sheet="Panel Damage & Loss Information")
 names(panel)[names(panel)=="haul date"] <- "Haul"
 names(panel)[names(panel)=="string id"] <- "stringid"
 names(panel)[names(panel)=="were pannels lost"] <- "panel_loss"
 names(panel)[names(panel)=="describe damange"] <- "damage"
 panel[panel$Name=="Chuck solan",]$Name <- "Charles Solan"
 panel[panel$Name=="f/v webb",]$Name <- "F/v webo"
+
+merged <- merge(haul, string, by=c("Name","stringid"))
+merged <- merged[!is.na(merged$`Target Species`),]
+merged$target <- "bluefish"
+merged$target[merged$`Target Species`=="butterfish"] <- "butterfish"
+merged$target[merged$`Target Species`=="croaker"] <- "croaker"
+merged$target[merged$`Target Species` %in% c("dogfish", "small dogfish",
+                                             "smooth dogfish",
+                                             "smooth dogfish, bonito", 
+                                             "smooth dogfish, skate",
+                                             "spiny dogfish")] <- "dogfish"
+merged$target[merged$`Target Species` %in% c("menhaden", "menhaden, skate")] <- "menhaden"
+merged$target[merged$`Target Species` %in% c("monkfish", "skate, monkfish")] <- "monkfish"
+merged$target[merged$`Target Species` %in% c("shark", "spinner shark")] <- "shark"
+merged$target[merged$`Target Species` %in% c("skate", "skt", "skw", "winter skate")] <- "skate"
+merged$target[merged$`Target Species` %in% c("spanish mackerel")] <- "spanish mackerel"
+merged$target[merged$`Target Species` %in% c("spot")] <- "spot"
+
+#test <- merged[merged$`Target Species`== "menhaden",]
+#aov(catch ~ estimated_soak + net, data = test)
+testdata <- merged[,names(merged)[!names(merged) %in% c("VTR#", "Expected Soak Time", 
+                                            "Estimated Soak Duration", "VTR Data",
+                                            "nontarget", "Set", "Haul",
+                                            "Protected Species Interaction",
+                                            "panel", "buoy_buoy", "Headrope Buoyancy (lb)",
+                                            "footrope_buoy", "Target Species",
+                                            "hours", "minutes", "Notes/design")]]
+predictors <- names(testdata)[!names(testdata) %in% c("catch", "net", "Treatment",
+                                    "target")]
+char_cols <- sapply(testdata, is.character)
+testdata[char_cols] <- lapply(testdata[char_cols], as.factor)
+#paste(predictors, collapse=" + ")
+
+model_all <- lm(catch ~ #Name + 
+                #stringid + 
+                #Vessel +
+                wind_speed + 
+                #wind_direction +
+                `Wave Length (ft)` + 
+                #sst +
+                current + Substrate +
+                `Set Depth (fa)` + lat + lon + `Wind Speed (knots)` +
+                `Wind Direction...25` + #`Wave Height (ft)` +
+                `Sea Surface (f)...27` + `Current (Knots)...28` + max_swell +
+                estimated_soak + #`# Net Panels` + #`Net Length (ft)` +
+                #`Net Height (ft)` + #`Mesh Count (vertical)` +
+                #`Stretched Mesh Size (in)` + #`Leadline (Spool) Weight (lbs)` +
+                #`Net Color` + #`# Floats` + 
+                `# Weak Links`, #+
+                #`Weak Link Type (if any)`, #+ `Anchor Weight (lbs)`, #+
+                #`Twine Size`, #+ `# Tie Downs`, #+ `Tie Down Length (in)`, #+
+                #`Footrope Length (ft)`, #+ `Footrope Diameter (in)`, #+
+                #`Footrope MFG`, #+ `Headrope Length (ft)`, #+
+                #`Headrope Diameter (in)`, #+ `Headrope MFG`, #+
+                #`Buoy line Length (ft)`, #+ `Buoy line Diameter (in)`, #+
+                #`Buoy line MFG`
+                data=testdata)
+
+#you have to remove these to de-alias the model:
+#ld.vars <- attributes(alias(model_all)$Complete)$dimnames[[1]]
+vif(model_all) #use this to get rid of collinear variables
+#then when they're out, use what's left to extract the col names (below)
+#names(vif(model_all)[,1])
+
+clean_data <- testdata[,which(names(testdata) %in% c("catch", "wind_speed", "Wave Length (ft)", "current",
+                          "Substrate", "Set Depth (fa)", "lat", "lon",
+                          "Wind Speed (knots)", "Wind Direction...25",
+                          "`Sea Surface (f)...27", "Current (Knots)...28",
+                          "max_swell", "estimated_soak", "# Weak Links",
+                          "target", "net"))]
+clean_data <- na.omit(clean_data)
+
+model1 <- lm(catch ~ wind_speed +
+               `Wind Direction...25` + `Wave Length (ft)` + current +
+               Substrate + `Set Depth (fa)` + lat + lon +
+               `Wind Speed (knots)` + `Current (Knots)...28` + `# Weak Links` +
+               max_swell + estimated_soak + target*net,
+             data = clean_data, na.action=na.fail)
+
+subset_results <- dredge(model1)
+best_model <- aov(catch ~ wind_speed + `Wind Direction...25` +
+                   `Set Depth (fa)` + `Wave Length (ft)` +
+                   Substrate +
+                   lat + 
+                   `Current (Knots)...28` + estimated_soak + #target*net,
+                    target*`# Weak Links`,
+                 data = clean_data, na.action=na.fail)
+summary(best_model)
+library(emmeans)
+#comp_means <- emmeans(best_model, ~ `Target Species` * net)
+#pairwise_results <- pairs(comp_means, by = "Target Species", adjust = "net")
+#summary(pairwise_results)
