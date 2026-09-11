@@ -300,36 +300,35 @@ model_all <- lm(catch ~ #Name +
                 `Wave Length (ft)` + 
                 #sst +
                 current +
-                #Substrate +
+                Substrate +
                 `Set Depth (fa)` + lat + lon + `Wind Speed (knots)` +
                 #`Wind Direction...25` +
-                `Wave Height (ft)` +
+                #`Wave Height (ft)` +
                 `Sea Surface (f)...27` + `Current (Knots)...28` + max_swell +
                 estimated_soak +
                 #`# Net Panels` +
-                #`Net Length (ft)` +
-                #`Net Height (ft)`
+                `Net Length (ft)` +
+                #`Net Height (ft)` +
                 `Mesh Count (vertical)` +
-                #`Stretched Mesh Size (in)
+                #`Stretched Mesh Size (in)` +
                 `Leadline (Spool) Weight (lbs)` +
-                #`Net Color`
-                #`# Floats` + 
+                #`Net Color` +
+                `# Floats` + 
                 `# Weak Links` +
                 #`Buoy line Diameter (in)` +
-                  #`Buoy line Length (ft)` + #`Headrope Length (ft)` +
+                 # `Buoy line Length (ft)` + #`Headrope Length (ft)` +
                   #`Footrope MFG` +
-                  #`Footrope Diameter (in)` +
-                  `# Tie Downs` +
+                  `Footrope Diameter (in)` +
+                  #`# Tie Downs` +
                   #`Tie Down Length (in)` +
                   #`Twine Size` +
                   #`Footrope Length (ft)` +
-                  `Anchor Weight (lbs)`, #+ 
-                #`Weak Link Type (if any)`,
-                #`Headrope Diameter (in)`, #+ `Headrope MFG`, #+
-                #+ , #+ Buoy line MFG  
+                  #`Anchor Weight (lbs)` + #`Buoy line MFG` +
+                  #`Weak Link Type (if any)` +
+                  `Headrope Diameter (in)`, #+ `Headrope MFG`,
                 data=testdata)
 
-#you have to remove these to de-alias the model:
+#you have to remov]e these to de-alias the model:
 #ld.vars <- attributes(alias(model_all)$Complete)$dimnames[[1]]
 vif(model_all) #use this to get rid of collinear variables
 #then when they're out, use what's left to extract the col names (below)
@@ -338,25 +337,29 @@ vif(model_all) #use this to get rid of collinear variables
 clean_data <- testdata[,which(names(testdata) %in% c("catch",
                                                      gsub("`",
                                                           "", 
-                                                          names(vif(model_all))),
+                                                          names(vif(model_all)[,1])),
                                                      "target", "net"))]
 clean_data <- na.omit(clean_data)
 
 
 
 model1 <- lm(as.formula(paste0("catch ~ ",
-                               paste(names(vif(model_all)), collapse=" + "),
+                               paste(names(vif(model_all)[,1]), collapse=" + "),
                                " + target*net")),
              data = clean_data, na.action=na.fail)
 
-subset_results <- dredge(model1)
-best_model <- aov(catch ~ wind_speed + #`Wind Direction...25` +
-                   `Set Depth (fa)` + `Wave Length (ft)` + current +
-                   Substrate +
-                   lat + 
-                   #`Current (Knots)...28` +
-                    estimated_soak + #target*net,
-                    target*`# Weak Links`,
+num_cores <- parallel::detectCores() - 1
+fuck <- parallel::makeCluster(num_cores)
+parallel::clusterExport(fuck, "clean_data")
+subset_results <- dredge(model1, cluster=fuck)
+parallel::stopCluster(fuck)
+
+best_model <- aov(catch ~ `Anchor Weight (lbs)` +
+                    `Leadline (Spool) Weight (lbs)` + 
+                    `Sea Surface (f)...27` + `Set Depth (fa)` +
+                    `Wind Speed (knots)` + current + lat +
+                    estimated_soak + `# Weak Links` + target*net,
+                    #target*`# Weak Links`,
                  data = clean_data, na.action=na.fail)
 summary(best_model)
 emtrends(best_model, ~ target, var="# Weak Links")
