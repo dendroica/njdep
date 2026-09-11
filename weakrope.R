@@ -4,6 +4,8 @@ library(stringr)
 library(leaps)
 library(car)
 library(MuMIn)
+library(emmeans)
+library(interactions)
 #in -JMG2 file version:
 #I fixed a typo in the name of the sheet to correct it to "Protected species interactions"
 
@@ -297,22 +299,34 @@ model_all <- lm(catch ~ #Name +
                 #wind_direction +
                 `Wave Length (ft)` + 
                 #sst +
-                current + Substrate +
+                current +
+                #Substrate +
                 `Set Depth (fa)` + lat + lon + `Wind Speed (knots)` +
-                `Wind Direction...25` + #`Wave Height (ft)` +
+                #`Wind Direction...25` +
+                `Wave Height (ft)` +
                 `Sea Surface (f)...27` + `Current (Knots)...28` + max_swell +
-                estimated_soak + #`# Net Panels` + #`Net Length (ft)` +
-                #`Net Height (ft)` + #`Mesh Count (vertical)` +
-                #`Stretched Mesh Size (in)` + #`Leadline (Spool) Weight (lbs)` +
-                #`Net Color` + #`# Floats` + 
-                `# Weak Links`, #+
-                #`Weak Link Type (if any)`, #+ `Anchor Weight (lbs)`, #+
-                #`Twine Size`, #+ `# Tie Downs`, #+ `Tie Down Length (in)`, #+
-                #`Footrope Length (ft)`, #+ `Footrope Diameter (in)`, #+
-                #`Footrope MFG`, #+ `Headrope Length (ft)`, #+
+                estimated_soak +
+                #`# Net Panels` +
+                #`Net Length (ft)` +
+                #`Net Height (ft)`
+                `Mesh Count (vertical)` +
+                #`Stretched Mesh Size (in)
+                `Leadline (Spool) Weight (lbs)` +
+                #`Net Color`
+                #`# Floats` + 
+                `# Weak Links` +
+                #`Buoy line Diameter (in)` +
+                  #`Buoy line Length (ft)` + #`Headrope Length (ft)` +
+                  #`Footrope MFG` +
+                  #`Footrope Diameter (in)` +
+                  `# Tie Downs` +
+                  #`Tie Down Length (in)` +
+                  #`Twine Size` +
+                  #`Footrope Length (ft)` +
+                  `Anchor Weight (lbs)`, #+ 
+                #`Weak Link Type (if any)`,
                 #`Headrope Diameter (in)`, #+ `Headrope MFG`, #+
-                #`Buoy line Length (ft)`, #+ `Buoy line Diameter (in)`, #+
-                #`Buoy line MFG`
+                #+ , #+ Buoy line MFG  
                 data=testdata)
 
 #you have to remove these to de-alias the model:
@@ -321,31 +335,35 @@ vif(model_all) #use this to get rid of collinear variables
 #then when they're out, use what's left to extract the col names (below)
 #names(vif(model_all)[,1])
 
-clean_data <- testdata[,which(names(testdata) %in% c("catch", "wind_speed", "Wave Length (ft)", "current",
-                          "Substrate", "Set Depth (fa)", "lat", "lon",
-                          "Wind Speed (knots)", "Wind Direction...25",
-                          "`Sea Surface (f)...27", "Current (Knots)...28",
-                          "max_swell", "estimated_soak", "# Weak Links",
-                          "target", "net"))]
+clean_data <- testdata[,which(names(testdata) %in% c("catch",
+                                                     gsub("`",
+                                                          "", 
+                                                          names(vif(model_all))),
+                                                     "target", "net"))]
 clean_data <- na.omit(clean_data)
 
-model1 <- lm(catch ~ wind_speed +
-               `Wind Direction...25` + `Wave Length (ft)` + current +
-               Substrate + `Set Depth (fa)` + lat + lon +
-               `Wind Speed (knots)` + `Current (Knots)...28` + `# Weak Links` +
-               max_swell + estimated_soak + target*net,
+
+
+model1 <- lm(as.formula(paste0("catch ~ ",
+                               paste(names(vif(model_all)), collapse=" + "),
+                               " + target*net")),
              data = clean_data, na.action=na.fail)
 
 subset_results <- dredge(model1)
-best_model <- aov(catch ~ wind_speed + `Wind Direction...25` +
-                   `Set Depth (fa)` + `Wave Length (ft)` +
+best_model <- aov(catch ~ wind_speed + #`Wind Direction...25` +
+                   `Set Depth (fa)` + `Wave Length (ft)` + current +
                    Substrate +
                    lat + 
-                   `Current (Knots)...28` + estimated_soak + #target*net,
+                   #`Current (Knots)...28` +
+                    estimated_soak + #target*net,
                     target*`# Weak Links`,
                  data = clean_data, na.action=na.fail)
 summary(best_model)
-library(emmeans)
+emtrends(best_model, ~ target, var="# Weak Links")
 #comp_means <- emmeans(best_model, ~ `Target Species` * net)
 #pairwise_results <- pairs(comp_means, by = "Target Species", adjust = "net")
 #summary(pairwise_results)
+
+#ggplot(data = clean_data, aes(x = `# Weak Links`, y = catch, color=target, group=target)) +
+#  geom_point() +
+#  geom_smooth(method = "lm")
