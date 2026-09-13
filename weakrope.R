@@ -94,11 +94,11 @@ model1 <- lm(as.formula(paste0("catch ~ ",
                                " + target*net")),
              data = clean_data, na.action=na.fail)
 
-num_cores <- parallel::detectCores() - 1
-fuck <- parallel::makeCluster(num_cores)
-parallel::clusterExport(fuck, "clean_data")
-subset_results <- dredge(model1, cluster=fuck, m.max=7)
-parallel::stopCluster(fuck)
+#num_cores <- parallel::detectCores() - 1
+#fuck <- parallel::makeCluster(num_cores)
+#parallel::clusterExport(fuck, "clean_data")
+#subset_results <- dredge(model1, cluster=fuck) #, m.max=7
+#parallel::stopCluster(fuck)
 
 #`#Flt`  `#WekLnk``FtrDmt(in)` `MshCnt(vrt)` `NetLng(ft)``SeaSrf(f)...27` SetDpt(fa)` current
 #est_sok    lat max_swl wnd_spd
@@ -115,10 +115,10 @@ parallel::stopCluster(fuck)
 #                                                     "target", "net"))]
 #clean_data <- na.omit(clean_data)
 
-#best_model <- aov(catch ~ `# Floats` + `# Weak Links` + `Footrope Diameter (in)` +
-#      `Mesh Count (vertical)` + `Net Length (ft)` + `Sea Surface (f)...27` +
-#      `Set Depth (fa)` + current + estimated_soak + lat + max_swell + wind_speed +
-#      target*`# Weak Links`, data = clean_data, na.action=na.fail)
+best_model <- aov(catch ~ `# Floats` + `# Weak Links` + `Footrope Diameter (in)` +
+      `Mesh Count (vertical)` + `Net Length (ft)` + `Sea Surface (f)...27` +
+      `Set Depth (fa)` + current + estimated_soak + lat + max_swell + wind_speed +
+      target*`# Weak Links`, data = clean_data, na.action=na.fail)
 
 
 #oldbest_model <- aov(catch ~ `Anchor Weight (lbs)` +
@@ -128,8 +128,8 @@ parallel::stopCluster(fuck)
 #                    estimated_soak + `# Weak Links` + target*net,
                     #target*`# Weak Links`,
 #                 data = clean_data, na.action=na.fail)
-#summary(best_model)
-#emtrends(best_model, ~ target, var="# Weak Links")
+summary(best_model)
+emtrends(best_model, ~ target, var="# Weak Links")
 #comp_means <- emmeans(best_model, ~ `Target Species` * net)
 #pairwise_results <- pairs(comp_means, by = "Target Species", adjust = "net")
 #summary(pairwise_results)
