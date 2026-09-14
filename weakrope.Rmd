@@ -42,7 +42,7 @@ design is balanced, so balancing groups in the data to the extent possible was a
 for analysis. For instance, each record was assigned to a single target species, 
 even if multiple were listed. I attempted to balance the target groups by
 assigning records to a given target species based on what seemed to be the primary target, and/or
-attempting to achieve as equivalent sizes of target species groups as possible where multiple
+attempting to achieve as equivalent sizes of target species groups as possible and reasonable where multiple
 species were listed.
 
 The following target species were considered, and lumped into categories where necessary:
@@ -53,7 +53,6 @@ The following target species were considered, and lumped into categories where n
 * shark (species lumped, since species wasn't always specified)
 * skate (species lumped, since species wasn't always specified)
 * Spanish mackerel
-
 
 ```{r cars}
 load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data.RData"))
@@ -230,8 +229,7 @@ emtrends(best_model, ~ target, var="# Weak Links")
 In our data set, foot rope diameter was aliased with a number of different variables describing
 the net, which included tie down length, twine size, anchor weight,
 manufacturer of various net components, as well as experimental parameter of the type of weak link used.
-This represents a limitation of the data set, reflecting sample size and what was available given that data collection was dependent on volunteer participation rather than a dedicated, pre-designed experiment. So, we do not have 
-enough unique combinations of these variables to properly separate them. Thus, the relationship of catch to foot rope diameter, though there was a significant linear relationship, can alternatively be interpreted as potentially 
+This represents a limitation of the data set, reflecting sample size and what was available given that data collection circumstances. So, we do not have enough unique combinations of these variables to properly separate them. Thus, the relationship of catch to foot rope diameter, though there was a significant linear relationship, can alternatively be interpreted as potentially 
 representing other net specifications. Teasing apart those influences could be 
 further investigated by testing other combinations of net measurements and
 manufacturers.
@@ -243,3 +241,6 @@ the interaction term. It is possible that clearer relationships between
 treatment and catch separated by target species might be elucidated by more replicates per group,
 and also a more complete experimental design to ensure each treatment is tested
 for each target.
+
+Nonetheless, the variable quantifying the differences between the control and experimental \
+nets, namely the number of weak links, 
