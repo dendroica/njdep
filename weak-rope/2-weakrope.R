@@ -7,11 +7,14 @@ merged <- merged[!is.na(merged$`Target Species`),]
 merged$target <- "bluefish"
 merged$target[merged$`Target Species`=="butterfish"] <- "butterfish"
 merged$target[merged$`Target Species`=="croaker"] <- "croaker"
-merged$target[merged$`Target Species` %in% c("dogfish", "small dogfish",
+merged$target[merged$`Target Species` %in% c("dogfish",
+                                             "small dogfish",
                                              "smooth dogfish",
                                              "smooth dogfish, bonito", 
                                              "smooth dogfish, skate",
-                                             "spiny dogfish")] <- "dogfish"
+                                             "spiny dogfish",
+                                             "skate, bluefish, smooth dogfish",
+                                             "smooth dogfish, bluefish")] <- "dogfish"
 merged$target[merged$`Target Species` %in% c("menhaden", "menhaden, skate")] <- "menhaden"
 merged$target[merged$`Target Species` %in% c("monkfish", "skate, monkfish", "bluefish, monkfish")] <- "monkfish"
 merged$target[merged$`Target Species` %in% c("shark", "spinner shark")] <- "shark"
@@ -25,11 +28,12 @@ testdata <- merged[,names(merged)[!names(merged) %in% c("VTR#", "Expected Soak T
                                                         "nontarget", "Set", "Haul",
                                                         "Protected Species Interaction",
                                                         "panel", "buoy_buoy", "Headrope Buoyancy (lb)",
-                                                        "footrope_buoy", "Target Species",
+                                                        "footrope_buoy",
                                                         "hours", "minutes", "Notes/design")]]
 predictors <- names(testdata)[!names(testdata) %in% c("catch", "net", "Treatment",
-                                                      "target")]
+                                                      "target", "Target Species")]
 char_cols <- sapply(testdata, is.character)
+char_cols[which(names(char_cols)=="Target Species")] <- FALSE
 testdata[char_cols] <- lapply(testdata[char_cols], as.factor)
 
 model_all <- lm(catch ~ #Name + 
@@ -77,7 +81,7 @@ vif(model_all) #use this to get rid of collinear variables
 clean_data <- testdata[,
                        which(names(testdata) %in% c("catch", gsub("`","", 
                                                                   names(vif(model_all)[,1])),
-                                                     "target", "net", "Treatment"))]
+                                                     "target", "net", "Treatment", "Target Species"))]
 clean_data <- na.omit(clean_data)
 #save(clean_data, file="weakrope_data_analysis.RData")
 model1 <- lm(as.formula(paste0("catch ~ ",

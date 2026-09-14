@@ -9,15 +9,17 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2, quietly = TRUE, verbose=FALSE)
 library(emmeans)
-load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data_analysis.RData"))
+load(file.path(Sys.getenv("FILEPATH"),
+               "data/weakrope/weakrope_data_analysis.RData"))
 ```
 
 ## Introduction
 
-The purpose of this analysis was to compare gill nets with the number of weak links
-required by NMFS (control group) to those with more than the required number (experimental group),
-to determine how catch is affected by the number of weak links in a net. There were
-4 experimental treatments for types of weak link configurations:
+The purpose of this analysis was to compare gill nets with the number of weak
+links required by NMFS (control group) to those with more than the required
+number (experimental group), to determine how catch is affected by the number of
+weak links in a net. There were 4 experimental treatments for types of weak link
+configurations:
 
 * Single End Line (One Vert line)
 * Weak endline
@@ -31,17 +33,19 @@ as an analysis of covariance (ANCOVA). This framework allows for accommodating
 co-variates that can affect catch (in this scenario, nuisance variables)
 while quantifying the relationships of interest, namely the effects of whether
 the net was control or experimental, the experimental treatment, and the number
-of weak links. The experimental design was unbalanced, though, due to the nature of depending
-on volunteer participation rather than being a researcher-led endeavor with gear
-designed solely for the experiment. An ANCOVA is most powerful across groups when the experimental 
-design is balanced, so balancing groups in the data to the extent possible was a priority in preparing the data
+of weak links. The experimental design was unbalanced, though, due to the nature
+of depending on volunteer participation rather than being a researcher-led
+endeavor with gear designed solely for the experiment. An ANCOVA is most
+powerful across groups when the experimental design is balanced, so balancing
+groups in the data to the extent possible was a priority in preparing the data
 for analysis. For instance, each record was assigned to a single target species, 
 even if multiple were listed. I attempted to balance the target groups by
-assigning records to a given target species based on what seemed to be the primary target, and/or
-attempting to achieve as equivalent sizes of target species groups as possible and reasonable where multiple
-species were listed.
+assigning records to a given target species based on what seemed to be the
+primary target, and/or attempting to achieve as equivalent sizes of target
+species groups as possible and reasonable where multiple species were listed.
 
-The following target species were considered, and lumped into categories where necessary:
+The following target species were considered, and lumped into categories where
+necessary:
 * bluefish
 * dogfish (species lumped, since species wasn't always specified)
 * menhaden
@@ -53,11 +57,11 @@ The following target species were considered, and lumped into categories where n
 ### Variable selection
 
 Of the suite of nuisance variables available to investigate, I first 
-identified aliases and chose among them, with a preference given to numeric, continuous
-variables that could be best hypothesized to affect catch. To maximize the
-number of net specifications considered while restricting the set to variables
-that are not aliased and not co-linear, the following net specifications
-were considered:
+identified aliases and chose among them, with a preference given to numeric,
+continuous variables that could be best hypothesized to affect catch. To
+maximize the number of net specifications considered while restricting the set
+to variables that are not aliased and not co-linear, the following net
+specifications were considered:
 
 * Net Length (ft)
 * Mesh Count (vertical)
@@ -80,13 +84,14 @@ available:
 * maximum swell
 * estimated soak duration
 
-The data set was whittled down to records that had values for all of these variables, 
-leaving 786 observations. Then, these co-variates were combined into a global model, 
-and all possible subsets were investigated to select a best model by AICc. Of the
-3 variables of interest, preliminary analysis implied that number of weak links would 
-likely be the most influential variable of interest in the model. Thus, number of weak links was also included in 
-the global model used for variable selection. The final models included the following nuisance variables, in addition
-to the independent variables of interest:
+The data set was whittled down to records that had values for all of these
+variables, leaving 786 observations. Then, these co-variates were combined into
+a global model, and all possible subsets were investigated to select a best
+model by AICc. Of the 3 variables of interest, preliminary analysis implied that
+number of weak links would likely be the most influential variable of interest
+in the model. Thus, number of weak links was also included in the global model
+used for variable selection. The final models included the following nuisance
+variables, in addition to the independent variables of interest:
 
 * No. floats
 * Foot rope diameter
@@ -102,8 +107,9 @@ to the independent variables of interest:
 
 The relationship of catch to the experimental conditions of interest
 was modeled via interaction terms with target species, allowing the variance to 
-be partitioned by target. Thus, separate models were developed with interactions of
-species by the each variable of interest: experimental group (control or experimental), treatment, and number of weak links. 
+be partitioned by target. Thus, separate models were developed with interactions
+of species by the each variable of interest: experimental group (control or
+experimental), treatment, and number of weak links. 
 
 ```{r models}
 best_model_net <- aov(catch ~ `# Floats` + `Footrope Diameter (in)` +
@@ -126,11 +132,15 @@ best_model <- aov(catch ~ `# Floats` + `# Weak Links` + `Footrope Diameter (in)`
 
 While accounting for the influence of nuisance variables, whether the net
 was a control or experimental net was not significant in the overall model. It 
-was also not significant for any target species. Thus, the performance of a control
-net did not differ significantly from the performance of an experimental net on the whole.
+was also not significant for any target species. Thus, the performance of a
+control net did not differ significantly from the performance of an experimental
+net on the whole by group.
 
 ```{r results}
 summary(best_model_net)
+```
+
+```{r net, include=F}
 comp_means <- emmeans(best_model_net, ~ target * net)
 pairwise_results <- pairs(comp_means, by = "target", adjust = "net")
 summary(pairwise_results)
@@ -139,49 +149,67 @@ Considering instead the type of weak link, the treatment was also not significan
 
 ```{r results-trt}
 summary(best_model_trt)
+```
+
+```{r trt, include=F}
 comp_means <- emmeans(best_model_trt, ~ target * Treatment)
 pairwise_results <- pairs(comp_means, by="target")
 #summary(pairwise_results)
 ```
 
-On a finer scale, the model explicitly including number of weak links revealed that
-the number of weak links was one of the most significant variables in this model.
-However, the effect strongly differed by target species. The number of weak links 
-was only a significant predictor of catch where dogfish 
-and monk fish were listed as target species. Total catch for these target species 
-was negatively correlated with the number of weak links in a given net. The catch
-was not significantly correlated with number of weak links for any other target species.
-There were not enough records where shark was the primary target to estimate a slope
-for this group.
+On a finer scale, the model explicitly including number of weak links revealed
+that the number of weak links was one of the most significant variables in this
+model. The interaction between the number of weak links and the target species
+was also significant.
 
 ```{r results-best}
 summary(best_model)
+```
+
+The effect of number of weak links strongly differed by target species. The number of
+weak links was only a significant predictor of catch where dogfish and monkfish
+were assigned as the representative target species for the record. Total catch for these target
+species/groups was negatively correlated with the number of weak links in a given net.
+To further test the robustness of this relationship, records where both bluefish and monkfish
+were listed as the target species were reassigned to bluefish, and the significant
+negative relationship remained. 
+
+The catch was not significantly correlated with number of weak links for any
+other target species. There were not enough records where shark was the primary
+target to estimate a slope for this group.
+
+```{r best}
 emtrends(best_model, ~ target, var="# Weak Links")
 ```
 
 ## Discussion
 
-In our data set, foot rope diameter was aliased with a number of different variables describing
-the net, which included tie down length, twine size, anchor weight,
-manufacturer of various net components, as well as experimental parameter of the type of weak link used.
-This represents a limitation of the data set, reflecting sample size and what was available given that data collection circumstances. So, we do not have enough unique combinations of these variables to properly separate them. Thus, the relationship of catch to foot rope diameter, though there was a significant linear relationship, can alternatively be interpreted as potentially 
-representing other net specifications. Teasing apart those influences could be 
-further investigated by testing other combinations of net measurements and
-manufacturers.
+In our data set, foot rope diameter was aliased with a number of different
+variables describing the net, which included tie down length, twine size, anchor
+weight, manufacturer of various net components, as well as experimental
+parameter of the type of weak link used. This represents a limitation of the
+data set, reflecting sample size and what was available given that data
+collection circumstances. So, we do not have enough unique combinations of these
+variables to properly separate them. Thus, the relationship of catch to foot
+rope diameter, though there was a significant linear relationship, can
+alternatively be interpreted as potentially representing other net
+specifications. Teasing apart those influences could be further investigated by
+testing other combinations of net measurements and manufacturers.
 
-Similarly, there were limited replicates of treatment per target species, and in some cases,
-some treatments were never tested for a given target species. Treatment
-(i.e. weak link type) was insignificant in the model, which weakens the support for
-the interaction term. It is possible that clearer relationships between
-treatment and catch separated by target species might be elucidated by more replicates per group,
-and also a more complete experimental design to ensure each treatment is tested
-for each target.
+Similarly, there were limited replicates of treatment per target species, and in
+some cases, some treatments were never tested for a given target species.
+Treatment (i.e. weak link type) was insignificant in the model, which weakens
+the support for the interaction term. It is possible that clearer relationships
+between treatment and catch separated by target species might be elucidated by
+more replicates per group, and also a more complete experimental design to
+ensure each treatment is tested for each target.
 
-Nonetheless, the variable quantifying the differences between the control and experimental 
-nets, namely the number of weak links, was highly significant in the model where it was considered, and 
-negatively affected the catch for 2 groups of target species (dogfish and monkfish).
-Notably, the catch of the remainder of target species/groups considered
-(bluefish, menhaden, shark, skate, Spanish mackerel) were not significantly
-affected by the number of weak links in this analysis. There was not enough data
-on sharks to model the relationship for this group, so further research is needed
-to better understand how shark catch is affected by the number of weak links in a net.
+Nonetheless, the variable quantifying the differences between the control and
+experimental nets, namely the number of weak links, was highly significant in
+the model where it was considered, and negatively affected the catch for 2
+groups of target species (dogfish and monkfish). Notably, the catch of the
+remainder of target species/groups considered (bluefish, menhaden, shark, skate,
+Spanish mackerel) were not significantly affected by the number of weak links in
+this analysis. There was not enough data on sharks to model the relationship for
+this group, so further research is needed to better understand how shark catch
+is affected by the number of weak links in a net.
