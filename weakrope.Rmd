@@ -242,5 +242,6 @@ treatment and catch separated by target species might be elucidated by more repl
 and also a more complete experimental design to ensure each treatment is tested
 for each target.
 
-Nonetheless, the variable quantifying the differences between the control and experimental \
-nets, namely the number of weak links, 
+Nonetheless, the variable quantifying the differences between the control and experimental 
+nets, namely the number of weak links, was highly significant in the model, and 
+negatively affected the catch for 2 groups of target species.
