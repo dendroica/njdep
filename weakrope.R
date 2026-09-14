@@ -17,7 +17,7 @@ merged$target[merged$`Target Species` %in% c("dogfish", "small dogfish",
                                              "smooth dogfish, skate",
                                              "spiny dogfish")] <- "dogfish"
 merged$target[merged$`Target Species` %in% c("menhaden", "menhaden, skate")] <- "menhaden"
-merged$target[merged$`Target Species` %in% c("monkfish", "skate, monkfish")] <- "monkfish"
+merged$target[merged$`Target Species` %in% c("monkfish", "skate, monkfish", "bluefish, monkfish")] <- "monkfish"
 merged$target[merged$`Target Species` %in% c("shark", "spinner shark")] <- "shark"
 merged$target[merged$`Target Species` %in% c("skate", "skt", "skw", "winter skate")] <- "skate"
 merged$target[merged$`Target Species` %in% c("spanish mackerel")] <- "spanish mackerel"
@@ -50,32 +50,29 @@ model_all <- lm(catch ~ #Name +
                   #`Wave Height (ft)` +
                   `Sea Surface (f)...27` + `Current (Knots)...28` + max_swell +
                   estimated_soak +
-                  `# Net Panels` +
+                  #`# Net Panels` +
                   `Net Length (ft)` +
-                  `Net Height (ft)` +
+                  #`Net Height (ft)` +
                   `Mesh Count (vertical)` +
-                  `Stretched Mesh Size (in)` +
+                  #`Stretched Mesh Size (in)` +
                   `Leadline (Spool) Weight (lbs)` +
-                  `Net Color` +
+                  #`Net Color` +
                   `# Floats` + 
                   `# Weak Links` +
-                  `Buoy line Diameter (in)` +
-                  `Buoy line Length (ft)` + 
-                  `Headrope Length (ft)` +
-                  `Footrope MFG` +
+                  #`Buoy line Diameter (in)` +
+                  # `Buoy line Length (ft)` + #`Headrope Length (ft)` +
+                  #`Footrope MFG` +
                   `Footrope Diameter (in)` +
-                  `# Tie Downs` +
-                  `Tie Down Length (in)` +
-                  `Twine Size` +
-                  `Footrope Length (ft)` +
-                  `Anchor Weight (lbs)` +
-                  `Buoy line MFG` +
-                  `Weak Link Type (if any)` +
-                  `Headrope Diameter (in)` + 
-                  `Headrope MFG`, #+ `Headrope MFG`,
+                  #`# Tie Downs` +
+                  #`Tie Down Length (in)` +
+                  #`Twine Size` +
+                  #`Footrope Length (ft)` +
+                  #`Anchor Weight (lbs)` + #`Buoy line MFG` +
+                  #`Weak Link Type (if any)` +
+                  `Headrope Diameter (in)`, #+ `Headrope MFG`,
                 data=testdata)
 
-#you have to remov]e these to de-alias the model:
+#you have to remove these to de-alias the model:
 #ld.vars <- attributes(alias(model_all)$Complete)$dimnames[[1]]
 vif(model_all) #use this to get rid of collinear variables
 #then when they're out, use what's left to extract the col names (below)
@@ -88,6 +85,35 @@ clean_data <- testdata[,which(names(testdata) %in% c("catch",
                                                      "target", "net", "Treatment"))]
 clean_data <- na.omit(clean_data)
 
+#model1 <- lm(as.formula(paste0("catch ~ ",
+#                               paste(names(vif(model_all)[,1]), collapse=" + "),
+#                               " + target*net")),
+#             data = clean_data, na.action=na.fail)
+#num_cores <- parallel::detectCores() - 1
+#fuck <- parallel::makeCluster(num_cores)
+#parallel::clusterExport(fuck, "clean_data")
+#subset_results <- dredge(model1, cluster=fuck) #, m.max=7
+#parallel::stopCluster(fuck)
+#################
+
+#not needed here but if you tweak variables you might want to reconsider how much the data is pared down
+#model_all <- lm(catch ~ `# Floats` + `# Weak Links` + `Footrope Diameter (in)` +
+#  `Mesh Count (vertical)` + `Net Length (ft)` + `Sea Surface (f)...27` +
+#  `Set Depth (fa)` + current + estimated_soak + lat + max_swell + wind_speed +
+#  target*`# Weak Links`, data=testdata)
+
+#clean_data <- testdata[,which(names(testdata) %in% c("catch",
+#                                                     gsub("`",
+#                                                          "", 
+#                                                          names(vif(model_all)[,1])),
+#                                                     "target", "net"))]
+#clean_data <- na.omit(clean_data)
+##################
+
+best_model <- aov(catch ~ `# Floats` + `# Weak Links` + `Footrope Diameter (in)` +
+                    `Mesh Count (vertical)` + `Net Length (ft)` + `Sea Surface (f)...27` +
+                    `Set Depth (fa)` + current + estimated_soak + lat + max_swell + wind_speed +
+                    target*`# Weak Links`, data = clean_data, na.action=na.fail)
 
 #test <- merged[merged$`Target Species`== "menhaden",]
 #aov(catch ~ estimated_soak + net, data = test)
