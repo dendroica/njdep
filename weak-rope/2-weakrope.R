@@ -1,9 +1,6 @@
 library(ggplot2, quietly = TRUE, verbose=FALSE)
-library(leaps)
 library(car)
 library(MuMIn)
-library(emmeans)
-library(interactions)
 load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data.RData"))
 merged <- merge(haul, string, by=c("Name","stringid"))
 merged <- merged[!is.na(merged$`Target Species`),]
@@ -77,10 +74,9 @@ vif(model_all) #use this to get rid of collinear variables
 #then when they're out, use what's left to extract the col names (below)
 #names(vif(model_all)[,1])
 
-clean_data <- testdata[,which(names(testdata) %in% c("catch",
-                                                     gsub("`",
-                                                          "", 
-                                                          names(vif(model_all)[,1])),
+clean_data <- testdata[,
+                       which(names(testdata) %in% c("catch", gsub("`","", 
+                                                                  names(vif(model_all)[,1])),
                                                      "target", "net", "Treatment"))]
 clean_data <- na.omit(clean_data)
 #save(clean_data, file="weakrope_data_analysis.RData")
