@@ -85,17 +85,17 @@ clean_data <- testdata[,which(names(testdata) %in% c("catch",
                                                      "target", "net", "Treatment"))]
 clean_data <- na.omit(clean_data)
 
-#model1 <- lm(as.formula(paste0("catch ~ ",
-#                               paste(names(vif(model_all)[,1]), collapse=" + "),
-#                               " + target*net")),
-#             data = clean_data, na.action=na.fail)
-#num_cores <- parallel::detectCores() - 1
-#fuck <- parallel::makeCluster(num_cores)
-#parallel::clusterExport(fuck, "clean_data")
-#subset_results <- dredge(model1, cluster=fuck) #, m.max=7
-#parallel::stopCluster(fuck)
+model1 <- lm(as.formula(paste0("catch ~ ",
+                               paste(names(vif(model_all)[,1]), collapse=" + "),
+                               " + target*net")),
+             data = clean_data, na.action=na.fail)
+num_cores <- parallel::detectCores() - 1
+fuck <- parallel::makeCluster(num_cores)
+parallel::clusterExport(fuck, "clean_data")
+subset_results <- dredge(model1, cluster=fuck) #, m.max=7
+parallel::stopCluster(fuck)
 #################
-
+#save.image("big.RData")
 #not needed here but if you tweak variables you might want to reconsider how much the data is pared down
 #model_all <- lm(catch ~ `# Floats` + `# Weak Links` + `Footrope Diameter (in)` +
 #  `Mesh Count (vertical)` + `Net Length (ft)` + `Sea Surface (f)...27` +
@@ -110,11 +110,6 @@ clean_data <- na.omit(clean_data)
 #clean_data <- na.omit(clean_data)
 ##################
 
-best_model <- aov(catch ~ `# Floats` + `# Weak Links` + `Footrope Diameter (in)` +
-                    `Mesh Count (vertical)` + `Net Length (ft)` + `Sea Surface (f)...27` +
-                    `Set Depth (fa)` + current + estimated_soak + lat + max_swell + wind_speed +
-                    target*`# Weak Links`, data = clean_data, na.action=na.fail)
-
 #test <- merged[merged$`Target Species`== "menhaden",]
 #aov(catch ~ estimated_soak + net, data = test)
 #paste(predictors, collapse=" + ")
@@ -126,11 +121,6 @@ best_model <- aov(catch ~ `# Floats` + `# Weak Links` + `Footrope Diameter (in)`
 #                    estimated_soak + `# Weak Links` + target*net,
                     #target*`# Weak Links`,
 #                 data = clean_data, na.action=na.fail)
-summary(best_model)
-emtrends(best_model, ~ target, var="# Weak Links")
-#comp_means <- emmeans(best_model, ~ `Target Species` * net)
-#pairwise_results <- pairs(comp_means, by = "Target Species", adjust = "net")
-#summary(pairwise_results)
 
 #ggplot(data = clean_data, aes(x = `# Weak Links`, y = catch, color=target, group=target)) +
 #  geom_point() +
