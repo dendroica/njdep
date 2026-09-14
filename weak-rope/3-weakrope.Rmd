@@ -9,6 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2, quietly = TRUE, verbose=FALSE)
 library(emmeans)
+load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data_analysis.RData"))
 ```
 
 ## Introduction
@@ -48,10 +49,6 @@ The following target species were considered, and lumped into categories where n
 * shark (species lumped, since species wasn't always specified)
 * skate (species lumped, since species wasn't always specified)
 * Spanish mackerel
-
-```{r cars}
-load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data_analysis.RData"))
-```
 
 ### Variable selection
 
