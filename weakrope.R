@@ -5,7 +5,7 @@ library(car)
 library(MuMIn)
 library(emmeans)
 library(interactions)
-#load(save.image("C:/Users/galax/OneDrive - New Jersey Office of Information Technology/Documents/weakrope_data.RData"))
+load(file.path(Sys.getenv("FILEPATH"),"data/weakrope_data.RData"))
 merged <- merge(haul, string, by=c("Name","stringid"))
 merged <- merged[!is.na(merged$`Target Species`),]
 merged$target <- "bluefish"
