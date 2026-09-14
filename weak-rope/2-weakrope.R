@@ -84,7 +84,7 @@ clean_data <- testdata[,which(names(testdata) %in% c("catch",
                                                           names(vif(model_all)[,1])),
                                                      "target", "net", "Treatment"))]
 clean_data <- na.omit(clean_data)
-
+#save(clean_data, file="weakrope_data_analysis.RData")
 model1 <- lm(as.formula(paste0("catch ~ ",
                                paste(names(vif(model_all)[,1]), collapse=" + "),
                                " + target*net")),

@@ -55,36 +55,7 @@ The following target species were considered, and lumped into categories where n
 * Spanish mackerel
 
 ```{r cars}
-load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data.RData"))
-merged <- merge(haul, string, by=c("Name","stringid"))
-merged <- merged[!is.na(merged$`Target Species`),]
-merged$target <- "bluefish"
-merged$target[merged$`Target Species`=="butterfish"] <- "butterfish"
-merged$target[merged$`Target Species`=="croaker"] <- "croaker"
-merged$target[merged$`Target Species` %in% c("dogfish", "small dogfish",
-                                             "smooth dogfish",
-                                             "smooth dogfish, bonito", 
-                                             "smooth dogfish, skate",
-                                             "spiny dogfish")] <- "dogfish"
-merged$target[merged$`Target Species` %in% c("menhaden", "menhaden, skate")] <- "menhaden"
-merged$target[merged$`Target Species` %in% c("monkfish", "skate, monkfish", "bluefish, monkfish")] <- "monkfish"
-merged$target[merged$`Target Species` %in% c("shark", "spinner shark")] <- "shark"
-merged$target[merged$`Target Species` %in% c("skate", "skt", "skw", "winter skate")] <- "skate"
-merged$target[merged$`Target Species` %in% c("spanish mackerel")] <- "spanish mackerel"
-merged$target[merged$`Target Species` %in% c("spot")] <- "spot"
-merged$Treatment[is.na(merged$Treatment)] <- "control"
-
-testdata <- merged[,names(merged)[!names(merged) %in% c("VTR#", "Expected Soak Time", 
-                                            "Estimated Soak Duration", "VTR Data",
-                                            "nontarget", "Set", "Haul",
-                                            "Protected Species Interaction",
-                                            "panel", "buoy_buoy", "Headrope Buoyancy (lb)",
-                                            "footrope_buoy", "Target Species",
-                                            "hours", "minutes", "Notes/design")]]
-predictors <- names(testdata)[!names(testdata) %in% c("catch", "net", "Treatment",
-                                    "target")]
-char_cols <- sapply(testdata, is.character)
-testdata[char_cols] <- lapply(testdata[char_cols], as.factor)
+load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data_analysis.RData"))
 ```
 
 ### Variable selection
@@ -122,35 +93,7 @@ leaving 786 observations. Then, these co-variates were combined into a global mo
 and all possible subsets were investigated to select a best model by AICc. Of the
 3 variables of interest, preliminary analysis implied that number of weak links would 
 likely be the most influential variable of interest in the model. Thus, number of weak links was also included in 
-the global model used for variable selection.
-
-```{r analysis}
-model_all <- lm(catch ~ 
-                wind_speed + 
-                `Wave Length (ft)` + 
-                current +
-                Substrate +
-                `Set Depth (fa)` + lat + lon + `Wind Speed (knots)` +
-                `Sea Surface (f)...27` + `Current (Knots)...28` + max_swell +
-                estimated_soak +
-                `Net Length (ft)` +
-                `Mesh Count (vertical)` +
-                `Leadline (Spool) Weight (lbs)` +
-                `# Floats` + 
-                `# Weak Links` +
-                `Footrope Diameter (in)` +
-                `Headrope Diameter (in)`,
-                data=testdata)
-
-clean_data <- testdata[,which(names(testdata) %in% c("catch",
-                                                     gsub("`",
-                                                          "", 
-                                                          names(vif(model_all)[,1])),
-                                                     "target", "net", "Treatment"))]
-clean_data <- na.omit(clean_data)
-```
-
-The final models included the following nuisance variables, in addition
+the global model used for variable selection. The final models included the following nuisance variables, in addition
 to the independent variables of interest:
 
 * No. floats
