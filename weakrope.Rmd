@@ -243,5 +243,10 @@ and also a more complete experimental design to ensure each treatment is tested
 for each target.
 
 Nonetheless, the variable quantifying the differences between the control and experimental 
-nets, namely the number of weak links, was highly significant in the model, and 
-negatively affected the catch for 2 groups of target species.
+nets, namely the number of weak links, was highly significant in the model where it was considered, and 
+negatively affected the catch for 2 groups of target species (dogfish and monkfish).
+Notably, the catch of the remainder of target species/groups considered
+(bluefish, menhaden, shark, skate, Spanish mackerel) were not significantly
+affected by the number of weak links in this analysis. There was not enough data
+on sharks to model the relationship for this group, so further research is needed
+to better understand how shark catch is affected by the number of weak links in a net.
