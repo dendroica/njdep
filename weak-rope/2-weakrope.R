@@ -1,5 +1,4 @@
 library(ggplot2, quietly = TRUE, verbose=FALSE)
-library(stringr)
 library(leaps)
 library(car)
 library(MuMIn)

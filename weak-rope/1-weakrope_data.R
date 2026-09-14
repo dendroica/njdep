@@ -1,4 +1,5 @@
 library(readxl, quietly = TRUE, verbose=FALSE)
+library(stringr)
 #in -JMG2 file version:
 #I fixed a typo in the name of the sheet to correct it to "Protected species interactions"
 
