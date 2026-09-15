@@ -2,6 +2,7 @@
 title: "Weak Rope Analysis"
 author: "Jess Gorzo"
 date: "`r Sys.Date()`"
+bibliography: references.bib
 output: html_document
 ---
 
@@ -9,25 +10,35 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 library(ggplot2, quietly = TRUE, verbose=FALSE)
 library(emmeans)
+library(sf)
+library(mapview)
+library(broom)
 load(file.path(Sys.getenv("FILEPATH"),
                "data/weakrope/weakrope_data_analysis.RData"))
+#clean_data <- clean_data[clean_data$lon > -74.29 & clean_data$lon < -70 & clean_data$lat > 37,]
+clean_data$target <- gsub("\\b([a-z])", "\\U\\1", clean_data$target, perl = TRUE)
+df_sf <- st_as_sf(clean_data, coords = c("lon", "lat"), crs = 4326)
 ```
 
 ## Introduction
 
-The purpose of this analysis was to compare gill nets with the number of weak
-links required by NMFS (control group) to those with more than the required
-number (experimental group), to determine how catch is affected by the number of
-weak links in a net. There were 4 experimental treatments for types of weak link
-configurations:
+Commercial gillnet fishermen that fish in the Atlantic Ocean where the floatline is above 280 fathoms deep are required to construct nets with weak links (hereby defined as a segment with a breaking strength of 1100 lb) to allow large whales to break free when entangled [@nmfs2003sam]. Weak links can be constructed of rope that breaks at the required threshold, plastic, as well various as other approved materials and constructions [@noaa2015taking]. For anchored gillnets in the Mid-Atlantic brought back to port with the vessel, at least one weak link is required along the floatline per panel up to 50 fathoms long, and additional weak links every 25 fathoms for longer panels [@50cfr229]. For nets left out (i.e. not returning to port with the vessel), there must be a weak link at each flotation device and at least 5 weak links per net panel [@nmfs2014atlantic]. All panels must have a weak link placed in the center of each of the up and down lines (i.e. the lines that connect the floatline and leadline at the end of each panel). Also, each panel must have a weak link at the center of the float line, and additional weak links are required along the floatline if the panel is longer than 50 fathoms (with a maximum spacing of 25 fathoms between weak links). For the remaining 2 required weak links, there are optional configurations: either to have a weak link placed as close as possible on the floatline at each end of the panel just before the floatline meets the up and down line, or placed between the floatline tie loops between panels as well as the bridle/buoy line (depending on the net configuration). Off New Jersey, Delaware Bay is exempt from these regulations [@nmfs2007alwtrp].
 
-* Single End Line (One Vert line)
-* Weak endline
-* Weak endline and Weak Horizontal
-* Weak Horizontal Line
+Yet, different configurations and additional weak links beyond the minimum requirement may prove increasingly beneficial for reducing by-catch of protected species. The purpose of this analysis was to compare gillnets with the number of weak links required, which served as the control group, to those with more than the required number and with novel configurations, which served as the experimental group. There were 4 experimental treatments for types of weak link configurations:
+
+* Single end line (vertical)
+* Weak end line
+* Weak end line and weak horizontal
+* Weak horizontal line
+
+Further, nets were characterized by the number of weak links, to provide a continuous descriptor per string. The goal was to assess how each of these variables affected catch, broken down by target species.
 
 ## Methods
 
+### Study Area
+```{r map, include=F}
+mapview(df_sf)
+```
 The relationship of catch to the experimental parameters of interest was modeled 
 as an analysis of covariance (ANCOVA). This framework allows for accommodating
 co-variates that can affect catch (in this scenario, nuisance variables)
@@ -46,6 +57,7 @@ species groups as possible and reasonable where multiple species were listed.
 
 The following target species were considered, and lumped into categories where
 necessary:
+
 * bluefish
 * dogfish (species lumped, since species wasn't always specified)
 * menhaden
@@ -61,7 +73,7 @@ identified aliases and chose among them, with a preference given to numeric,
 continuous variables that could be best hypothesized to affect catch. To
 maximize the number of net specifications considered while restricting the set
 to variables that are not aliased and not co-linear, the following net
-specifications were considered:
+specifications were considered:  
 
 * Net Length (ft)
 * Mesh Count (vertical)
@@ -72,7 +84,7 @@ specifications were considered:
 * Head rope Diameter (in)
 
 Similarly, the following environmental factors were considered among those
-available:
+available:  
 
 * set depth
 * wind speed (at set and haul)
@@ -85,13 +97,13 @@ available:
 * estimated soak duration
 
 The data set was whittled down to records that had values for all of these
-variables, leaving 786 observations. Then, these co-variates were combined into
+variables, leaving `r `nrow(clean_data)` observations. Then, these co-variates were combined into
 a global model, and all possible subsets were investigated to select a best
 model by AICc. Of the 3 variables of interest, preliminary analysis implied that
 number of weak links would likely be the most influential variable of interest
 in the model. Thus, number of weak links was also included in the global model
 used for variable selection. The final models included the following nuisance
-variables, in addition to the independent variables of interest:
+variables, in addition to the independent variables of interest:  
 
 * No. floats
 * Foot rope diameter
@@ -137,7 +149,7 @@ control net did not differ significantly from the performance of an experimental
 net on the whole by group.
 
 ```{r results}
-summary(best_model_net)
+knitr::kable(tidy(best_model_net))
 ```
 
 ```{r net, include=F}
@@ -148,7 +160,7 @@ summary(pairwise_results)
 Considering instead the type of weak link, the treatment was also not significant in the overall model.
 
 ```{r results-trt}
-summary(best_model_trt)
+knitr::kable(tidy(best_model_trt))
 ```
 
 ```{r trt, include=F}
@@ -163,7 +175,7 @@ model. The interaction between the number of weak links and the target species
 was also significant.
 
 ```{r results-best}
-summary(best_model)
+knitr::kable(tidy(best_model))
 ```
 
 The effect of number of weak links strongly differed by target species. The number of
@@ -179,22 +191,12 @@ other target species. There were not enough records where shark was the primary
 target to estimate a slope for this group.
 
 ```{r best}
-emtrends(best_model, ~ target, var="# Weak Links")
+knitr::kable(emtrends(best_model, ~ target, var="# Weak Links"))
 ```
 
 ## Discussion
-
-In our data set, foot rope diameter was aliased with a number of different
-variables describing the net, which included tie down length, twine size, anchor
-weight, manufacturer of various net components, as well as experimental
-parameter of the type of weak link used. This represents a limitation of the
-data set, reflecting sample size and what was available given that data
-collection circumstances. So, we do not have enough unique combinations of these
-variables to properly separate them. Thus, the relationship of catch to foot
-rope diameter, though there was a significant linear relationship, can
-alternatively be interpreted as potentially representing other net
-specifications. Teasing apart those influences could be further investigated by
-testing other combinations of net measurements and manufacturers.
+For this analysis, I prioritized maximizing the number of covariates that could be considered in model selection, while removing aliased and co-linear variables from the candidate set. In our data set, foot rope diameter was significant in all models, and was aliased with a number of different variables in the data set describing the net, which included tie down length, twine size, anchor weight, manufacturer of various net components, as well as experimental
+parameter of the type of weak link used. While the type of weak link used may be of interest in further analysis, this variable exhibited severe multicollinearity with several variables in the study, which may have corresponded to artifacts in the data collection process rather than a true relationship. These issues represent a limitation of the data set, reflecting sample size and what was available given that data collection circumstances. So, we do not always have enough unique combinations of the variables recorded to properly separate them. Thus, the relationship of catch to foot rope diameter, though there was a significant linear relationship, can alternatively be interpreted as potentially representing other net specifications. Teasing apart those influences could be further investigated by testing other combinations of net measurements and manufacturers.
 
 Similarly, there were limited replicates of treatment per target species, and in
 some cases, some treatments were never tested for a given target species.
@@ -213,3 +215,7 @@ Spanish mackerel) were not significantly affected by the number of weak links in
 this analysis. There was not enough data on sharks to model the relationship for
 this group, so further research is needed to better understand how shark catch
 is affected by the number of weak links in a net.
+
+In sum, the control group did not meaningfully differ from the experimental group, but the finer scale descriptor of number of weak links proved influential for some target species groups. For target species groups not affected by the number of weak links (most of them considered in this analysis), it may be possible to use gear with more weak links that may benefit protected species while not reducing catch.
+
+## References
