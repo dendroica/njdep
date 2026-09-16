@@ -18,11 +18,15 @@ load(file.path(Sys.getenv("FILEPATH"),
 #clean_data <- clean_data[clean_data$lon > -74.29 & clean_data$lon < -70 & clean_data$lat > 37,]
 clean_data$target <- gsub("\\b([a-z])", "\\U\\1", clean_data$target, perl = TRUE)
 df_sf <- st_as_sf(clean_data, coords = c("lon", "lat"), crs = 4326)
+
+#shoot for 809 words intro
 ```
 
 ## Introduction
 
-Commercial gillnet fishermen that fish in the Atlantic Ocean where the floatline is above 280 fathoms deep are required to construct nets with weak links (hereby defined as a segment with a breaking strength of 1100 lb) to allow large whales to break free when entangled [@nmfs2003sam]. Weak links can be constructed of rope that breaks at the required threshold, plastic, as well various as other approved materials and constructions [@noaa2015taking]. For anchored gillnets in the Mid-Atlantic brought back to port with the vessel, at least one weak link is required along the floatline per panel up to 50 fathoms long, and additional weak links every 25 fathoms for longer panels [@50cfr229]. For nets left out (i.e. not returning to port with the vessel), there must be a weak link at each flotation device and at least 5 weak links per net panel [@nmfs2014atlantic]. All panels must have a weak link placed in the center of each of the up and down lines (i.e. the lines that connect the floatline and leadline at the end of each panel). Also, each panel must have a weak link at the center of the float line, and additional weak links are required along the floatline if the panel is longer than 50 fathoms (with a maximum spacing of 25 fathoms between weak links). For the remaining 2 required weak links, there are optional configurations: either to have a weak link placed as close as possible on the floatline at each end of the panel just before the floatline meets the up and down line, or placed between the floatline tie loops between panels as well as the bridle/buoy line (depending on the net configuration). Off New Jersey, Delaware Bay is exempt from these regulations [@nmfs2007alwtrp].
+The Mid-Atlantic commercial gillnet fishery is currently in category 1 under the Marine Mammal Protection Act (MMPA), meaning it is categorically of the highest risk to marine mammals [@NOAA2024LOF]. There are currently an estimated 4020 vessels/persons participating in this fishery [@Noaa2026LOF]. Fishermen that set gillnets in the Atlantic Ocean where the floatline is above 280 fathoms deep are required to construct nets with weak links (hereby defined as a segment with a breaking strength of 1100 lbf) to allow large whales to break free when entangled [@noaa1997alwtrp]. Weak links can be constructed of rope that breaks at the required threshold, plastic, as well various as other approved materials and constructions [@noaa2015taking]. For anchored gillnets in the Mid-Atlantic brought back to port with the vessel, at least one weak link is required along the floatline per panel up to 50 fathoms long, and additional weak links every 25 fathoms for longer panels [@50cfr229]. For nets left out (i.e. not returning to port with the vessel), there must be a weak link at each flotation device and at least 5 weak links per net panel [@nmfs2014atlantic]. All panels must have a weak link placed in the center of each of the up and down lines (i.e. the lines that connect the floatline and leadline at the end of each panel). Also, each panel must have a weak link at the center of the float line, and additional weak links are required along the floatline if the panel is longer than 50 fathoms (with a maximum spacing of 25 fathoms between weak links). For the remaining 2 required weak links, there are optional configurations: either to have a weak link placed as close as possible on the floatline at each end of the panel just before the floatline meets the up and down line, or placed between the floatline tie loops between panels as well as the bridle/buoy line (depending on the net configuration).
+
+New Jersey has not been issuing new gillnet permits offshore since 2003 [@njdep2002multispecies]. Thus, the open entry program ended in 2002, and fishermen who had existing licenses have been able to apply year after year, or transfer the license [@njac2003commercial].  Delaware Bay is exempt from these regulations [@nmfs2007alwtrp]. However, New Jersey manages gillnet fishing in the Delaware Bay via a separate permitting system [@njac2026commercial]. No new gillnet permits have been issued for Delaware Bay since 1991, and will not be issued unless the total number of permits for anchored gill nets drops below 800 [@njac7_25_18_6].
 
 Yet, different configurations and additional weak links beyond the minimum requirement may prove increasingly beneficial for reducing by-catch of protected species. The purpose of this analysis was to compare gillnets with the number of weak links required, which served as the control group, to those with more than the required number and with novel configurations, which served as the experimental group. There were 4 experimental treatments for types of weak link configurations:
 
@@ -36,9 +40,12 @@ Further, nets were characterized by the number of weak links, to provide a conti
 ## Methods
 
 ### Study Area
+Coastal NJ
 ```{r map, include=F}
 mapview(df_sf)
 ```
+
+### Analysis
 The relationship of catch to the experimental parameters of interest was modeled 
 as an analysis of covariance (ANCOVA). This framework allows for accommodating
 co-variates that can affect catch (in this scenario, nuisance variables)
