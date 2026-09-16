@@ -2,7 +2,9 @@ library(ggplot2, quietly = TRUE, verbose=FALSE)
 library(car)
 library(MuMIn)
 load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data.RData"))
-merged <- merge(haul, string, by=c("Name","stringid"))
+haul$id <- paste(haul$Name, haul$stringid, sep="_")
+string$id <- paste(string$Name, string$stringid, sep="_")
+merged <- merge(haul, string, by="id")
 merged <- merged[!is.na(merged$`Target Species`),]
 merged$target <- "bluefish"
 merged$target[merged$`Target Species`=="butterfish"] <- "butterfish"
@@ -79,9 +81,11 @@ vif(model_all) #use this to get rid of collinear variables
 #names(vif(model_all)[,1])
 
 clean_data <- testdata[,
-                       which(names(testdata) %in% c("catch", gsub("`","", 
+                       which(names(testdata) %in% c("id", gsub("`","", 
                                                                   names(vif(model_all)[,1])),
-                                                     "target", "net", "Treatment", "Target Species"))]
+                                                    "net", "Treatment",
+                                                    "Target Species", "target",
+                                                    "catch"))]
 clean_data <- na.omit(clean_data)
 #save(clean_data, file="weakrope_data_analysis.RData")
 model1 <- lm(as.formula(paste0("catch ~ ",

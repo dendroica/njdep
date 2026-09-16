@@ -18,6 +18,7 @@ load(file.path(Sys.getenv("FILEPATH"),
 #clean_data <- clean_data[clean_data$lon > -74.29 & clean_data$lon < -70 & clean_data$lat > 37,]
 clean_data$target <- gsub("\\b([a-z])", "\\U\\1", clean_data$target, perl = TRUE)
 df_sf <- st_as_sf(clean_data, coords = c("lon", "lat"), crs = 4326)
+#clean_data$weak <- clean_data$`# Weak Links` / clean_data$
 
 #shoot for 809 words intro
 # I think it's 2003 where the 280 fathom rule is specified? see if it's also in 1997
