@@ -32,6 +32,14 @@ testdata <- merged[,names(merged)[!names(merged) %in% c("VTR#", "Expected Soak T
                                                         "panel", "buoy_buoy", "Headrope Buoyancy (lb)",
                                                         "footrope_buoy",
                                                         "hours", "minutes", "Notes/design")]]
+
+#lapply(split(df$Col_to_see, df$Col_group), unique)
+
+#foot rope diameter was significant in all models, and was aliased with a number
+#of different variables in the data set describing the net, which included tie
+#down length, twine size, anchor weight, manufacturer of various net components,
+#as well as experimental parameter of the type of weak link used
+
 predictors <- names(testdata)[!names(testdata) %in% c("catch", "net", "Treatment",
                                                       "target", "Target Species")]
 char_cols <- sapply(testdata, is.character)
