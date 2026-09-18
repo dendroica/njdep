@@ -20,3 +20,4 @@ seine$Name[15] <- "East Green Street Point"
 seine$Name[11] <- "Barnegat Public Beach"
 seine <- seine %>% 
   st_as_sf(coords = c("Longitude", "Latitude"), crs = 4326)
+mapview(seine)
