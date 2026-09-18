@@ -1,5 +1,10 @@
 library(sf)
+library(mapview)
+mapviewOptions(basemaps = c("OpenStreetMap", "Esri.WorldGrayCanvas", "Esri.WorldImagery"))
+
 menhaden <- read.csv(file.path(Sys.getenv("FILEPATH"), "data/John JJ Egan bunker totals by tow (002)(Original data).csv"))
+#CollectionID has duplicated values, TowID does not
+
 menhaden$Site.Name[menhaden$Site.Name %in% c("Berkeley Island Park", "Berkeley Island Park Profile")] <- "Berkeley Island Beach"
 menhaden$Site.Name[menhaden$Site.Name %in% c("Cattus Island Park Beach")] <- "Cattus Isl Control"
 menhaden$Site.Name[menhaden$Site.Name %in% c("Cattus Island Park Point")] <- "Cattus Isl Point"
