@@ -5,8 +5,8 @@ library(stringr)
 
 #what's left to do...
 #1. fix Haul where you can from estimated_soak
-
-haul <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG4.xlsx"), sheet="Hauling Data")
+fiel <- file.path(Sys.getenv("FILEPATH"), "data/weakrope/Weak Rope Survey Current.xlsx")
+haul <- read_xlsx(path=fiel, sheet="Hauling Data")
 haul[,c(5:6, 19:20, 22)] <- NULL
 names(haul)[4] <- "stringid"
 names(haul)[names(haul)=="Lattitude (DD.dddd)"] <- "lat"
@@ -190,7 +190,7 @@ haul$`Wind Direction...25`[grep("A$", haul$`Wind Direction...25`)] <- NA
 haul$`Wave Height (ft)` <- as.numeric(unname(unlist(lapply(sapply(haul$`Wave Height (ft)`, function(x) str_split(x, "-")), "[[", 1))))
 haul$`Current (Knots)...28` <- as.numeric(haul$`Current (Knots)...28`)
 
-string <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG4.xlsx"), sheet="String ID")
+string <- read_xlsx(path=fiel, sheet="String ID")
 names(string)[names(string)=="String ID"] <- "stringid"
 names(string)[names(string)=="Control or experimental"] <- "net"
 #names(string)[names(string)=="Footrope MFG (manfacture)"] <- "footrope_mfg"
@@ -224,7 +224,7 @@ string$`Headrope Diameter (in)` <- unname(sapply(string$`Headrope Diameter (in)`
 string$`Buoy line Diameter (in)` <- unname(sapply(string$`Headrope Diameter (in)`, function(x) eval(parse(text=x))))
 string$`Twine Size` <- as.numeric(string$`Twine Size`)
 
-protected <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG4.xlsx"), sheet="Protected species interactions")
+protected <- read_xlsx(path=fiel, sheet="Protected species interactions")
 names(protected)[names(protected)=="string id"] <- "stringid"
 names(protected)[names(protected)=="net type"] <- "net"
 names(protected)[names(protected)=="Haul date"] <- "Haul"
@@ -246,11 +246,11 @@ protected[protected$`on the animal?`=="head,gilled",]$`on the animal?` <- "head 
 #if alive, what was the state when released needs cleanup
 #injury needs cleanup
 
-panel <- read_xlsx(path=file.path(Sys.getenv("FILEPATH"), "data/Weak Rope Survey-JMG4.xlsx"), sheet="Panel Damage & Loss Information")
+panel <- read_xlsx(path=fiel, sheet="Panel Damage & Loss Information")
 names(panel)[names(panel)=="haul date"] <- "Haul"
 names(panel)[names(panel)=="string id"] <- "stringid"
 names(panel)[names(panel)=="were pannels lost"] <- "panel_loss"
 names(panel)[names(panel)=="describe damange"] <- "damage"
 panel[panel$Name=="Chuck solan",]$Name <- "Charles Solan"
 panel[panel$Name=="f/v webb",]$Name <- "F/v webo"
-save.image("C:/Users/galax/OneDrive - New Jersey Office of Information Technology/Documents/weakrope_data.RData")
+save.image("C:/Users/jgorzo/OneDrive - New Jersey Office of Information Technology/Documents/data/weakrope/weakrope_data2.RData")

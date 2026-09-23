@@ -1,7 +1,7 @@
 library(ggplot2, quietly = TRUE, verbose=FALSE)
 library(car)
 library(MuMIn)
-load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data.RData"))
+load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data2.RData"))
 haul$id <- paste(haul$Name, haul$stringid, sep="_")
 string$id <- paste(string$Name, string$stringid, sep="_")
 merged <- merge(haul, string, by="id")
@@ -31,7 +31,8 @@ testdata <- merged[,names(merged)[!names(merged) %in% c("VTR#", "Expected Soak T
                                                         "Protected Species Interaction",
                                                         "panel", "buoy_buoy", "Headrope Buoyancy (lb)",
                                                         "footrope_buoy",
-                                                        "hours", "minutes", "Notes/design")]]
+                                                        "hours", "minutes",
+                                                        "Notes/design")]]
 
 #lapply(split(df$Col_to_see, df$Col_group), unique)
 
@@ -93,7 +94,7 @@ clean_data <- testdata[,
                                                                   names(vif(model_all)[,1])),
                                                     "net", "Treatment",
                                                     "Target Species", "target",
-                                                    "catch"))]
+                                                    "catch", "Weak Links Total"))]
 clean_data <- na.omit(clean_data)
 #save(clean_data, file="weakrope_data_analysis.RData")
 model1 <- lm(as.formula(paste0("catch ~ ",
