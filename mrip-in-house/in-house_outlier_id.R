@@ -7,9 +7,9 @@
 library(mriptools)
 
 ### EDIT THIS#########
-comparison_timespan <- c(2017:2019, 2021:2024)
-prelim_yr <- 2025
-waves <- 5 # c(2, 3, 4, 5, 6)
+comparison_timespan <- c(2017:2019, 2021:2025)
+prelim_yr <- 2026
+waves <- 2 # c(2, 3, 4, 5, 6)
 #########
 
 myspecies <- c(
@@ -39,6 +39,15 @@ Map(function(state, z) {
     state
   ) # indir="~/data/MRIP",
   # return(list(catchall, effortall))
+  
+  catch <- read.csv(file.path(Sys.getenv("FILEPATH"),"data/MRIP/catch26.csv"))
+  MRIPData[[1]] <- MRIPData[[1]][,names(MRIPData[[1]]) %in% names(catch)]
+  catch <- catch[catch$YEAR > 2025,]
+  MRIPData[[1]] <- rbind(MRIPData[[1]], catch)
+  effort <- read.csv(file.path(Sys.getenv("FILEPATH"),"data/MRIP/effort26.csv"))
+  MRIPData[[2]] <- MRIPData[[2]][,names(MRIPData[[2]]) %in% names(effort)]
+  effort <- effort[effort$YEAR > 2025,]
+  MRIPData[[2]] <- rbind(MRIPData[[2]], effort)
 
   my_outdir <- file.path(Sys.getenv("OUT"), prelim_yr, waves)
   combined_catch <- OutlieMRIP(MRIPData[[1]], MRIPData[[2]], comparison_timespan, prelim_yr, species = myspecies)
