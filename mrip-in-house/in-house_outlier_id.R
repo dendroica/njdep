@@ -9,7 +9,7 @@ library(mriptools)
 ### EDIT THIS#########
 comparison_timespan <- c(2017:2019, 2021:2025)
 prelim_yr <- 2026
-waves <- 2 # c(2, 3, 4, 5, 6)
+waves <- 3 # c(2, 3, 4, 5, 6)
 #########
 
 myspecies <- c(
