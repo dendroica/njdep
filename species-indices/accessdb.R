@@ -5,16 +5,16 @@
 library(RODBC)
 
 trawl <- file.path(Sys.getenv("CRAB"), "Ocean Trawl Survey.accdb")
-outfile <-  file.path(Sys.getenv("CRAB"), "crab.RData")
+outfile <-  file.path(Sys.getenv("CRAB"), "spot.RData")
 oceantrawl <- function(pathtodb, outfile) {
   dummy_db <- odbcConnectAccess2007(access.file = pathtodb)
-  boats <- sqlQuery(dummy_db, "SELECT * FROM CATCH WHERE SPP = 314") #BLUE CRAB: SPP =  314
+  boats <- sqlQuery(dummy_db, "SELECT * FROM CATCH WHERE SPP = 149") #BLUE CRAB: SPP =  314
   tows <- sqlQuery(dummy_db, paste0("SELECT * FROM TOWS")) #WHERE ID NOT IN (", paste(boats$ID, collapse=","), ")"
-  length <- sqlQuery(dummy_db, paste0("SELECT * FROM LENGTH WHERE SPP = 314")) #WHERE ID NOT IN (", paste(boats$ID, collapse=","), ")"
+  length <- sqlQuery(dummy_db, paste0("SELECT * FROM LENGTH WHERE SPP = 149")) #WHERE ID NOT IN (", paste(boats$ID, collapse=","), ")"
   odbcClose(dummy_db)
   save(boats,tows,length,file=outfile)
 } 
-#oceantrawl(trawl, outfile)
+oceantrawl(trawl, outfile)
 
 outfile <- "weakfish.RData"
 seine <- file.path(Sys.getenv("VIN"), "Delaware River Seine Survey/Delaware River Seine 1980-2024_2-26-25.mdb")
@@ -35,5 +35,5 @@ weakfish_trawl <- function(pathtodb, outfile) {
   odbcClose(dummy_db)
   save(boats,tows,length,file=outfile) #tows,
 }
-weak <- weakfish_trawl(detrawl,file.path(Sys.getenv("FILEPATH"), "weakfish.RData"))
+#weak <- weakfish_trawl(detrawl,file.path(Sys.getenv("FILEPATH"), "weakfish.RData"))
 odbcCloseAll()
