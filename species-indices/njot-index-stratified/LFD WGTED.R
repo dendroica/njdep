@@ -226,9 +226,11 @@ LFD <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir, totlenin = 
   }
 
   ABUND <- ABUND[ABUND$CRUISE %in% unlist(cruiseno), ]
+  ABUND <- ABUND[!is.na(ABUND$STRATUM) & ABUND$STRATUM < 99,]
   ABUND$FACTOR <- unname(unlist(Map(FactorAssignment, ABUND$AREA, ABUND$STRATUM)))
   LENG <- LENG[LENG$CRUISE %in% unlist(cruiseno), ]
   LENG <- LENG %>% mutate(AREA = area)
+  LENG <- LENG[!is.na(LENG$STRATUM) & LENG$STRATUM < 99,]
   LENG$FACTOR <- unname(unlist(Map(FactorAssignment, LENG$AREA, LENG$STRATUM)))
   ABUND$TOW <- NULL
 
@@ -478,11 +480,13 @@ LFD <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir, totlenin = 
     filter(!is.na(SUM)) %>%
     mutate(MEAN1 = FACTOR * (SUM / COUNT)) %>%
     group_by(YEAR, LENGA) %>%
-    summarise(MEANS = sum(MEAN1, na.rm = TRUE), .groups = "drop") %>% # this matches! :) (need to flesh out/expand colnames)
-    group_by(YEAR) %>%
-    complete(
+    summarise(MEANS = sum(MEAN1, na.rm = TRUE), .groups = "drop") # this matches! :) (need to flesh out/expand colnames)
+  
+  lengy <- lengy[!is.na(lengy$LENGA),]  
+  lengy <- lengy %>%
+    complete(YEAR,
       LENGA = full_seq(c(1, max(LENGA)), period = 1),
-      fill = list(value = 0)
+      fill = list(MEANS = 0)
     ) %>%
     pivot_wider(names_from = LENGA, values_from = MEANS) %>% # matches!
     mutate(across(where(is.numeric), ~ ifelse(is.na(.), 0, .)))

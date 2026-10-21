@@ -159,7 +159,7 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
   )
 
   abund <- abund[abund$CRUISE %in% unlist(cruiseno), ]
-  abund <- abund[!is.na(abund$STRATUM),]
+  abund <- abund[!is.na(abund$STRATUM) & abund$STRATUM < 99,]
   factor <- unname(unlist(Map(function(AREA, STRATUM) {
     factor <- NA
     if (AREA == "ALL") {
