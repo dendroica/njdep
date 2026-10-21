@@ -125,7 +125,7 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
     "Atl sturgeon" = "AO",
     "Jonah crab" = "CB"
   )
-  abund <- read.dbf(file.path(mypath, paste0(value_map[myspp], "ABUN.dbf")))
+  abund <- read.dbf(file.path(mypath, paste0(value_map[myspp], "ABUN.dbf"))) #replace with db pull and merge
   abund$NUMBER <- abund$NUMBER / abund$MINOUT * 20
   if (!myspp %in% c("Lobster - F (GE53mm)", "Lobster - M (GE53mm)")) {
     abund$WEIGHT <- abund$WEIGHT / abund$MINOUT * 20
@@ -159,6 +159,7 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
   )
 
   abund <- abund[abund$CRUISE %in% unlist(cruiseno), ]
+  abund <- abund[!is.na(abund$STRATUM),]
   factor <- unname(unlist(Map(function(AREA, STRATUM) {
     factor <- NA
     if (AREA == "ALL") {
