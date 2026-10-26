@@ -13,7 +13,7 @@ library(dplyr)
 library(slider)
 input <- Sys.getenv("MYPATH")
 load(file.path(Sys.getenv("FILEPATH"),"data/njot_all.RData"))
-catch <- boats[boats$SPP==149,]
+catch <- catch[catch$SPP==149,]
 second <- length[length$SPP==149,]
 abund <- merge(tows, catch, all=T) 
 abund[is.na(abund$SPP),]$WEIGHT <- 0
