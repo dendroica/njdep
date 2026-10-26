@@ -6,11 +6,22 @@ library(RODBC)
 
 trawl <- file.path(Sys.getenv("CRAB"), "Ocean Trawl Survey.accdb")
 outfile <-  file.path(Sys.getenv("CRAB"), "spot.RData")
-oceantrawl <- function(pathtodb, outfile) {
+oceantrawl_spp <- function(pathtodb, outfile) {
   dummy_db <- odbcConnectAccess2007(access.file = pathtodb)
   boats <- sqlQuery(dummy_db, "SELECT * FROM CATCH WHERE SPP = 149") #BLUE CRAB: SPP =  314
   tows <- sqlQuery(dummy_db, paste0("SELECT * FROM TOWS")) #WHERE ID NOT IN (", paste(boats$ID, collapse=","), ")"
   length <- sqlQuery(dummy_db, paste0("SELECT * FROM LENGTH WHERE SPP = 149")) #WHERE ID NOT IN (", paste(boats$ID, collapse=","), ")"
+  odbcClose(dummy_db)
+  save(boats,tows,length,file=outfile)
+} 
+#oceantrawl_spp(trawl, outfile)
+
+outfile <-  file.path(Sys.getenv("CRAB"), "njot_all.RData")
+oceantrawl <- function(pathtodb, outfile) {
+  dummy_db <- odbcConnectAccess2007(access.file = pathtodb)
+  boats <- sqlQuery(dummy_db, "SELECT * FROM CATCH") #BLUE CRAB: SPP =  314
+  tows <- sqlQuery(dummy_db, paste0("SELECT * FROM TOWS")) #WHERE ID NOT IN (", paste(boats$ID, collapse=","), ")"
+  length <- sqlQuery(dummy_db, paste0("SELECT * FROM LENGTH")) #WHERE ID NOT IN (", paste(boats$ID, collapse=","), ")"
   odbcClose(dummy_db)
   save(boats,tows,length,file=outfile)
 } 

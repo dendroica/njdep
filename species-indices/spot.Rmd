@@ -12,16 +12,27 @@ library(ggplot2)
 library(dplyr)
 library(slider)
 input <- Sys.getenv("MYPATH")
-#load("crab.RData")
-#abund2 <- merge(tows, boats, all=T) 
-#second2 <- merge(tows, length, all=T) 
+load(file.path(Sys.getenv("FILEPATH"),"data/njot_all.RData"))
+catch <- boats[boats$SPP==149,]
+second <- length[length$SPP==149,]
+abund <- merge(tows, catch, all=T) 
+abund[is.na(abund$SPP),]$WEIGHT <- 0
+abund[is.na(abund$SPP),]$NUMBER <- 0
+
 source("./njot-index-stratified/WGTED-ARIM.R")
 source("./njot-index-stratified/LFD WGTED.R")
+abund2 <- read.dbf(file.path(Sys.getenv("FILEPATH"),"data/LXABUN.DBF"))
+second2 <- read.dbf(file.path(Sys.getenv("FILEPATH"),"data/LXLENG.DBF"))
 outdir <- file.path(Sys.getenv("FILEPATH"),"output/sasr")
 
-index_annual <- WgtedAriM(input, "Spot", outdir=outdir)
-index <- WgtedAriM(input, myspp="Spot", area="INM", cruise="AugOct", outdir=outdir)
-lf <- LFD(input, "Spot", outdir = outdir)
+index_annual <- WgtedAriM(input, "Spot", abund, outdir=outdir)
+index <- WgtedAriM(input, myspp="Spot", abund, area="INM", cruise="AugOct", outdir=outdir)
+lf <- LFD(input, "Spot", abund, second, outdir = outdir)
+
+index_annual2 <- WgtedAriM(input, "Spot", abund2, outdir=outdir)
+index2 <- WgtedAriM(input, myspp="Spot", abund2, area="INM", cruise="AugOct",
+                    outdir=outdir)
+lf2 <- LFD(input, "Spot", abund2, second2, outdir = outdir)
 ```
 
 ## Annual

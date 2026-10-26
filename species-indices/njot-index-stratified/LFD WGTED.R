@@ -157,7 +157,7 @@ FactorAssignment <- function(area, stratum) { # MACRO1
   return(factor)
 }
 
-LFD <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir, totlenin = F) {
+LFD <- function(mypath, myspp, ABUND, SECOND, area = "ALL", cruise = "ALL", outdir, totlenin = F) {
   value_map <- c(
     "Black drum" = "PC",
     "Lobster - F (GE53mm)" = "HA53F",
@@ -170,25 +170,25 @@ LFD <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir, totlenin = 
     "Atl croaker" = "MU",
     "Striped bass" = "MS"
   )
-  ABUND <- read.dbf(file.path(mypath, paste0(value_map[myspp], "ABUN.dbf")))
+  #ABUND <- read.dbf(file.path(mypath, paste0(value_map[myspp], "ABUN.dbf")))
   ABUND$CRUCODE[ABUND$CRUCODE == 19882] <- 19884
   ABUND$CRUCODE[ABUND$CRUCODE == 19883] <- 19885
   ABUND$CRUISE <- substr(ABUND$CRUCODE, 5, 5)
   ABUND$NUMBER <- ABUND$NUMBER / ABUND$MINOUT * 20 # ABUN
   ABUND <- ABUND %>% mutate(AREA = area)
 
-  if (!grepl("Lobster", myspp)) {
-    SECOND <- read.dbf(file.path(mypath, paste0(value_map[myspp], "LENG.dbf")))
-  }
+  #if (!grepl("Lobster", myspp)) {
+  #  SECOND <- read.dbf(file.path(mypath, paste0(value_map[myspp], "LENG.dbf")))
+  #}
   if (myspp == "Lobster - F (GE53mm)") {
     # LOBSTER
     # Female index & catch at length (CAL), GE 53mm+ (i.e., lengths equal to 53 mm and greater)
-    SECOND <- read.dbf(file.path(mypath, "HAXLENG.dbf"))
+    #SECOND <- read.dbf(file.path(mypath, "HAXLENG.dbf"))
     SECOND <- SECOND[SECOND$SEX == 2 & SECOND$LENGTH >= 53, ]
     SECOND$SEX <- NULL
   } else if (myspp == "Lobster - M (GE53mm)") {
     # Male index & catch at length (CAL), GE 53mm+ (i.e., lengths equal to 53 mm and greater)
-    SECOND <- read.dbf(file.path(mypath, "HAXLENG.dbf"))
+    #SECOND <- read.dbf(file.path(mypath, "HAXLENG.dbf"))
     SECOND <- SECOND[SECOND$SEX == 1 & SECOND$LENGTH >= 53, ]
     SECOND$SEX <- NULL
   }

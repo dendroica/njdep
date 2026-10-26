@@ -110,7 +110,7 @@ Macro8 <- function(tsamw) {
     select(-NMSESUM1) #-WMSESUM1
 }
 
-WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
+WgtedAriM <- function(mypath, myspp, abund, area = "ALL", cruise = "ALL", outdir) {
   value_map <- c(
     "Black drum" = "PC",
     "Lobster - F (GE53mm)" = "HA53F",
@@ -125,7 +125,7 @@ WgtedAriM <- function(mypath, myspp, area = "ALL", cruise = "ALL", outdir) {
     "Atl sturgeon" = "AO",
     "Jonah crab" = "CB"
   )
-  abund <- read.dbf(file.path(mypath, paste0(value_map[myspp], "ABUN.dbf"))) #replace with db pull and merge
+  #abund <- read.dbf(file.path(mypath, paste0(value_map[myspp], "ABUN.dbf"))) #replace with db pull and merge
   abund$NUMBER <- abund$NUMBER / abund$MINOUT * 20
   if (!myspp %in% c("Lobster - F (GE53mm)", "Lobster - M (GE53mm)")) {
     abund$WEIGHT <- abund$WEIGHT / abund$MINOUT * 20
