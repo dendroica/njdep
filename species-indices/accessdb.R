@@ -46,5 +46,5 @@ weakfish_trawl <- function(path_to_db, outfile) {
   odbcClose(dummy_db)
   save(boats,tows,length,file=outfile) #tows,
 }
-#weak <- weakfish_trawl(detrawl,file.path(Sys.getenv("FILEPATH"), "weakfish.RData"))
+#weak <- weakfish_trawl(detrawl, file.path(Sys.getenv("FILEPATH"), "weakfish.RData"))
 odbcCloseAll()
