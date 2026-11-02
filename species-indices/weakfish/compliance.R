@@ -1,3 +1,5 @@
+#devtools::install_github("dendroica/mriptools")
+#devtools::update_packages("mriptools")
 library(mriptools)
 catch <- ReadCatch(file.path("https://apps-st.fisheries.noaa.gov/st1/recreational/MRIP_Estimate_Data/CSV/Wave%20Level%20Estimate%20Downloads", "mrip_catch_bywave_2025.csv"), 34, 1:6)
 
