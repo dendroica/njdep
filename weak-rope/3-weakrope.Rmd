@@ -167,10 +167,13 @@ Considering instead the type of weak link, the treatment was also not significan
 knitr::kable(tidy(best_model_trt))
 ```
 
-```{r trt, include=F}
+```{r trt}
 comp_means <- emmeans(best_model_trt, ~ target * Treatment)
 pairwise_results <- pairs(comp_means, by="target")
-#summary(pairwise_results)
+summary(pairwise_results)
+pairs_df <- as.data.frame(pairwise_results)
+pairs_df <- pairs_df[pairs_df$p.value < 0.05 & !is.na(pairs_df$p.value),]
+#write.csv(pairs_df, "emmeans_pairs.csv", row.names = FALSE)
 ```
 
 On a finer scale, the model explicitly including number of weak links revealed

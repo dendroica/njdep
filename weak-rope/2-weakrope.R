@@ -13,14 +13,15 @@ merged$target[merged$`Target Species` %in% c("dogfish",
                                              "small dogfish",
                                              "smooth dogfish",
                                              "smooth dogfish, bonito", 
-                                             "smooth dogfish, skate",
-                                             "spiny dogfish",
-                                             "skate, bluefish, smooth dogfish",
-                                             "smooth dogfish, bluefish")] <- "dogfish"
-merged$target[merged$`Target Species` %in% c("menhaden", "menhaden, skate")] <- "menhaden"
-merged$target[merged$`Target Species` %in% c("monkfish", "skate, monkfish", "bluefish, monkfish")] <- "monkfish"
+                                             
+                                             #"smooth dogfish, bluefish",
+                                             #"skate, bluefish, smooth dogfish",
+                                             "spiny dogfish")] <- "dogfish"
+merged$target[merged$`Target Species` %in% c("menhaden")] <- "menhaden"
+merged$target[merged$`Target Species` %in% c("monkfish", "bluefish, monkfish", "skate, monkfish")] <- "monkfish"
 merged$target[merged$`Target Species` %in% c("shark", "spinner shark")] <- "shark"
-merged$target[merged$`Target Species` %in% c("skate", "skt", "skw", "winter skate")] <- "skate"
+merged$target[merged$`Target Species` %in% c("skate", "skt", "skw", "winter skate",
+                                             "smooth dogfish, skate", "menhaden, skate")] <- "skate"
 merged$target[merged$`Target Species` %in% c("spanish mackerel")] <- "spanish mackerel"
 merged$target[merged$`Target Species` %in% c("spot")] <- "spot"
 merged$Treatment[is.na(merged$Treatment)] <- "control"
