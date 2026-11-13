@@ -1,7 +1,7 @@
 library(ggplot2, quietly = TRUE, verbose=FALSE)
 library(car)
 library(MuMIn)
-load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data2.RData"))
+load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data3.RData"))
 haul$id <- paste(haul$Name, haul$stringid, sep="_")
 string$id <- paste(string$Name, string$stringid, sep="_")
 merged <- merge(haul, string, by="id")
@@ -96,7 +96,7 @@ clean_data <- testdata[,
                                                     "Target Species", "target",
                                                     "catch", "Weak Links Total"))]
 clean_data <- na.omit(clean_data)
-#save(clean_data, file="weakrope_data_analysis.RData")
+#save(clean_data, file=file.path(Sys.getenv("FILEPATH"),"/data/weakrope/weakrope_data_analysis.RData"))
 model1 <- lm(as.formula(paste0("catch ~ ",
                                paste(names(vif(model_all)[,1]), collapse=" + "),
                                " + target*net")),
