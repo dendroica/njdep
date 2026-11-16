@@ -18,4 +18,4 @@ nj_boundary <- nj_boundary[nj_boundary$NAME=="New Jersey",] %>%
   st_transform(crs = st_crs(edna))
 shp_buffered <- st_buffer(nj_boundary, dist = 4828)
 points_inside <- st_filter(edna, shp_buffered)
-mapview(points_inside)
+mapview(points_inside) #display map
