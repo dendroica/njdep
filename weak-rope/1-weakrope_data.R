@@ -253,4 +253,4 @@ names(panel)[names(panel)=="were pannels lost"] <- "panel_loss"
 names(panel)[names(panel)=="describe damange"] <- "damage"
 panel[panel$Name=="Chuck solan",]$Name <- "Charles Solan"
 panel[panel$Name=="f/v webb",]$Name <- "F/v webo"
-save.image("C:/Users/jgorzo/OneDrive - New Jersey Office of Information Technology/Documents/data/weakrope/weakrope_data2.RData")
+save.image(file.path(Sys.getenv("FILEPATH"), "data/weakrope/weakrope_data3.RData"))

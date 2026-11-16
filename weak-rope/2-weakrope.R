@@ -1,7 +1,7 @@
 library(ggplot2, quietly = TRUE, verbose=FALSE)
 library(car)
 library(MuMIn)
-load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data2.RData"))
+load(file.path(Sys.getenv("FILEPATH"),"data/weakrope/weakrope_data3.RData"))
 haul$id <- paste(haul$Name, haul$stringid, sep="_")
 string$id <- paste(string$Name, string$stringid, sep="_")
 merged <- merge(haul, string, by="id")
@@ -13,14 +13,15 @@ merged$target[merged$`Target Species` %in% c("dogfish",
                                              "small dogfish",
                                              "smooth dogfish",
                                              "smooth dogfish, bonito", 
-                                             "smooth dogfish, skate",
-                                             "spiny dogfish",
-                                             "skate, bluefish, smooth dogfish",
-                                             "smooth dogfish, bluefish")] <- "dogfish"
-merged$target[merged$`Target Species` %in% c("menhaden", "menhaden, skate")] <- "menhaden"
-merged$target[merged$`Target Species` %in% c("monkfish", "skate, monkfish", "bluefish, monkfish")] <- "monkfish"
+                                             
+                                             #"smooth dogfish, bluefish",
+                                             #"skate, bluefish, smooth dogfish",
+                                             "spiny dogfish")] <- "dogfish"
+merged$target[merged$`Target Species` %in% c("menhaden")] <- "menhaden"
+merged$target[merged$`Target Species` %in% c("monkfish", "bluefish, monkfish", "skate, monkfish")] <- "monkfish"
 merged$target[merged$`Target Species` %in% c("shark", "spinner shark")] <- "shark"
-merged$target[merged$`Target Species` %in% c("skate", "skt", "skw", "winter skate")] <- "skate"
+merged$target[merged$`Target Species` %in% c("skate", "skt", "skw", "winter skate",
+                                             "smooth dogfish, skate", "menhaden, skate")] <- "skate"
 merged$target[merged$`Target Species` %in% c("spanish mackerel")] <- "spanish mackerel"
 merged$target[merged$`Target Species` %in% c("spot")] <- "spot"
 merged$Treatment[is.na(merged$Treatment)] <- "control"
@@ -96,7 +97,7 @@ clean_data <- testdata[,
                                                     "Target Species", "target",
                                                     "catch", "Weak Links Total"))]
 clean_data <- na.omit(clean_data)
-#save(clean_data, file="weakrope_data_analysis.RData")
+#save(clean_data, file=file.path(Sys.getenv("FILEPATH"),"/data/weakrope/weakrope_data_analysis.RData"))
 model1 <- lm(as.formula(paste0("catch ~ ",
                                paste(names(vif(model_all)[,1]), collapse=" + "),
                                " + target*net")),
