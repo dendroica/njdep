@@ -4,7 +4,7 @@
 #.\Rscript.exe <path to here> accessdb.R
 library(RODBC)
 
-trawl <- file.path(Sys.getenv("CRAB"), "Ocean Trawl Survey.accdb")
+trawl <- file.path(Sys.getenv("CRAB"), "Ocean Trawl Survey Data LEGACY.mdb")
 outfile <-  file.path(Sys.getenv("CRAB"), "spot.RData")
 oceantrawl_spp <- function(path_to_db, outfile) {
   dummy_db <- odbcConnectAccess2007(access.file = path_to_db)

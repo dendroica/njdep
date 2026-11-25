@@ -199,7 +199,7 @@ LFD <- function(mypath, myspp, ABUND, SECOND, area = "ALL", cruise = "ALL", outd
   # need more code for lobster...
   SECOND$CRUCODE[SECOND$CRUCODE == 19882] <- 19884
   SECOND$CRUCODE[SECOND$CRUCODE == 19883] <- 19885 # LENGS
-  LENG <- SECOND %>% select(-TOW)
+  LENG <- SECOND #%>% select(-TOW)
   LENG$CRUISE <- substr(LENG$CRUCODE, 5, 5)
 
   if (area == "INM") {
