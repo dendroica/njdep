@@ -103,10 +103,10 @@ model1 <- lm(as.formula(paste0("catch ~ ",
                                " + target*net")),
              data = clean_data, na.action=na.fail)
 num_cores <- parallel::detectCores() - 1
-fuck <- parallel::makeCluster(num_cores)
-parallel::clusterExport(fuck, "clean_data")
-subset_results <- dredge(model1, cluster=fuck) #, m.max=7
-parallel::stopCluster(fuck)
+eff <- parallel::makeCluster(num_cores)
+parallel::clusterExport(eff, "clean_data")
+subset_results <- dredge(model1, cluster=eff) #, m.max=7
+parallel::stopCluster(eff)
 #################
 #save.image("big.RData")
 #not needed here but if you tweak variables you might want to reconsider how much the data is pared down
